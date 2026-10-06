@@ -397,6 +397,10 @@ td.proj{font-weight:700}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
 .field textarea{min-height:70px;resize:vertical}
 .field .hint{font-size:12px;color:var(--faint);margin-top:3px}
+.wd-hint{font-family:var(--f-display);font-size:13.5px;color:var(--accent-tx);margin-top:4px;padding-left:4px}
+.wd-hint:empty{display:none}
+.se-dwrap{display:flex;flex-direction:column;gap:1px;min-width:0}
+.se-dwrap .wd-hint{font-size:11.5px;margin-top:0}
 .req{color:var(--accent-tx)}
 .checks{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding-top:22px}
 .checks label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0;color:var(--ink);font-size:14px}
@@ -1655,6 +1659,14 @@ const delBtn = key => `<button type="button" class="btn danger left" data-act="d
 const foot = key => `<div class="form-foot">${key ? delBtn(key) : ''}<button type="button" class="btn ghost" data-act="close">取消</button><button type="submit" class="btn primary">儲存</button></div>`;
 const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
 const chk = id => { const el = document.getElementById(id); return !!(el && el.checked); };
+// 日期欄位下方顯示「星期二・明天」，改日期時即時更新（見 document 的 input／change 監聽）
+function wdHint(v) {
+  if (!isDate(v)) return '';
+  const n = diff(TODAY, v);
+  const rel = n === 0 ? '今天' : n === 1 ? '明天' : n === 2 ? '後天' : n === -1 ? '昨天' : n > 0 ? `${n} 天後` : `${-n} 天前`;
+  return `星期${wd(v)}・${rel}`;
+}
+const dateInp = (id, v) => inp(id, v, 'type="date"') + `<div class="wd-hint" aria-live="polite">${wdHint(v)}</div>`;
 const timeInp = (id, v, disabled) => `<input id="${id}" class="time-in" value="${esc(v || '')}" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="例：930、14:30" ${disabled ? 'disabled' : ''}>`;
 // 手動輸入的時間 → "HH:MM"；空白回傳 ''，看不懂回傳 null。接受 930、0930、9.30、9:30、14、下午2點半、晚上7點15分
 function normTime(raw) {
@@ -1686,14 +1698,14 @@ function openItemForm(it, date, scope) {
     <div class="form-grid">
       <div class="field full"><label>屬性</label><div class="radio-seg" role="radiogroup" aria-label="屬性">${SCOPES.map(s => `<label><input type="radio" name="fi-scope" value="${s.k}" ${sc === s.k ? 'checked' : ''}><span>${s.t}</span></label>`).join('')}</div></div>
       ${fld('fi-title', '內容 <span class="req">*</span>', inp('fi-title', v.title, 'maxlength="200" placeholder="例如：與實驗室確認測試排程、繳電話費"'), 'full')}
-      ${fld('fi-date', (rep ? '開始日期' : '日期') + ' <span class="req">*</span>', inp('fi-date', v.date, 'type="date"'))}
+      ${fld('fi-date', (rep ? '開始日期' : '日期') + ' <span class="req">*</span>', dateInp('fi-date', v.date))}
       <div class="field checks"><label><input type="checkbox" id="fi-allday" ${v.allDay ? 'checked' : ''}> 整日</label></div>
       ${fld('fi-time', '開始時間', timeInp('fi-time', v.time, v.allDay) + '<div class="hint">直接輸入：930、9.30、14:30、下午2點半</div>')}
       ${fld('fi-end', '約略結束時間（選填）', timeInp('fi-end', v.endTime, v.allDay))}
       ${fld('fi-cat', '類別', `<select id="fi-cat">${catOptions(sc, v.cat)}</select>`)}
       <div class="field checks"><label><input type="checkbox" id="fi-star" ${v.star ? 'checked' : ''}> 重要／急件</label>${it && !rep ? `<label><input type="checkbox" id="fi-done" ${v.done ? 'checked' : ''}> 已完成</label>` : ''}</div>
       ${fld('fi-repeat', '重複', `<select id="fi-repeat">${Object.keys(REPEAT).map(k => `<option value="${k}" ${k === (v.repeat || 'none') ? 'selected' : ''}>${REPEAT[k]}</option>`).join('')}</select>`)}
-      ${fld('fi-until', '重複到（可不填）', inp('fi-until', v.until, 'type="date"'))}
+      ${fld('fi-until', '重複到（可不填）', dateInp('fi-until', v.until))}
       ${fld('fi-target', '對象', inp('fi-target', v.target, 'placeholder="聯絡人／窗口"'))}
       ${fld('fi-company', '公司', inp('fi-company', v.company, 'placeholder="公司、實驗室或店家"'))}
       ${fld('fi-location', '地點', inp('fi-location', v.location, 'placeholder="會議室、地址或線上"'))}
@@ -1744,7 +1756,7 @@ function openItemForm(it, date, scope) {
 
 function stepRow(s) {
   return `<div class="step-ed" data-sid="${esc(s.id || uid('s'))}">
-    <input type="date" class="se-date" value="${esc(s.date || '')}" aria-label="節點日期">
+    <div class="se-dwrap"><input type="date" class="se-date" value="${esc(s.date || '')}" aria-label="節點日期"><span class="wd-hint">${wdHint(s.date)}</span></div>
     <input class="se-time time-in" value="${esc(s.time || '')}" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="時間（選填）" aria-label="節點時間">
     <input class="se-title" value="${esc(s.title || '')}" placeholder="要提交的內容，例如：送樣 2 台" aria-label="提交內容" maxlength="200">
     <label class="dn"><input type="checkbox" class="se-done" ${s.done ? 'checked' : ''}>完成</label>
@@ -1768,17 +1780,17 @@ function openAppForm(a, preset) {
       ${fld('fa-location', '地點', inp('fa-location', v.location))}
       ${fld('fa-link', '相關連結', inp('fa-link', v.link, 'type="url" inputmode="url" placeholder="https://"'), 'full')}
       <div class="fsec">期間與顏色</div>
-      ${fld('fa-apply', '申請日 <span class="req">*</span>', inp('fa-apply', v.applyDate, 'type="date"'))}
-      ${fld('fa-cert', '預計取證日 <span class="req">*</span>', inp('fa-cert', v.certDate, 'type="date"'))}
+      ${fld('fa-apply', '申請日 <span class="req">*</span>', dateInp('fa-apply', v.applyDate))}
+      ${fld('fa-cert', '預計取證日 <span class="req">*</span>', dateInp('fa-cert', v.certDate))}
       ${fld('fa-status', '狀態', `<select id="fa-status">${Object.keys(STATUS).map(k => `<option value="${k}" ${k === v.status ? 'selected' : ''}>${STATUS[k].t}</option>`).join('')}</select>`)}
       <div class="field"><label>紙膠帶顏色</label><div class="swatches" role="radiogroup" aria-label="紙膠帶顏色">${[1, 2, 3, 4, 5, 6].map(n => `<label style="--tape:var(--tape-${n})"><input type="radio" name="fa-color" value="${n}" ${Number(v.color) === n ? 'checked' : ''} aria-label="顏色 ${n}"><span></span></label>`).join('')}</div></div>
       <div class="fsec">提交節點（要交的內容）</div>
       <div class="full"><div class="steps-ed" id="fa-steps">${(v.steps || []).slice().sort((x, y) => (x.date || '') < (y.date || '') ? -1 : 1).map(stepRow).join('')}</div>
         <div class="steps-tools"><button type="button" class="btn sm" data-act="step-add">${IC.plus}新增節點</button><button type="button" class="btn sm" data-act="step-tpl">套用常用節點</button></div></div>
       <div class="fsec">取證與效期</div>
-      ${fld('fa-actual', '實際取證日', inp('fa-actual', v.actualCertDate, 'type="date"'))}
+      ${fld('fa-actual', '實際取證日', dateInp('fa-actual', v.actualCertDate))}
       ${fld('fa-certno', '證書編號', inp('fa-certno', v.certNo))}
-      ${fld('fa-expiry', '證書到期日', inp('fa-expiry', v.expiry, 'type="date"') + '<div class="hint">狀態為「已取證」且填了到期日，會自動加入「證書效期」。</div>', 'full')}
+      ${fld('fa-expiry', '證書到期日', dateInp('fa-expiry', v.expiry) + '<div class="hint">狀態為「已取證」且填了到期日，會自動加入「證書效期」。</div>', 'full')}
       ${fld('fa-note', '備註', `<textarea id="fa-note" maxlength="3000">${esc(v.note || '')}</textarea>`, 'full')}
     </div>${foot(a ? 'app:' + a.id : '')}</form>`;
   openLayer(m);
@@ -1832,7 +1844,7 @@ function openCertForm(c) {
     <div class="form-grid">
       ${fld('fc-project', '機型／專案 <span class="req">*</span>', inp('fc-project', v.project, 'list="projList" maxlength="80"') + `<datalist id="projList">${projs.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`)}
       ${fld('fc-cert', '認證項目 <span class="req">*</span>', inp('fc-cert', v.cert, 'list="certList" maxlength="120" placeholder="例如：CB (發證日+5年)"') + `<datalist id="certList">${names.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`)}
-      ${fld('fc-due', '到期日 <span class="req">*</span>', inp('fc-due', v.due, 'type="date"'))}
+      ${fld('fc-due', '到期日 <span class="req">*</span>', dateInp('fc-due', v.due))}
       ${fld('fc-no', '證書編號', inp('fc-no', v.no))}
       ${fld('fc-state', '狀態', `<select id="fc-state">${Object.keys(CSTATE).map(k => `<option value="${k}" ${k === (v.state || 'normal') ? 'selected' : ''}>${CSTATE[k]}</option>`).join('')}</select>`)}
       ${fld('fc-note', '備註', `<textarea id="fc-note" maxlength="2000">${esc(v.note || '')}</textarea>`, 'full')}
@@ -2410,8 +2422,14 @@ document.addEventListener('input', ev => {
   if (ev.target.id === 'certSearch') { UI.certQ = ev.target.value; render(); }
   if (ev.target.id === 'agSearch') { UI.agQ = ev.target.value; render(); }
   if (ev.target.id === 'syncInput') UI.syncInput = ev.target.value;
+  if (ev.target.type === 'date') updateWdHint(ev.target);
 });
+function updateWdHint(el) {
+  const h = el.parentElement && el.parentElement.querySelector('.wd-hint');
+  if (h) h.textContent = wdHint(el.value);
+}
 document.addEventListener('change', ev => {
+  if (ev.target.type === 'date') updateWdHint(ev.target);
   if (ev.target.id === 'sndToggle') { prefs.snd = ev.target.checked; savePrefs(); if (ev.target.checked) chime(); }
   if (ev.target.id === 'agDone') { UI.agDone = ev.target.checked; render(); }
   if (ev.target.id === 'importFile') handleImportFile(ev.target.files && ev.target.files[0]);
