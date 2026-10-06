@@ -8,7 +8,7 @@
 ## 檔案結構
 ```
 index.html        整個 App：CSS、畫面、程式都在這一個檔案（vanilla JS，無框架、無 build）
-manifest.json     PWA 設定（名稱、圖示、theme color #E24A82）
+manifest.json     PWA 設定（名稱、圖示、theme color #F5F1E8 生成色）
 sw.js             Service Worker：同源 network-first、Google Fonts cache-first；改版時把 CACHE 名稱 +1
 icon-180.png / icon-192.png / icon-512.png   App 圖示：AI 仿真雪納瑞「開心」照片裁成正方形（System.Drawing）
 mascot/*.jpg      吉祥物貼紙照片（256px）：happy／worried／sleepy；原圖在 _private/mascot-src/
@@ -38,6 +38,13 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   iPhone 主畫面 App 與 Safari 的儲存空間是分開的，所以從 Safari 開的配對頁會提供「複製配對碼」給主畫面 App 貼上。
 - 行事曆訂閱網址：`https://gist.githubusercontent.com/<login>/<gistId>/raw/msec-calendar.ics`（webcal://）。
   內容只放標題、時間、地點、屬性・類別，不放電話／對象／備註（使用者隱私偏好）。單向：iPhone 端修改不會回 App。
+
+## 視覺風格（使用者指定）
+日系手帳風、有質感、很多可愛小貼圖；**不要粉紅色系、不要粉色外框**。
+- 配色：生成色方格紙底（--bg／--grid）、墨色文字、主色「藍」#3F5B72，輔色抹茶／山吹／朱／藤／空色；紙膠帶為低彩度點點和紙。
+- 字體：標題 LXGW WenKai TC（手寫感）、內文 Noto Sans TC、數字 Quicksand、印章 Noto Serif TC。
+- 小貼圖：`doodle(name)`／區塊標題 `ph(name)`（pencil、bell、plane、seal、hourglass、leaf、fuji、clip、onigiri、tea、paw、bone、sparkle、cloud、sun、moon、flower、memo）。
+- 「完成」是朱色方形印章 `stamp()`；月曆週六藍、週日朱（日本慣例）。
 
 ## 吉祥物
 使用者自家的白色雪納瑞。使用者用 Gemini 依她的照片產生的 AI 仿真照片（她不喜歡手繪卡通版）。
