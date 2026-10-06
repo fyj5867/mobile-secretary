@@ -25,6 +25,18 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
 - `certs`：證書效期。project、cert、due、no、state `normal|renewing|retired`、note。
 - 範例資料帶 `sample: true`，首次開啟自動放入，可一鍵清除。
+- 每筆資料都有 `updatedAt`；刪除記在 `deleted["<col>:<id>"] = 時間`（墓碑，保留 120 天）。
+  **任何寫入都要經過 Store.set/patch/del 或自行補上 updatedAt／tomb()，否則雲端同步會被舊資料蓋回去。**
+
+## 雲端同步（電腦・手機連動）
+- 儲存在使用者 GitHub 帳號的**私密 Gist**（描述：`行動祕書 Mobile Secretary 同步資料（請勿刪除）`），
+  檔案 `msec-data.json`（完整資料）與 `msec-calendar.ics`（給 iPhone 行事曆訂閱）。
+- 金鑰：使用者自建的 classic token，只勾 `gist`；存在各裝置 localStorage `msec.sync.v1`，不進備份檔、不進程式碼。
+- 合併：逐筆比 updatedAt，新的贏；墓碑時間比資料新就刪除。時機：存檔後 1.5 秒、開 App、切回 App、每 60 秒、恢復連線。
+- 配對：`MSEC1.` + base64url({t: token, g: gistId})；QR Code 是 `<網址>#pair=<配對碼>`。
+  iPhone 主畫面 App 與 Safari 的儲存空間是分開的，所以從 Safari 開的配對頁會提供「複製配對碼」給主畫面 App 貼上。
+- 行事曆訂閱網址：`https://gist.githubusercontent.com/<login>/<gistId>/raw/msec-calendar.ics`（webcal://）。
+  內容只放標題、時間、地點、屬性・類別，不放電話／對象／備註（使用者隱私偏好）。單向：iPhone 端修改不會回 App。
 
 ## 提醒規則（使用者指定，不要改）
 - 事項／認證節點／預計取證日：到期前 **2 天** 開始提醒。

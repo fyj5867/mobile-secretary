@@ -365,6 +365,17 @@ td.proj{font-weight:700}
 .stat-line{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--sub);margin-bottom:10px}
 .stat-line b{font-family:var(--f-num);color:var(--ink);font-weight:600}
 .file-btn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.set-grid .span2{grid-column:1/-1}
+.sync-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sync-row input{flex:1;min-width:220px;background:var(--card-2);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;outline:0;font-size:16px}
+.sync-row input:focus{border-color:var(--accent)}
+.round .sdot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:var(--mint);border:2px solid var(--bg)}
+.round .sdot.busy{background:var(--sun)}
+.round .sdot.err{background:var(--red)}
+.pair-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;margin-bottom:10px}
+.qr-box{width:200px;min-height:200px;display:grid;place-items:center;background:#fff;border-radius:16px;padding:8px;color:#5F6782;font-size:12.5px;text-align:center}
+.qr-box img{width:184px;height:184px;image-rendering:pixelated}
+@media (max-width:560px){.pair-grid{grid-template-columns:minmax(0,1fr)}.qr-box{margin:0 auto}}
 
 /* ---------- layers ---------- */
 .overlay{position:fixed;inset:0;background:var(--scrim);z-index:45;backdrop-filter:blur(2px)}
@@ -706,7 +717,7 @@ function stamp(txt = '完成', cls = '') {
 /* ================= state & local storage ================= */
 const DATA_KEY = 'msec.data.v1';
 const PREF_KEY = 'msec.prefs.v1';
-const S = { items: [], apps: [], certs: [], savedAt: null };
+const S = { items: [], apps: [], certs: [], deleted: {}, savedAt: null };
 const prefs = (() => { try { return JSON.parse(ls.get(PREF_KEY)) || {}; } catch (e) { return {}; } })();
 const savePrefs = () => ls.set(PREF_KEY, JSON.stringify(prefs));
 const UI = {
@@ -722,6 +733,7 @@ function loadData() {
     S.items = Array.isArray(d.items) ? d.items : [];
     S.apps = Array.isArray(d.apps) ? d.apps : [];
     S.certs = Array.isArray(d.certs) ? d.certs : [];
+    S.deleted = d.deleted && typeof d.deleted === 'object' ? d.deleted : {};
     S.savedAt = d.savedAt || null;
     if (migrateItems()) saveData();
     return true;
@@ -730,26 +742,28 @@ function loadData() {
 // v1.1：「Shinnyo」從個人類別升格為獨立屬性
 function migrateItems() {
   let moved = false;
-  S.items.forEach(it => { if (it.scope === 'personal' && it.cat === 'Shinnyo') { it.scope = 'shinnyo'; it.cat = '其他'; moved = true; } });
+  S.items.forEach(it => { if (it.scope === 'personal' && it.cat === 'Shinnyo') { it.scope = 'shinnyo'; it.cat = '其他'; it.updatedAt = iso(); moved = true; } });
   return moved;
 }
 function saveData() {
   S.savedAt = iso();
-  const ok = ls.set(DATA_KEY, JSON.stringify({ app: 'mobile-secretary', v: 1, savedAt: S.savedAt, items: S.items, apps: S.apps, certs: S.certs }));
+  const ok = ls.set(DATA_KEY, JSON.stringify({ app: 'mobile-secretary', v: 2, savedAt: S.savedAt, items: S.items, apps: S.apps, certs: S.certs, deleted: S.deleted }));
   if (!ok) toast('儲存失敗：這個瀏覽器不允許儲存資料（可能是無痕模式或空間已滿）', 'worried', 'coral');
   return ok;
 }
+// 每筆資料都帶 updatedAt；刪除留下「墓碑」時間，雲端同步時才知道哪邊比較新
+const tomb = (col, id) => { S.deleted[col + ':' + id] = iso(); };
 const Store = {
   set(col, id, data) {
-    const body = Object.assign({}, data, { id });
+    const body = Object.assign({}, data, { id, updatedAt: iso() });
     const arr = S[col]; const i = arr.findIndex(x => x.id === id);
     if (i < 0) arr.push(body); else arr[i] = body;
     commit();
   },
-  patch(col, id, data) { const x = S[col].find(v => v.id === id); if (x) Object.assign(x, data); commit(); },
-  del(col, id) { S[col] = S[col].filter(x => x.id !== id); commit(); }
+  patch(col, id, data) { const x = S[col].find(v => v.id === id); if (x) Object.assign(x, data, { updatedAt: iso() }); commit(); },
+  del(col, id) { S[col] = S[col].filter(x => x.id !== id); tomb(col, id); commit(); }
 };
-function commit() { saveData(); render(); }
+function commit() { saveData(); render(); scheduleSync(); }
 async function write(fn) {
   try { await fn(); return true; }
   catch (e) { toast('儲存沒有成功，請再試一次', 'worried', 'coral'); return false; }
@@ -1350,7 +1364,34 @@ function vSettings() {
   const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
   const samples = S.items.filter(x => x.sample).length + S.apps.filter(x => x.sample).length + S.certs.filter(x => x.sample).length;
   const snd = prefs.snd !== false;
+  const st = syncStatusText();
+  const syncPanel = syncCfg ? `
+    <section class="panel span2">
+      <div class="panel-h"><span class="dot" style="--c:var(--sky)"></span><h2>雲端同步（電腦・手機連動）</h2><span id="syncStatus" class="tag ${st.cls}">${st.txt}</span></div>
+      <div class="stat-line"><span>GitHub 帳號 <b>${esc(syncCfg.login || '')}</b></span><span>最後同步 <b>${syncCfg.lastSync ? new Date(syncCfg.lastSync).toLocaleString('zh-TW', { hour12: false }) : '—'}</b></span></div>
+      <p>在任何一台裝置新增或修改，都會自動同步到其他已連動的裝置（打開 App、切回 App、以及每分鐘自動檢查一次）。</p>
+      <div class="set-acts">
+        <button class="btn primary" data-act="sync-now">${IC.repeat}立即同步</button>
+        <button class="btn" data-act="pair-out">${IC.phoneDev}配對其他裝置</button>
+        <button class="btn" data-act="subscribe">${IC.cal}訂閱到 iPhone 行事曆</button>
+        <button class="btn danger" data-act="sync-disconnect">中斷這台的同步</button>
+      </div>
+    </section>` : `
+    <section class="panel span2">
+      <div class="panel-h"><span class="dot" style="--c:var(--sky)"></span><h2>雲端同步（電腦・手機連動）</h2><span id="syncStatus" class="tag ${st.cls}">${st.txt}</span></div>
+      <p>開啟後，電腦和手機會使用同一份資料，資料存在你自己 GitHub 帳號下的私密 Gist。</p>
+      <ol class="set-list" style="margin-bottom:12px">
+        <li><b>第一台裝置（建議用電腦）：</b>按「建立 GitHub 金鑰」→ 確認只勾了 <b>gist</b> → 拉到最下面按綠色的 <b>Generate token</b> → 複製 <b>ghp_</b> 開頭的金鑰 → 貼到下面按「連線」。</li>
+        <li><b>其他裝置：</b>在第一台按「配對其他裝置」取得配對碼（MSEC1. 開頭），貼到下面按「連線」。</li>
+      </ol>
+      <div class="sync-row">
+        <a class="btn" href="${TOKEN_URL}" target="_blank" rel="noopener noreferrer">${IC.link}建立 GitHub 金鑰</a>
+        <input id="syncInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="貼上金鑰（ghp_…）或配對碼（MSEC1.…）" value="${esc(UI.syncInput || '')}" aria-label="GitHub 金鑰或配對碼">
+        <button class="btn primary" data-act="sync-connect">連線</button>
+      </div>
+    </section>`;
   return `<div class="set-grid">
+    ${syncPanel}
     <section class="panel">
       <div class="panel-h"><span class="dot" style="--c:var(--accent)"></span><h2>安裝到手機主畫面</h2>${standalone ? '<span class="tag done">已安裝</span>' : ''}</div>
       ${installEvt ? `<p>這台裝置可以直接安裝成 App。</p><div class="set-acts" style="margin-bottom:10px"><button class="btn primary" data-act="install">${IC.phoneDev}安裝行動祕書</button></div>` : ''}
@@ -1372,12 +1413,12 @@ function vSettings() {
         <button class="btn" data-act="ics-events">${IC.cal}匯出未來 180 天行程（含提前兩天提醒）</button>
         <button class="btn" data-act="ics-daily">${IC.bell}匯出每日四時段提醒</button>
       </div>
-      <p class="muted" style="margin-top:8px;font-size:12.5px">iPhone 下載 .ics 後點開，選「加入全部」即可。行程有更新時再匯出一次（同一筆會覆蓋或新增，視行事曆而定）。</p>
+      <p class="muted" style="margin-top:8px;font-size:12.5px">iPhone 的主畫面 App 匯出 .ics 常常沒反應，請改用 <b>Safari</b> 開這個網址再匯出；開啟雲端同步後，建議改用「訂閱到 iPhone 行事曆」，會自動更新。</p>
     </section>
     <section class="panel">
       <div class="panel-h"><span class="dot" style="--c:var(--mint)"></span><h2>資料備份與匯入</h2></div>
       <div class="stat-line"><span>事項 <b>${S.items.length}</b></span><span>認證申請 <b>${S.apps.length}</b></span><span>證書 <b>${S.certs.length}</b></span><span>最後儲存 <b>${S.savedAt ? new Date(S.savedAt).toLocaleString('zh-TW', { hour12: false }) : '—'}</b></span></div>
-      <p>資料只存在這台裝置的瀏覽器裡，不會上傳。換手機或電腦時，用「匯出備份」再到另一台「匯入」。</p>
+      <p>${syncCfg ? '雲端同步已開啟；備份檔仍建議每週存一份到雲端硬碟，以防萬一。' : '目前資料只存在這台裝置。要在電腦和手機共用，請開啟上方的「雲端同步」；或用「匯出備份」再到另一台「匯入」。'}</p>
       <div class="set-acts">
         <button class="btn" data-act="backup">${IC.dl}匯出備份檔</button>
         <button class="btn primary" data-act="import">${IC.ul}匯入備份／證書資料</button>
@@ -1418,6 +1459,7 @@ function render() {
   bell.classList.toggle('ring', A.ev.some(e => ['overdue', 'today'].includes(lvl(e))));
   bell.setAttribute('aria-label', `提醒通知，${A.count} 則`);
   const gear = $('#gearBtn'); gear.innerHTML = IC.gear; if (UI.view === 'settings') gear.setAttribute('aria-current', 'page'); else gear.removeAttribute('aria-current');
+  paintSync();
   $('#fab').innerHTML = IC.plus;
   $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy', 'pink', A.count ? 'bell' : 'phone');
   $('#addMenu').innerHTML = `
@@ -1821,7 +1863,12 @@ function handleImportFile(file) {
 }
 function applyImport(mode) {
   const d = pendingImport; if (!d) return;
-  if (mode === 'replace') { S.items = d.items; S.apps = d.apps; S.certs = d.certs; }
+  const now = iso();
+  ['items', 'apps', 'certs'].forEach(col => d[col].forEach(doc => { doc.updatedAt = now; }));
+  if (mode === 'replace') {
+    ['items', 'apps', 'certs'].forEach(col => S[col].forEach(x => { if (!d[col].some(n => n.id === x.id)) tomb(col, x.id); }));
+    S.items = d.items; S.apps = d.apps; S.certs = d.certs;
+  }
   else ['items', 'apps', 'certs'].forEach(col => d[col].forEach(doc => { const i = S[col].findIndex(x => x.id === doc.id); if (i < 0) S[col].push(doc); else S[col][i] = doc; }));
   pendingImport = null; migrateItems(); commit(); closeLayer($('#modal'));
   toast(`匯入完成：事項 ${d.items.length}、認證申請 ${d.apps.length}、證書 ${d.certs.length} 筆`, 'happy', 'mint', 'check');
@@ -1855,8 +1902,10 @@ function vevent({ uid: u, date, time, endTime, summary, desc, location, url, rru
   L.push('END:VEVENT');
   return L;
 }
-function icsWrap(events, name) {
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mobile Secretary//ZH-TW', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${icsText(name)}`, ...events.flat(), 'END:VCALENDAR'].map(icsFold).join('\r\n') + '\r\n';
+function icsWrap(events, name, feed) {
+  const head = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Mobile Secretary//ZH-TW', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${icsText(name)}`];
+  if (feed) head.push('X-WR-TIMEZONE:Asia/Taipei', 'REFRESH-INTERVAL;VALUE=DURATION:PT15M', 'X-PUBLISHED-TTL:PT15M');
+  return [...head, ...events.flat(), 'END:VCALENDAR'].map(icsFold).join('\r\n') + '\r\n';
 }
 const appUrl = () => location.protocol.startsWith('http') ? location.href.split('#')[0] : '';
 function exportEventsICS() {
@@ -1901,6 +1950,266 @@ function exportDailyICS() {
   const evs = SLOTS.map(s => vevent({ uid: 'slot-' + s.k, date: TODAY, time: s.t, durMin: 5, summary: `${s.t} ${s.name}提醒｜打開行動祕書`, desc: s.sub, url: appUrl(), rrule: 'FREQ=DAILY', alarms: ['PT0M'] }));
   shareOrDownload('行動祕書_每日提醒.ics', icsWrap(evs, '行動祕書提醒'), 'text/calendar');
   toast('每天 07:00／12:00／17:00／21:00 會由手機行事曆響鈴提醒', 'happy', 'sun', 'bell');
+}
+
+/* ================= cloud sync (GitHub secret gist) =================
+   資料：每台裝置的 localStorage ↔ 使用者 GitHub 帳號下的私密 Gist（msec-data.json）。
+   同一個 Gist 另放 msec-calendar.ics，給 iPhone 行事曆訂閱。逐筆依 updatedAt 合併，刪除靠 deleted 墓碑。 */
+const SYNC_KEY = 'msec.sync.v1';
+const GIST_DESC = '行動祕書 Mobile Secretary 同步資料（請勿刪除）';
+const DATA_FILE = 'msec-data.json', ICS_FILE = 'msec-calendar.ics';
+const TOKEN_URL = 'https://github.com/settings/tokens/new?scopes=gist&description=' + encodeURIComponent('行動祕書同步');
+const QR_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+let syncCfg = (() => { try { const c = JSON.parse(ls.get(SYNC_KEY)); return c && c.token && c.gistId ? c : null; } catch (e) { return null; } })();
+const saveSyncCfg = () => syncCfg ? ls.set(SYNC_KEY, JSON.stringify(syncCfg)) : ls.del(SYNC_KEY);
+const sync = { busy: false, again: false, err: null, errToast: null, timer: null };
+
+async function gh(method, path, body, token) {
+  const res = await fetch('https://api.github.com' + path, {
+    method, cache: 'no-store',
+    headers: Object.assign({ Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + (token || (syncCfg && syncCfg.token)) }, body ? { 'Content-Type': 'application/json' } : {}),
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) { const e = new Error('GitHub ' + res.status); e.status = res.status; throw e; }
+  return res.status === 204 ? null : res.json();
+}
+async function readRemote(g) {
+  const f = g && g.files && g.files[DATA_FILE];
+  if (!f) return null;
+  let txt = f.content;
+  if (f.truncated && f.raw_url) txt = await fetch(f.raw_url, { cache: 'no-store' }).then(r => r.text());
+  try { const d = JSON.parse(txt); return { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), deleted: d.deleted && typeof d.deleted === 'object' ? d.deleted : {} }; }
+  catch (e) { return null; }
+}
+const snapshot = () => ({ items: S.items, apps: S.apps, certs: S.certs, deleted: S.deleted });
+function applyData(m) { S.items = m.items; S.apps = m.apps; S.certs = m.certs; S.deleted = m.deleted; }
+function mergeData(L, R) {
+  if (!R) return L;
+  const del = Object.assign({}, R.deleted || {});
+  Object.keys(L.deleted || {}).forEach(k => { if (!del[k] || L.deleted[k] > del[k]) del[k] = L.deleted[k]; });
+  const cutoff = new Date(Date.now() - 120 * 864e5).toISOString();
+  Object.keys(del).forEach(k => { if (del[k] < cutoff) delete del[k]; });
+  const out = { deleted: del };
+  ['items', 'apps', 'certs'].forEach(col => {
+    const m = new Map();
+    (R[col] || []).forEach(d => m.set(d.id, d));
+    (L[col] || []).forEach(d => { const r = m.get(d.id); if (!r || (d.updatedAt || '') >= (r.updatedAt || '')) m.set(d.id, d); });
+    out[col] = Array.from(m.values()).filter(d => { const t = del[col + ':' + d.id]; return !t || (d.updatedAt || '') > t; });
+  });
+  return out;
+}
+function stable(v) {
+  if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
+  if (v && typeof v === 'object') return '{' + Object.keys(v).filter(k => v[k] !== undefined).sort().map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
+  return JSON.stringify(v === undefined ? null : v);
+}
+const byId = (a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+const canon = d => stable({ items: (d.items || []).slice().sort(byId), apps: (d.apps || []).slice().sort(byId), certs: (d.certs || []).slice().sort(byId), deleted: d.deleted || {} });
+const payload = () => JSON.stringify({ app: 'mobile-secretary', v: 2, syncedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, deleted: S.deleted });
+const onlySamples = () => ['items', 'apps', 'certs'].every(col => S[col].every(x => x.sample));
+
+function scheduleSync(delay = 1500) {
+  if (!syncCfg) return;
+  clearTimeout(sync.timer); sync.timer = setTimeout(() => syncNow(false), delay);
+}
+async function syncNow(manual) {
+  if (!syncCfg) return;
+  if (!navigator.onLine) { sync.err = 'net'; paintSync(); return; }
+  if (sync.busy) { sync.again = true; return; }
+  sync.busy = true; paintSync();
+  try {
+    const g = await gh('GET', '/gists/' + syncCfg.gistId);
+    const remote = await readRemote(g);
+    const local = snapshot();
+    const merged = mergeData(local, remote);
+    const mStr = canon(merged);
+    if (mStr !== canon(local)) { applyData(merged); saveData(); render(); }
+    const needData = !remote || mStr !== canon(remote);
+    const needFeed = needData || !g.files[ICS_FILE] || syncCfg.feedDay !== TODAY;
+    if (needData || needFeed) {
+      const files = { [ICS_FILE]: { content: buildFeed() } };
+      if (needData) files[DATA_FILE] = { content: payload() };
+      await gh('PATCH', '/gists/' + syncCfg.gistId, { files });
+      syncCfg.feedDay = TODAY;
+    }
+    syncCfg.lastSync = iso(); saveSyncCfg();
+    sync.err = null; sync.errToast = null;
+    if (manual) toast('同步完成，所有裝置都是最新資料', 'happy', 'mint', 'check');
+  } catch (e) {
+    sync.err = e.status === 401 || e.status === 403 ? 'auth' : e.status === 404 ? 'missing' : 'net';
+    const msg = { auth: '雲端同步失敗：GitHub 金鑰無效或已過期，請到「設定 → 雲端同步」重新連線', missing: '雲端同步失敗：找不到同步資料（Gist 可能被刪除），請重新連線', net: '暫時連不上 GitHub，稍後會自動再同步' }[sync.err];
+    if (manual || sync.errToast !== sync.err) { toast(msg, 'worried', 'coral'); sync.errToast = sync.err; }
+  } finally {
+    sync.busy = false; paintSync();
+    if (sync.again) { sync.again = false; scheduleSync(400); }
+  }
+}
+function syncStatusText() {
+  if (!syncCfg) return { cls: 'later', txt: '尚未開啟' };
+  if (sync.busy) return { cls: 'soon', txt: '同步中…' };
+  if (sync.err === 'auth') return { cls: 'overdue', txt: '金鑰失效' };
+  if (sync.err === 'missing') return { cls: 'overdue', txt: '找不到雲端資料' };
+  if (sync.err === 'net') return { cls: 'soon', txt: '離線，稍後再試' };
+  const t = syncCfg.lastSync ? new Date(syncCfg.lastSync) : null;
+  return { cls: 'done', txt: t ? `已同步 ${pad(t.getHours())}:${pad(t.getMinutes())}` : '已連線' };
+}
+function paintSync() {
+  const gear = $('#gearBtn'); if (!gear) return;
+  let dot = gear.querySelector('.sdot');
+  if (!syncCfg) { if (dot) dot.remove(); }
+  else {
+    if (!dot) { dot = document.createElement('span'); dot.className = 'sdot'; gear.appendChild(dot); }
+    dot.className = 'sdot ' + (sync.busy ? 'busy' : sync.err ? (sync.err === 'net' ? 'busy' : 'err') : '');
+  }
+  const st = $('#syncStatus');
+  if (st) { const s = syncStatusText(); st.className = 'tag ' + s.cls; st.textContent = s.txt; }
+}
+const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = s => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
+const pairCode = () => 'MSEC1.' + b64u(JSON.stringify({ t: syncCfg.token, g: syncCfg.gistId }));
+function readPairCode(code) {
+  try { const o = JSON.parse(unb64u(String(code).trim().replace(/^MSEC1\./, ''))); return o && o.t && o.g ? { token: o.t, gistId: o.g } : null; }
+  catch (e) { return null; }
+}
+const APP_HOME = 'https://fyj5867.github.io/mobile-secretary/';
+const pairUrl = () => (location.protocol.startsWith('http') ? location.origin + location.pathname : APP_HOME) + '#pair=' + pairCode();
+const feedUrl = () => `https://gist.githubusercontent.com/${syncCfg.login}/${syncCfg.gistId}/raw/${ICS_FILE}`;
+
+async function connectSync(raw, btn) {
+  const s = String(raw || '').trim();
+  let token = s, gistId = null;
+  if (s.startsWith('MSEC1.')) { const p = readPairCode(s); if (!p) { toast('配對碼不完整，請重新複製一次', 'worried', 'sun'); return; } token = p.token; gistId = p.gistId; }
+  if (!/^(ghp_|github_pat_)[A-Za-z0-9_]{20,}$/.test(token)) { toast('這看起來不是 GitHub 金鑰：金鑰是 ghp_ 開頭的一長串，配對碼是 MSEC1. 開頭', 'worried', 'sun'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '連線中…'; }
+  try {
+    const user = await gh('GET', '/user', null, token);
+    if (!gistId) {
+      const list = await gh('GET', '/gists?per_page=100', null, token);
+      const found = (list || []).find(x => x.description === GIST_DESC);
+      if (found) gistId = found.id;
+    }
+    let first = false;
+    if (gistId) {
+      const remote = await readRemote(await gh('GET', '/gists/' + gistId, null, token));
+      if (remote && onlySamples()) applyData(mergeData({ items: [], apps: [], certs: [], deleted: {} }, remote)); // 新裝置：直接用雲端資料
+    } else {
+      const created = await gh('POST', '/gists', { description: GIST_DESC, public: false, files: { [DATA_FILE]: { content: payload() }, [ICS_FILE]: { content: buildFeed() } } }, token);
+      gistId = created.id; first = true;
+    }
+    syncCfg = { token, gistId, login: user.login, since: iso() }; saveSyncCfg();
+    UI.syncInput = '';
+    saveData(); render();
+    await syncNow(false);
+    toast(first ? `已在 ${user.login} 的 GitHub 建立同步空間，這台裝置開始同步` : `已連線到 ${user.login} 的同步資料，這台裝置開始同步`, 'happy', 'mint', 'check');
+    closeLayer($('#modal'));
+  } catch (e) {
+    toast(e.status === 401 ? '金鑰無效：請確認整串複製完整、沒有過期' : e.status === 403 ? '金鑰權限不足：建立時要勾選「gist」' : '連線失敗，請確認網路後再試一次', 'worried', 'coral');
+  } finally { if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = '連線'; } }
+}
+function disconnectSync(btn) {
+  arm(btn, '確定中斷？再按一次', () => {
+    syncCfg = null; saveSyncCfg(); sync.err = null; render();
+    toast('這台裝置已停止同步（資料仍保留在這台裝置與雲端）', 'calm', 'sky');
+  });
+}
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
+async function openPairOut() {
+  const m = $('#modal'); m.setAttribute('aria-label', '配對其他裝置');
+  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sky', 'phone')}<div><h2>配對其他裝置</h2><p>讓手機或另一台電腦使用同一份資料</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="pair-grid"><div class="qr-box" id="qrBox">產生 QR Code 中…</div>
+    <ol class="set-list">
+      <li><b>用 iPhone 相機掃描</b>左邊的 QR Code，會用 Safari 打開行動祕書。</li>
+      <li>在 Safari 跳出的視窗按 <b>「複製配對碼」</b>。</li>
+      <li>打開<b>主畫面上的行動祕書 App</b> → 設定 → 雲端同步 → 貼上 → 連線。</li>
+      <li>沒辦法掃描時：按下方「複製配對碼」，用 LINE 或 Email 傳給自己，在手機上貼上即可。</li>
+    </ol></div>
+    <p class="muted" style="font-size:12.5px">配對碼裡含有你的同步金鑰，只傳給你自己，不要分享給別人。</p>
+    <div class="form-foot"><button class="btn" data-act="copy-pair">${IC.copy}複製配對碼</button><button class="btn primary" data-act="close">完成</button></div>`;
+  openLayer(m);
+  try {
+    if (!window.qrcode) await loadScript(QR_LIB);
+    const qr = window.qrcode(0, 'M'); qr.addData(pairUrl()); qr.make();
+    $('#qrBox').innerHTML = `<img src="${qr.createDataURL(5, 2)}" alt="配對用 QR Code">`;
+  } catch (e) { const b = $('#qrBox'); if (b) b.textContent = '無法產生 QR Code，請改用「複製配對碼」。'; }
+}
+function openPairIn(code) {
+  const p = readPairCode(code); if (!p) { toast('配對連結不完整，請在電腦上重新產生', 'worried', 'sun'); return; }
+  const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  UI.incomingPair = code;
+  const m = $('#modal'); m.setAttribute('aria-label', '連動這台裝置');
+  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'mint', 'phone')}<div><h2>連動這台裝置</h2><p>與你的電腦同步同一份行程資料</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    ${standalone ? '' : `<div class="banner" style="margin-bottom:12px">${mascot('calm', 'sun', 'bell')}<p><b>如果你平常用的是「主畫面上的行動祕書 App」：</b>請按「複製配對碼」，再打開主畫面的 App → 設定 → 雲端同步 → 貼上。iPhone 的主畫面 App 和 Safari 的資料是分開的。</p></div>`}
+    <div class="form-foot">${standalone ? '' : `<button class="btn" data-act="copy-in-pair">${IC.copy}複製配對碼</button>`}<button class="btn primary" data-act="pair-here">${standalone ? '開始同步' : '在這個瀏覽器同步'}</button></div>`;
+  openLayer(m);
+}
+function openSubscribe() {
+  const url = feedUrl(); const webcal = url.replace(/^https:/, 'webcal:');
+  const m = $('#modal'); m.setAttribute('aria-label', '訂閱到 iPhone 行事曆');
+  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sun', 'bell')}<div><h2>訂閱到 iPhone 行事曆</h2><p>行程會自動出現在 iPhone 內建的行事曆，App 改了它也跟著更新</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <ol class="set-list">
+      <li><b>在 iPhone 上</b>按下方「在 iPhone 訂閱」，跳出視窗時選 <b>「訂閱」</b>。</li>
+      <li>設定畫面若有 <b>「移除提示」</b>，請<b>關閉</b>，到期前兩天才會響鈴。</li>
+      <li>按「加入」完成。之後可到 iPhone「設定 → 行事曆 → 帳號 → 已訂閱的行事曆」調整更新頻率（建議每 15 分鐘）。</li>
+      <li>按鈕沒反應時：複製下方網址，到「設定 → 行事曆 → 帳號 → 加入帳號 → 其他 → 加入已訂閱的行事曆」貼上。</li>
+    </ol>
+    <div class="field" style="margin-top:12px"><label for="feedUrl">訂閱網址（只給自己用）</label><input id="feedUrl" readonly value="${esc(url)}" onfocus="this.select()"></div>
+    <p class="muted" style="font-size:12.5px">行事曆只放標題、時間、地點與類別，不含電話、對象、備註。在 iPhone 行事曆修改不會回到 App，請在 App 裡改。</p>
+    <div class="form-foot"><button class="btn" data-act="copy-feed">${IC.copy}複製網址</button><a class="btn primary" href="${esc(webcal)}">${IC.cal}在 iPhone 訂閱</a></div>`;
+  openLayer(m);
+}
+async function copyText(text, okMsg) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg, 'happy', 'mint', 'check'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (er) {}
+    ta.remove(); toast(ok ? okMsg : '無法自動複製，請長按選取後複製', ok ? 'happy' : 'worried', ok ? 'mint' : 'sun');
+  }
+}
+/* 行事曆訂閱內容：過去 60 天～未來 400 天；只放標題、時間、地點、類別 */
+function buildFeed() {
+  const lo = addDays(TODAY, -60), hi = addDays(TODAY, 400);
+  const evs = [];
+  const twoDays = t => t ? '-P2D' : '-P1DT15H';
+  const dayOf = t => t ? '-PT15M' : 'PT9H';
+  const url = location.protocol.startsWith('http') ? location.origin + location.pathname : '';
+  for (const it of S.items) {
+    if (!isDate(it.date)) continue;
+    const sc = it.scope || 'work';
+    const pre = (sc === 'personal' ? '' : `【${scopeOf(sc).t}】`) + (it.star ? '★' : '');
+    const time = it.allDay ? '' : (it.time || ''), endTime = it.allDay ? '' : (it.endTime || '');
+    const base = { desc: `${scopeOf(sc).t}・${it.cat || '其他'}`, location: it.location, url };
+    if (isRep(it)) {
+      if (isDate(it.until) && it.until < lo) continue;
+      const freq = { daily: 'FREQ=DAILY', weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', weekly: 'FREQ=WEEKLY', monthly: 'FREQ=MONTHLY', yearly: 'FREQ=YEARLY' }[it.repeat];
+      if (!freq) continue;
+      const rr = freq + (isDate(it.until) ? `;UNTIL=${icsDate(it.until)}T235959` : '');
+      const al = ['monthly', 'yearly'].includes(it.repeat) ? [twoDays(time), dayOf(time)] : [time ? 'PT0M' : 'PT9H'];
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary: pre + it.title, rrule: rr, alarms: al }, base)));
+    } else {
+      if (it.date < lo || it.date > hi) continue;
+      const future = it.date >= TODAY && !it.done;
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary: (it.done ? '✓ ' : '') + pre + it.title, alarms: future ? [twoDays(time), dayOf(time)] : [] }, base)));
+    }
+  }
+  for (const a of S.apps) {
+    if (a.status === 'cancelled') continue;
+    const live = isLive(a);
+    (a.steps || []).forEach(st => {
+      if (!isDate(st.date) || st.date < lo || st.date > hi) return;
+      const future = live && !st.done && st.date >= TODAY;
+      evs.push(vevent({ uid: `step-${a.id}-${st.id}`, date: st.date, time: st.time, summary: `${st.done ? '✓ ' : ''}【認證】${appName(a)}｜${st.title}`, desc: '認證提交節點', url, alarms: future ? [twoDays(st.time), dayOf(st.time)] : [] }));
+    });
+    const cd = endOf(a);
+    if (isDate(cd) && cd >= lo && cd <= hi) evs.push(vevent({ uid: 'certday-' + a.id, date: cd, summary: `${a.status === 'obtained' ? '【取證】' : '【預計取證】'}${appName(a)}`, url, alarms: live && cd >= TODAY ? [twoDays(''), dayOf('')] : [] }));
+  }
+  for (const c of S.certs) {
+    if (!isDate(c.due) || certLvl(c) === 'retired' || c.due < lo) continue;
+    evs.push(vevent({ uid: 'cert-' + c.id, date: c.due, summary: `【證書到期】${c.project}｜${c.cert}`, url, alarms: c.due >= TODAY ? ['-P89DT15H', '-P29DT15H', '-P1DT15H'] : [] }));
+  }
+  return icsWrap(evs, '行動祕書', true);
 }
 
 /* ================= actions ================= */
@@ -1963,14 +2272,15 @@ function doDelete(btn) {
 }
 function clearSamples(btn) {
   arm(btn, '確定清除？再按一次', () => {
-    ['items', 'apps', 'certs'].forEach(col => { S[col] = S[col].filter(x => !x.sample); });
+    ['items', 'apps', 'certs'].forEach(col => { S[col].forEach(x => { if (x.sample) tomb(col, x.id); }); S[col] = S[col].filter(x => !x.sample); });
     commit(); toast('範例資料已清除，開始寫下你自己的行程吧！', 'happy', 'sky', 'star');
   });
 }
 function clearAll(btn) {
   arm(btn, '全部刪除？再按一次', () => {
+    ['items', 'apps', 'certs'].forEach(col => S[col].forEach(x => tomb(col, x.id)));
     S.items = []; S.apps = []; S.certs = []; commit();
-    toast('已清除全部資料', 'calm', 'sky');
+    toast(syncCfg ? '已清除全部資料（已連動的裝置也會一起清除）' : '已清除全部資料', 'calm', 'sky');
   });
 }
 async function copyReport() {
@@ -2041,7 +2351,16 @@ const ACT = {
   'ics-events': () => exportEventsICS(),
   'ics-daily': () => exportDailyICS(),
   notify: () => enableNotify(),
-  install: async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; render(); }
+  install: async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; render(); },
+  'sync-connect': b => connectSync(($('#syncInput') || {}).value, b),
+  'sync-now': () => syncNow(true),
+  'sync-disconnect': b => disconnectSync(b),
+  'pair-out': () => openPairOut(),
+  'copy-pair': () => copyText(pairCode(), '配對碼已複製，貼到另一台裝置的「設定 → 雲端同步」即可'),
+  'copy-in-pair': () => copyText(UI.incomingPair || '', '配對碼已複製，請打開主畫面的行動祕書 App → 設定 → 雲端同步 → 貼上'),
+  'pair-here': b => connectSync(UI.incomingPair, b),
+  subscribe: () => openSubscribe(),
+  'copy-feed': () => copyText(feedUrl(), '訂閱網址已複製')
 };
 document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-act]');
@@ -2057,6 +2376,7 @@ document.addEventListener('keydown', ev => {
 document.addEventListener('input', ev => {
   if (ev.target.id === 'certSearch') { UI.certQ = ev.target.value; render(); }
   if (ev.target.id === 'agSearch') { UI.agQ = ev.target.value; render(); }
+  if (ev.target.id === 'syncInput') UI.syncInput = ev.target.value;
 });
 document.addEventListener('change', ev => {
   if (ev.target.id === 'sndToggle') { prefs.snd = ev.target.checked; savePrefs(); if (ev.target.checked) chime(); }
@@ -2075,10 +2395,20 @@ window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); inst
 
 /* ================= boot ================= */
 if (!loadData()) { Object.assign(S, demoData()); saveData(); }
+let incomingPair = null;
+if ((location.hash || '').startsWith('#pair=')) {
+  incomingPair = decodeURIComponent(location.hash.slice(6));
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+}
 const hashView = (location.hash || '').replace('#', '');
 UI.view = VIEWS[hashView] ? hashView : (VIEWS[prefs.view] ? prefs.view : 'today');
+if (incomingPair) UI.view = 'settings';
 render();
-setTimeout(() => maybeSlot(true), 900);
+if (incomingPair) openPairIn(incomingPair);
+else setTimeout(() => maybeSlot(true), 900);
+if (syncCfg) setTimeout(() => syncNow(false), 300);
+setInterval(() => { if (syncCfg && !document.hidden) syncNow(false); }, 60000);
+window.addEventListener('online', () => { if (syncCfg) syncNow(false); });
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
@@ -2089,7 +2419,7 @@ function tick() {
   maybeSlot(false);
 }
 setInterval(tick, 20000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (!layers.length) render(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (!layers.length) render(); if (syncCfg) syncNow(false); } });
 let lastMinute = nowHM();
 setInterval(() => { const n = nowHM(); if (n !== lastMinute) { lastMinute = n; if (UI.view === 'today' && !layers.length) render(); } }, 60000);
 })();
