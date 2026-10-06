@@ -7,6 +7,6 @@ _private/
 *.ics
 
 # 本機設定
-.claude/settings.local.json
+.claude/
 Thumbs.db
 .DS_Store

@@ -581,8 +581,8 @@ const CATS = {
     { k: '認證事務', c: 'var(--accent)' }, { k: '行政', c: 'var(--mint)' }, { k: '其他', c: 'var(--faint)' }
   ],
   personal: [
-    { k: '生活', c: 'var(--peach)' }, { k: '家庭', c: 'var(--accent)' }, { k: '健康', c: 'var(--leaf)' },
-    { k: '繳費理財', c: 'var(--red)' }, { k: '學習', c: 'var(--teal)' }, { k: '休閒', c: 'var(--lilac)' }, { k: '其他', c: 'var(--faint)' }
+    { k: '生活', c: 'var(--peach)' }, { k: '家庭', c: 'var(--accent)' }, { k: '健康', c: 'var(--leaf)' }, { k: '運動', c: 'var(--sun)' },
+    { k: '繳費理財', c: 'var(--red)' }, { k: '學習', c: 'var(--teal)' }, { k: '休閒', c: 'var(--lilac)' }, { k: 'Shinnyo', c: 'var(--sky)' }, { k: '其他', c: 'var(--faint)' }
   ]
 };
 const catColor = (k, scope) => {
@@ -744,7 +744,7 @@ function demoData() {
       { id: 'di5', sample: true, scope: 'work', title: '【範例】部門週會', date: d(toWed), time: '13:30', cat: '會議', repeat: 'weekly', location: '2F 大會議室' },
       { id: 'di6', sample: true, scope: 'personal', title: '【範例】牙醫回診', date: d(1), time: '18:30', cat: '健康', location: '巷口牙醫診所', phone: '02-2345-6789' },
       { id: 'di7', sample: true, scope: 'personal', title: '【範例】信用卡繳費', date: d(2), cat: '繳費理財', repeat: 'monthly' },
-      { id: 'di8', sample: true, scope: 'personal', title: '【範例】晚上散步 30 分鐘', date: TODAY, time: '20:00', cat: '健康', repeat: 'daily' },
+      { id: 'di8', sample: true, scope: 'personal', title: '【範例】晚上散步 30 分鐘', date: TODAY, time: '20:00', cat: '運動', repeat: 'daily' },
       { id: 'di9', sample: true, scope: 'personal', title: '【範例】媽媽生日', date: d(20), cat: '家庭', repeat: 'yearly', note: '提前訂蛋糕' }
     ],
     apps: [

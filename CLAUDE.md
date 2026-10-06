@@ -12,7 +12,7 @@ manifest.json     PWA 設定（名稱、圖示、theme color #E24A82）
 sw.js             Service Worker：同源 network-first、Google Fonts cache-first；改版時把 CACHE 名稱 +1
 icon.svg / icon-180.png / icon-192.png / icon-512.png   App 圖示（PNG 由 Windows System.Drawing 依 icon.svg 繪製）
 tools/serve.js    本機預覽用的小型靜態伺服器：node tools/serve.js . 8765
-.claude/launch.json  預覽設定（名稱 mobile-secretary，port 8765）
+.claude/launch.json  預覽設定（名稱 mobile-secretary，port 8765；本機絕對路徑，不進版控）
 _private/         ★不進版控（.gitignore）。放使用者的證書清單匯入檔、舊版 claude.ai 網頁原始檔
 ```
 
