@@ -10,7 +10,8 @@
 index.html        整個 App：CSS、畫面、程式都在這一個檔案（vanilla JS，無框架、無 build）
 manifest.json     PWA 設定（名稱、圖示、theme color #E24A82）
 sw.js             Service Worker：同源 network-first、Google Fonts cache-first；改版時把 CACHE 名稱 +1
-icon.svg / icon-180.png / icon-192.png / icon-512.png   App 圖示（PNG 由 Windows System.Drawing 依 icon.svg 繪製）
+icon.svg / icon-180.png / icon-192.png / icon-512.png   App 圖示：吉祥物 mascot('happy','mint','check') 放在粉紅底上；
+                  PNG 是用 headless Edge 截圖 512px 再以 System.Drawing 縮成 192／180
 tools/serve.js    本機預覽用的小型靜態伺服器：node tools/serve.js . 8765
 .claude/launch.json  預覽設定（名稱 mobile-secretary，port 8765；本機絕對路徑，不進版控）
 _private/         ★不進版控（.gitignore）。放使用者的證書清單匯入檔、舊版 claude.ai 網頁原始檔
@@ -37,6 +38,11 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   iPhone 主畫面 App 與 Safari 的儲存空間是分開的，所以從 Safari 開的配對頁會提供「複製配對碼」給主畫面 App 貼上。
 - 行事曆訂閱網址：`https://gist.githubusercontent.com/<login>/<gistId>/raw/msec-calendar.ics`（webcal://）。
   內容只放標題、時間、地點、屬性・類別，不放電話／對象／備註（使用者隱私偏好）。單向：iPhone 端修改不會回 App。
+
+## 吉祥物
+使用者自家的白色雪納瑞（卡通化，依她提供的照片：折耳、灰色耳尖、濃眉、大鬍子、黑鼻子、吐舌頭）。
+`mascot(mood, color, prop)`：mood `happy|calm|worried|shock|sleepy`；color 是領巾顏色（pink/mint/sun/coral/lilac/sky）；
+prop 是右下角徽章（check/bell/cert/hourglass/sun/moon/coffee/star/doc/heart/phone，zzz 在頭頂）。照片本身不放進版控。
 
 ## 提醒規則（使用者指定，不要改）
 - 事項／認證節點／預計取證日：到期前 **2 天** 開始提醒。
