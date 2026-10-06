@@ -166,7 +166,10 @@ h1{margin:0;font-family:var(--f-display);font-weight:400;font-size:25px;line-hei
 .star{color:var(--sun);margin-right:4px}
 .rep-ic{display:inline-flex;vertical-align:-2px;margin-left:4px;color:var(--sub)}
 .rep-ic svg{width:13px;height:13px}
-.scope-p{font-family:var(--f-display);font-size:11px;padding:0 6px;border-radius:999px;background:var(--sky-soft);color:var(--sky-tx)}
+.scope-p{font-family:var(--f-display);font-size:11px;padding:0 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent-tx)}
+.scope-p.s-shinnyo{background:var(--lilac-soft);color:var(--lilac-tx)}
+.field input:disabled{opacity:.4}
+input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:var(--red-soft)!important}
 .tag{flex:none;font-family:var(--f-display);font-size:12px;padding:2px 9px;border-radius:999px;white-space:nowrap;margin-top:2px}
 .tag.overdue{background:var(--red-soft);color:var(--red-tx)}
 .tag.today{background:var(--accent-soft);color:var(--accent-tx)}
@@ -480,6 +483,7 @@ td.proj{font-weight:700}
   .modal.slot{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
   @keyframes sheet{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
   .form-grid{grid-template-columns:minmax(0,1fr)}
+  .checks{padding-top:2px}
   .step-ed{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .step-ed .se-title{grid-column:1/-1;order:-1}
 }
@@ -582,14 +586,25 @@ const CATS = {
   ],
   personal: [
     { k: '生活', c: 'var(--peach)' }, { k: '家庭', c: 'var(--accent)' }, { k: '健康', c: 'var(--leaf)' }, { k: '運動', c: 'var(--sun)' },
-    { k: '繳費理財', c: 'var(--red)' }, { k: '學習', c: 'var(--teal)' }, { k: '休閒', c: 'var(--lilac)' }, { k: 'Shinnyo', c: 'var(--sky)' }, { k: '其他', c: 'var(--faint)' }
+    { k: '繳費理財', c: 'var(--red)' }, { k: '學習', c: 'var(--teal)' }, { k: '休閒', c: 'var(--lilac)' }, { k: '其他', c: 'var(--faint)' }
+  ],
+  shinnyo: [
+    { k: '法會', c: 'var(--lilac)' }, { k: '修行', c: 'var(--teal)' }, { k: '志工服務', c: 'var(--leaf)' },
+    { k: '聚會', c: 'var(--peach)' }, { k: '學習', c: 'var(--sky)' }, { k: '其他', c: 'var(--faint)' }
   ]
 };
+const SCOPES = [
+  { k: 'work', t: '工作', color: 'sky', prop: 'doc', hint: '業務、會議、拜訪、行政…' },
+  { k: 'personal', t: '個人', color: 'pink', prop: 'heart', hint: '生活、家庭、健康、運動、繳費…' },
+  { k: 'shinnyo', t: 'Shinnyo', color: 'lilac', prop: 'star', hint: '法會、修行、志工服務、聚會…' }
+];
+const scopeOf = k => SCOPES.find(s => s.k === k) || SCOPES[0];
 const catColor = (k, scope) => {
-  const lists = scope === 'personal' ? [CATS.personal, CATS.work] : [CATS.work, CATS.personal];
+  const lists = [CATS[scope] || CATS.work].concat(Object.keys(CATS).filter(s => s !== scope).map(s => CATS[s]));
   for (const l of lists) { const f = l.find(c => c.k === k); if (f) return f.c; }
   return 'var(--faint)';
 };
+const timeLabel = e => e.allDay ? '整日' : e.time ? (e.endTime ? `${e.time}～${e.endTime}` : e.time) : '';
 const REPEAT = { none: '不重複', daily: '每天', weekdays: '每個工作日（一～五）', weekly: '每週', monthly: '每月', yearly: '每年' };
 const STATUS = { active: { t: '進行中', cls: 'today' }, obtained: { t: '已取證', cls: 'done' }, paused: { t: '暫停', cls: 'later' }, cancelled: { t: '已取消', cls: 'later' } };
 const CSTATE = { normal: '追蹤中', renewing: '續證中', retired: '不續證／停用' };
@@ -708,8 +723,15 @@ function loadData() {
     S.apps = Array.isArray(d.apps) ? d.apps : [];
     S.certs = Array.isArray(d.certs) ? d.certs : [];
     S.savedAt = d.savedAt || null;
+    if (migrateItems()) saveData();
     return true;
   } catch (e) { return false; }
+}
+// v1.1：「Shinnyo」從個人類別升格為獨立屬性
+function migrateItems() {
+  let moved = false;
+  S.items.forEach(it => { if (it.scope === 'personal' && it.cat === 'Shinnyo') { it.scope = 'shinnyo'; it.cat = '其他'; moved = true; } });
+  return moved;
 }
 function saveData() {
   S.savedAt = iso();
@@ -792,8 +814,10 @@ const appName = a => a.name || '（未命名認證）';
 const shortName = a => { const n = appName(a); return n.length > 14 ? n.slice(0, 13) + '…' : n; };
 const appTag = a => `<span class="app-tag" style="--tape:var(--tape-${a.color || 1})">${esc(shortName(a))}</span>`;
 const isLive = a => (a.status || 'active') === 'active';
-const cmpEv = (a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : ((a.time || '99') < (b.time || '99') ? -1 : (a.time || '99') > (b.time || '99') ? 1 : 0);
+const tKey = e => e.allDay ? '00' : (e.time || '99');
+const cmpEv = (a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (tKey(a) < tKey(b) ? -1 : tKey(a) > tKey(b) ? 1 : 0);
 const scopeOk = e => UI.scope === 'all' || (e.scope || 'work') === UI.scope;
+const workVisible = () => UI.scope === 'all' || UI.scope === 'work';
 function viewWindow() {
   let lo = addDays(TODAY, -400), hi = addDays(TODAY, 400);
   lo = minS(lo, addDays(UI.month, -7)); hi = maxS(hi, addDays(UI.month, 45));
@@ -810,7 +834,7 @@ function buildEvents() {
     const dates = rep ? occurrences(it, lo, hi) : [it.date];
     for (const d of dates) {
       const done = rep ? !!(it.doneDates && it.doneDates[d]) : !!it.done;
-      out.push({ k: 'item', key: rep ? `item:${it.id}:${d}` : `item:${it.id}`, id: it.id, date: d, time: it.time || '', title: it.title || '（未命名事項）', done, live: true, ref: it, rep, scope: it.scope || 'work' });
+      out.push({ k: 'item', key: rep ? `item:${it.id}:${d}` : `item:${it.id}`, id: it.id, date: d, allDay: !!it.allDay, time: it.allDay ? '' : (it.time || ''), endTime: it.allDay ? '' : (it.endTime || ''), title: it.title || '（未命名事項）', done, live: true, ref: it, rep, scope: it.scope || 'work' });
     }
   }
   for (const a of S.apps) {
@@ -892,12 +916,13 @@ function evRow(e, o = {}) {
   title += esc(e.k === 'cert' ? e.title + ' 證書到期' : e.title);
   if (e.rep) title += `<span class="rep-ic" title="${esc(REPEAT[e.ref.repeat] || '')}">${IC.repeat}</span>`;
   const meta = [];
-  if (!o.noDate) meta.push(`<span class="m num">${md(e.date)}（${wd(e.date)}）${e.time ? ' ' + e.time : ''}</span>`);
-  else if (e.time) meta.push(`<span class="m num">${e.time}</span>`);
+  const tl = timeLabel(e);
+  if (!o.noDate) meta.push(`<span class="m num">${md(e.date)}（${wd(e.date)}）${tl ? ' ' + tl : ''}</span>`);
+  else if (tl) meta.push(`<span class="m num">${tl}</span>`);
   let note = '';
   if (e.k === 'item') {
     const r = e.ref;
-    if (UI.scope === 'all' && (r.scope || 'work') === 'personal') meta.push(`<span class="m scope-p">個人</span>`);
+    if (UI.scope === 'all' && (r.scope || 'work') !== 'work') meta.push(`<span class="m scope-p s-${esc(r.scope)}">${esc(scopeOf(r.scope).t)}</span>`);
     meta.push(`<span class="m cat" style="--c:${catColor(r.cat, r.scope)}"><i></i>${esc(r.cat || '其他')}</span>`);
     if (r.target) meta.push(`<span class="m">${IC.user}${esc(r.target)}</span>`);
     if (r.company) meta.push(`<span class="m">${IC.bldg}${esc(r.company)}</span>`);
@@ -925,7 +950,7 @@ function rowsOrEmpty(list, emptyHtml, o = {}) {
   const max = o.max || 999;
   return `<div class="rows">${list.slice(0, max).map(e => evRow(e, o)).join('')}</div>` + (list.length > max ? `<div class="more">還有 ${list.length - max} 項…</div>` : '');
 }
-const scopeWord = () => UI.scope === 'work' ? '工作' : UI.scope === 'personal' ? '個人' : '';
+const scopeWord = () => UI.scope === 'all' ? '' : scopeOf(UI.scope).t;
 
 /* ================= views ================= */
 function vToday() {
@@ -935,7 +960,7 @@ function vToday() {
   const doneT = todays.filter(e => e.done);
   const overdue = ev.filter(e => lvl(e) === 'overdue');
   const soon = ev.filter(e => lvl(e) === 'soon');
-  const showWork = UI.scope !== 'personal';
+  const showWork = workVisible();
   const certAl = showWork ? S.certs.filter(c => ['expired', 'warn', 'watch'].includes(certLvl(c))).sort((a, b) => a.due < b.due ? -1 : 1) : [];
   const active = showWork ? S.apps.filter(isLive).sort((a, b) => (endOf(a) || '') < (endOf(b) || '') ? -1 : 1) : [];
   let mood, color, prop, line;
@@ -1019,7 +1044,7 @@ function vAgenda() {
   </div>
   ${overdue.length ? `<div class="ag-day"><div class="ag-head"><b style="color:var(--red-tx)">逾期未完成</b><span>${overdue.length} 件</span></div><section class="panel">${rowsOrEmpty(overdue, '', { note: true })}</section></div>` : ''}
   ${days.length ? days.map(d => `<div class="ag-day"><div class="ag-head"><b>${full(d)}</b><span>${label(d)}・${byDay[d].length} 件</span></div><section class="panel">${rowsOrEmpty(byDay[d], '', { noDate: true, note: true })}</section></div>`).join('')
-    : `<section class="panel">${emptyBox(q ? '找不到符合的行程' : `未來 ${UI.agDays} 天沒有${scopeWord()}行程`, q ? '<div>換個關鍵字試試看。</div>' : '<div>按「＋」新增，或切換上方的「全部／工作／個人」。</div>', 'sleepy', 'sky', 'zzz')}</section>`}`;
+    : `<section class="panel">${emptyBox(q ? '找不到符合的行程' : `未來 ${UI.agDays} 天沒有${scopeWord()}行程`, q ? '<div>換個關鍵字試試看。</div>' : '<div>按「＋」新增，或切換上方的「全部／工作／個人／Shinnyo」。</div>', 'sleepy', 'sky', 'zzz')}</section>`}`;
 }
 
 function vCalendar() {
@@ -1030,7 +1055,7 @@ function vCalendar() {
   const weeks = []; for (let w = start; w <= last; w = addDays(w, 7)) weeks.push(w);
   const byDate = {};
   for (const e of EV) if (scopeOk(e)) (byDate[e.date] = byDate[e.date] || []).push(e);
-  const apps = UI.scope === 'personal' ? [] : S.apps.filter(a => isDate(a.applyDate) && isDate(endOf(a)) && a.applyDate <= endOf(a)).map(a => ({ a, s: a.applyDate, e: endOf(a) }));
+  const apps = !workVisible() ? [] : S.apps.filter(a => isDate(a.applyDate) && isDate(endOf(a)) && a.applyDate <= endOf(a)).map(a => ({ a, s: a.applyDate, e: endOf(a) }));
   let html = '';
   for (const ws of weeks) {
     const we = addDays(ws, 6);
@@ -1080,7 +1105,7 @@ function chip(e) {
   const L = lvl(e);
   const cls = `chip k-${e.k}${e.done ? ' done' : ''}${L ? ' l-' + L : ''}`;
   let style, lead, label;
-  if (e.k === 'item') { style = `--c:${catColor(e.ref.cat, e.ref.scope)}`; lead = '<i></i>'; label = (e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
+  if (e.k === 'item') { style = `--c:${catColor(e.ref.cat, e.ref.scope)}`; lead = '<i></i>'; label = (e.allDay ? '<b>整日</b> ' : e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
   else if (e.k === 'step') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.doc}</span>`; label = (e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
   else if (e.k === 'certday') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.medal}</span>`; label = `${e.done ? '取證' : '預計取證'}・${esc(shortName(e.app))}`; }
   else { style = '--c:var(--lilac)'; lead = `<span class="ic">${IC.hour}</span>`; label = `${esc(e.cert.project)} ${esc(e.cert.cert)} 到期`; }
@@ -1088,7 +1113,7 @@ function chip(e) {
 }
 function dayPanel(d) {
   const list = EV.filter(e => e.date === d && scopeOk(e));
-  const periods = UI.scope === 'personal' ? [] : S.apps.filter(a => isDate(a.applyDate) && isDate(endOf(a)) && a.applyDate <= d && endOf(a) >= d);
+  const periods = !workVisible() ? [] : S.apps.filter(a => isDate(a.applyDate) && isDate(endOf(a)) && a.applyDate <= d && endOf(a) >= d);
   const per = periods.map(a => `<div class="period" style="--tape:var(--tape-${a.color || 1})"><span class="tape-sw"></span><span>${esc(appName(a))}・認證期間第 <b class="num">${diff(a.applyDate, d) + 1}</b> 天／共 ${diff(a.applyDate, endOf(a)) + 1} 天</span></div>`).join('');
   return `<section class="panel daypanel">
     <div class="panel-h"><h2>${full(d)}</h2>${d === TODAY ? '<span class="tag today">今天</span>' : ''}<button class="btn sm act" data-act="new-item" data-date="${d}">＋ 新增</button></div>
@@ -1205,7 +1230,7 @@ function reportData() {
   const open = work.filter(e => !e.done && e.live);
   const late = open.filter(e => e.date < TODAY);
   const rate = work.length ? Math.round(done.length / work.length * 100) : 0;
-  const showWork = UI.scope !== 'personal';
+  const showWork = workVisible();
   const newApps = showWork ? S.apps.filter(a => inR(a.applyDate)) : [];
   const gotApps = showWork ? S.apps.filter(a => a.status === 'obtained' && inR(endOf(a))) : [];
   const activeApps = showWork ? S.apps.filter(isLive) : [];
@@ -1214,7 +1239,7 @@ function reportData() {
   const days = []; for (let d = R.s; d <= R.e; d = addDays(d, 1)) { const l = work.filter(e => e.date === d); days.push({ d, done: l.filter(e => e.done).length, open: l.filter(e => !e.done).length }); }
   const cats = {};
   work.forEach(e => {
-    const k = e.k === 'step' ? '認證節點' : ((e.ref.scope === 'personal' && UI.scope === 'all' ? '個人・' : '') + (e.ref.cat || '其他'));
+    const k = e.k === 'step' ? '認證節點' : (((e.ref.scope || 'work') !== 'work' && UI.scope === 'all' ? scopeOf(e.ref.scope).t + '・' : '') + (e.ref.cat || '其他'));
     cats[k] = cats[k] || { t: 0, d: 0, c: e.k === 'step' ? 'var(--tape-1)' : catColor(e.ref.cat, e.ref.scope) }; cats[k].t++; if (e.done) cats[k].d++;
   });
   return { R, work, done, open, late, rate, newApps, gotApps, activeApps, nextWork, certSoon, days, cats, showWork };
@@ -1259,10 +1284,10 @@ function vReport() {
     <button class="btn sm" data-act="rep-csv">${IC.dl}匯出 CSV</button>
   </div>
   <div class="kpis">
-    <div class="kpi"><div class="l">${scopeWord()}完成率</div><div class="v">${D.rate}<small>%</small></div><div class="s">${D.showWork ? '事項＋認證節點' : '個人事項'}共 ${D.work.length} 件</div></div>
+    <div class="kpi"><div class="l">${scopeWord()}完成率</div><div class="v">${D.rate}<small>%</small></div><div class="s">${D.showWork ? '事項＋認證節點' : `${scopeWord()}事項`}共 ${D.work.length} 件</div></div>
     <div class="kpi"><div class="l">已完成</div><div class="v" style="color:var(--mint-tx)">${D.done.length}</div><div class="s">本期內到期且已打勾</div></div>
     <div class="kpi"><div class="l">未完成</div><div class="v" style="color:var(--sun-tx)">${D.open.length}</div><div class="s">其中已過期 ${D.late.length} 件</div></div>
-    ${D.showWork ? `<div class="kpi"><div class="l">認證申請</div><div class="v">${D.newApps.length}<small>新申請</small> ${D.gotApps.length}<small>取證</small></div><div class="s">進行中 ${D.activeApps.length} 件</div></div>` : `<div class="kpi"><div class="l">${R.nextName}已排定</div><div class="v">${D.nextWork.length}</div><div class="s">件個人事項</div></div>`}
+    ${D.showWork ? `<div class="kpi"><div class="l">認證申請</div><div class="v">${D.newApps.length}<small>新申請</small> ${D.gotApps.length}<small>取證</small></div><div class="s">進行中 ${D.activeApps.length} 件</div></div>` : `<div class="kpi"><div class="l">${R.nextName}已排定</div><div class="v">${D.nextWork.length}</div><div class="s">件${scopeWord()}事項</div></div>`}
   </div>
   <section class="panel">
     <div class="panel-h"><h2>每日完成狀況</h2><span class="n">${R.s.replace(/-/g, '/')} – ${R.e.replace(/-/g, '/')}</span></div>
@@ -1282,7 +1307,8 @@ function plain(e) {
   const pre = (e.k === 'step' || e.k === 'certday') ? `[${appName(e.app)}] ` : '';
   const r = e.k === 'item' ? e.ref : null;
   const extra = r ? [r.target && `對象：${r.target}`, r.company && `公司：${r.company}`, r.location && `地點：${r.location}`].filter(Boolean).join('／') : '';
-  return `${md(e.date)}（${wd(e.date)}）${e.time ? ' ' + e.time : ''} ${pre}${e.title}${extra ? `（${extra}）` : ''}`;
+  const tl = timeLabel(e);
+  return `${md(e.date)}（${wd(e.date)}）${tl ? ' ' + tl : ''} ${pre}${e.title}${extra ? `（${extra}）` : ''}`;
 }
 function reportText() {
   const D = reportData(); const R = D.R; const L = [];
@@ -1310,10 +1336,10 @@ function reportText() {
 function reportCSV() {
   const D = reportData();
   const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-  const rows = [['日期', '時間', '屬性', '類型', '類別／認證', '內容', '對象', '公司', '地點', '聯絡電話', '連結', '狀態', '備註'].map(q).join(',')];
+  const rows = [['日期', '時間', '約略結束', '屬性', '類型', '類別／認證', '內容', '對象', '公司', '地點', '聯絡電話', '連結', '狀態', '備註'].map(q).join(',')];
   D.work.forEach(e => {
     const r = e.k === 'item' ? e.ref : {};
-    rows.push([e.date, e.time, (e.scope || 'work') === 'personal' ? '個人' : '工作', e.k === 'item' ? '事項' : '認證節點', e.k === 'item' ? (r.cat || '其他') : appName(e.app), e.title, r.target || (e.app && e.app.target) || '', r.company || (e.app && e.app.company) || '', r.location || '', r.phone || (e.app && e.app.phone) || '', r.link || '', e.done ? '已完成' : (e.date < TODAY ? '已過期未完成' : '未完成'), r.note || ''].map(q).join(','));
+    rows.push([e.date, e.allDay ? '整日' : e.time, e.endTime || '', scopeOf(e.scope).t,e.k === 'item' ? '事項' : '認證節點', e.k === 'item' ? (r.cat || '其他') : appName(e.app), e.title, r.target || (e.app && e.app.target) || '', r.company || (e.app && e.app.company) || '', r.location || '', r.phone || (e.app && e.app.phone) || '', r.link || '', e.done ? '已完成' : (e.date < TODAY ? '已過期未完成' : '未完成'), r.note || ''].map(q).join(','));
   });
   return '\uFEFF' + rows.join('\r\n');
 }
@@ -1385,7 +1411,7 @@ function render() {
   const cnt = { today: pendingToday, cert: S.certs.filter(c => ['expired', 'warn'].includes(certLvl(c))).length };
   $('#tabs').innerHTML = TABS.map(([k, t]) => `<button class="tab" aria-selected="${UI.view === k}" data-act="tab" data-view="${k}">${t}${cnt[k] ? `<span class="cnt">${cnt[k]}</span>` : ''}</button>`).join('');
   $('#bnav').innerHTML = TABS.map(([k, t, ic]) => `<button data-act="tab" data-view="${k}" ${UI.view === k ? 'aria-current="page"' : ''}>${IC[ic]}<span>${t}</span>${cnt[k] ? `<span class="cnt">${cnt[k]}</span>` : ''}</button>`).join('');
-  $('#scopeSeg').innerHTML = [['all', '全部'], ['work', '工作'], ['personal', '個人']].map(([k, t]) => `<button data-act="scope" data-s="${k}" aria-pressed="${UI.scope === k}">${t}</button>`).join('');
+  $('#scopeSeg').innerHTML = [['all', '全部']].concat(SCOPES.map(s => [s.k, s.t])).map(([k, t]) => `<button data-act="scope" data-s="${k}" aria-pressed="${UI.scope === k}">${t}</button>`).join('');
   $('#scopeSeg').hidden = UI.view === 'cert' || UI.view === 'settings';
   const bell = $('#bellBtn');
   bell.innerHTML = IC.bell + (A.count ? `<span class="badge">${A.count > 99 ? '99+' : A.count}</span>` : '');
@@ -1395,8 +1421,7 @@ function render() {
   $('#fab').innerHTML = IC.plus;
   $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy', 'pink', A.count ? 'bell' : 'phone');
   $('#addMenu').innerHTML = `
-    <button data-act="new-item" data-scope="work">${mascot('happy', 'sky', 'doc')}<span><b>工作事項</b><small>業務、會議、拜訪、行政…</small></span></button>
-    <button data-act="new-item" data-scope="personal">${mascot('happy', 'pink', 'heart')}<span><b>個人事項</b><small>生活、家庭、健康、繳費…</small></span></button>
+    ${SCOPES.map(s => `<button data-act="new-item" data-scope="${s.k}">${mascot('happy', s.color, s.prop)}<span><b>${s.t} 事項</b><small>${s.hint}</small></span></button>`).join('')}
     <button data-act="new-app">${mascot('calm', 'sun', 'cert')}<span><b>認證申請</b><small>申請日 → 取證日＋提交節點</small></span></button>
     <button data-act="new-cert">${mascot('calm', 'lilac', 'hourglass')}<span><b>證書效期</b><small>到期日提示</small></span></button>`;
   const nx = SLOTS.find(s => s.t > nowHM());
@@ -1555,21 +1580,41 @@ const delBtn = key => `<button type="button" class="btn danger left" data-act="d
 const foot = key => `<div class="form-foot">${key ? delBtn(key) : ''}<button type="button" class="btn ghost" data-act="close">取消</button><button type="submit" class="btn primary">儲存</button></div>`;
 const val = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
 const chk = id => { const el = document.getElementById(id); return !!(el && el.checked); };
+const timeInp = (id, v, disabled) => `<input id="${id}" class="time-in" value="${esc(v || '')}" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="例：930、14:30" ${disabled ? 'disabled' : ''}>`;
+// 手動輸入的時間 → "HH:MM"；空白回傳 ''，看不懂回傳 null。接受 930、0930、9.30、9:30、14、下午2點半、晚上7點15分
+function normTime(raw) {
+  let s = String(raw || '').trim().replace(/\s+/g, '');
+  if (!s) return '';
+  const pm = /下午|晚上|傍晚|pm/i.test(s), am = /上午|早上|凌晨|am/i.test(s);
+  s = s.replace(/下午|晚上|傍晚|上午|早上|凌晨|中午|am|pm/ig, '').replace(/[：.．。,，]/g, ':')
+    .replace(/點半$/, ':30').replace(/點(\d{1,2})分?$/, ':$1').replace(/點$/, '');
+  let h, m, mm;
+  if ((mm = s.match(/^(\d{1,2}):(\d{1,2})$/))) { h = +mm[1]; m = +mm[2]; }
+  else if (/^\d{1,4}$/.test(s)) { if (s.length <= 2) { h = +s; m = 0; } else { h = +s.slice(0, -2); m = +s.slice(-2); } }
+  else return null;
+  if (pm && h < 12) h += 12;
+  if (am && h === 12) h = 0;
+  if (h > 23 || m > 59) return null;
+  return pad(h) + ':' + pad(m);
+}
 const catOptions = (scope, cur) => CATS[scope].map(c => `<option ${c.k === cur ? 'selected' : ''}>${c.k}</option>`).join('');
 
 function openItemForm(it, date, scope) {
-  const sc = it ? (it.scope || 'work') : (scope || (UI.scope === 'personal' ? 'personal' : 'work'));
+  const sc = it ? (it.scope || 'work') : (scope || (UI.scope !== 'all' ? UI.scope : 'work'));
   const v = it || { date: date || TODAY, cat: CATS[sc][0].k, scope: sc, repeat: 'none' };
   const rep = isRep(v);
+  const so = scopeOf(sc);
   const m = $('#modal');
   m.setAttribute('aria-label', it ? '編輯事項' : '新增事項');
   m.innerHTML = `<form id="fItem" autocomplete="off" novalidate>
-    <div class="sheet-h">${mascot(it ? 'calm' : 'happy', sc === 'personal' ? 'pink' : 'sky', sc === 'personal' ? 'heart' : 'doc')}<div><h2>${it ? '編輯事項' : '新增事項'}</h2><p>到期前兩天開始提醒，也可以設定重複</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="sheet-h">${mascot(it ? 'calm' : 'happy', so.color, so.prop)}<div><h2>${it ? '編輯事項' : '新增事項'}</h2><p>到期前兩天開始提醒，也可以設定重複</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <div class="form-grid">
-      <div class="field full"><label>屬性</label><div class="radio-seg" role="radiogroup" aria-label="屬性"><label><input type="radio" name="fi-scope" value="work" ${sc === 'work' ? 'checked' : ''}><span>工作</span></label><label><input type="radio" name="fi-scope" value="personal" ${sc === 'personal' ? 'checked' : ''}><span>個人</span></label></div></div>
+      <div class="field full"><label>屬性</label><div class="radio-seg" role="radiogroup" aria-label="屬性">${SCOPES.map(s => `<label><input type="radio" name="fi-scope" value="${s.k}" ${sc === s.k ? 'checked' : ''}><span>${s.t}</span></label>`).join('')}</div></div>
       ${fld('fi-title', '內容 <span class="req">*</span>', inp('fi-title', v.title, 'maxlength="200" placeholder="例如：與實驗室確認測試排程、繳電話費"'), 'full')}
       ${fld('fi-date', (rep ? '開始日期' : '日期') + ' <span class="req">*</span>', inp('fi-date', v.date, 'type="date"'))}
-      ${fld('fi-time', '時間', inp('fi-time', v.time, 'type="time"'))}
+      <div class="field checks"><label><input type="checkbox" id="fi-allday" ${v.allDay ? 'checked' : ''}> 整日</label></div>
+      ${fld('fi-time', '開始時間', timeInp('fi-time', v.time, v.allDay) + '<div class="hint">直接輸入：930、9.30、14:30、下午2點半</div>')}
+      ${fld('fi-end', '約略結束時間（選填）', timeInp('fi-end', v.endTime, v.allDay))}
       ${fld('fi-cat', '類別', `<select id="fi-cat">${catOptions(sc, v.cat)}</select>`)}
       <div class="field checks"><label><input type="checkbox" id="fi-star" ${v.star ? 'checked' : ''}> 重要／急件</label>${it && !rep ? `<label><input type="checkbox" id="fi-done" ${v.done ? 'checked' : ''}> 已完成</label>` : ''}</div>
       ${fld('fi-repeat', '重複', `<select id="fi-repeat">${Object.keys(REPEAT).map(k => `<option value="${k}" ${k === (v.repeat || 'none') ? 'selected' : ''}>${REPEAT[k]}</option>`).join('')}</select>`)}
@@ -1588,6 +1633,9 @@ function openItemForm(it, date, scope) {
     if (ev.target.name === 'fi-scope') {
       const s2 = ev.target.value; $('#fi-cat').innerHTML = catOptions(s2, CATS[s2][0].k);
     }
+    if (ev.target.id === 'fi-allday') {
+      $('#fi-time').disabled = ev.target.checked; $('#fi-end').disabled = ev.target.checked;
+    }
   });
   form.addEventListener('submit', ev => {
     ev.preventDefault();
@@ -1598,9 +1646,15 @@ function openItemForm(it, date, scope) {
     const repeat = val('fi-repeat') || 'none';
     const until = val('fi-until');
     if (repeat !== 'none' && isDate(until) && until < date) { toast('「重複到」不能早於開始日期', 'worried', 'sun'); return; }
+    const allDay = chk('fi-allday');
+    const time = allDay ? '' : normTime(val('fi-time')), endTime = allDay ? '' : normTime(val('fi-end'));
+    if (time === null) { toast('開始時間看不懂，請輸入像 930 或 14:30 的格式', 'worried', 'sun'); $('#fi-time').focus(); return; }
+    if (endTime === null) { toast('結束時間看不懂，請輸入像 1100 或 17:30 的格式', 'worried', 'sun'); $('#fi-end').focus(); return; }
+    if (endTime && !time) { toast('填了結束時間，也請填開始時間', 'worried', 'sun'); $('#fi-time').focus(); return; }
+    if (endTime && endTime <= time) { toast('結束時間要晚於開始時間', 'worried', 'sun'); $('#fi-end').focus(); return; }
     const done = it && !rep ? chk('fi-done') : false;
     const body = Object.assign({}, it || {}, {
-      scope: scEl ? scEl.value : 'work', title, date, time: val('fi-time'), cat: val('fi-cat'), star: chk('fi-star'), repeat, until: repeat !== 'none' ? until : '',
+      scope: scEl ? scEl.value : 'work', title, date, allDay, time, endTime, cat: val('fi-cat'), star: chk('fi-star'), repeat, until: repeat !== 'none' ? until : '',
       target: val('fi-target'), company: val('fi-company'), location: val('fi-location'), phone: val('fi-phone'), link: val('fi-link'), note: val('fi-note'), updatedAt: iso()
     });
     if (repeat === 'none') { body.done = done; if (done && !(it && it.done)) body.doneAt = iso(); if (!done) body.doneAt = null; }
@@ -1609,14 +1663,14 @@ function openItemForm(it, date, scope) {
     const id = it ? it.id : uid('i');
     Store.set('items', id, body);
     closeLayer(m);
-    toast(it ? '已更新事項' : `已新增「${title}」`, 'happy', body.scope === 'personal' ? 'pink' : 'sky', 'star');
+    toast(it ? '已更新事項' : `已新增「${title}」`, 'happy', scopeOf(body.scope).color, 'star');
   });
 }
 
 function stepRow(s) {
   return `<div class="step-ed" data-sid="${esc(s.id || uid('s'))}">
     <input type="date" class="se-date" value="${esc(s.date || '')}" aria-label="節點日期">
-    <input type="time" class="se-time" value="${esc(s.time || '')}" aria-label="節點時間">
+    <input class="se-time time-in" value="${esc(s.time || '')}" inputmode="decimal" autocomplete="off" maxlength="12" placeholder="時間（選填）" aria-label="節點時間">
     <input class="se-title" value="${esc(s.title || '')}" placeholder="要提交的內容，例如：送樣 2 台" aria-label="提交內容" maxlength="200">
     <label class="dn"><input type="checkbox" class="se-done" ${s.done ? 'checked' : ''}>完成</label>
     <button type="button" class="ico" data-act="step-del" aria-label="移除節點">${IC.x}</button>
@@ -1660,11 +1714,13 @@ function openAppForm(a, preset) {
     if (!name) { toast('請填寫認證名稱', 'worried', 'sun'); $('#fa-name').focus(); return; }
     if (!isDate(applyDate) || !isDate(certDate)) { toast('請填寫申請日與預計取證日', 'worried', 'sun'); return; }
     if (certDate < applyDate) { toast('預計取證日不能早於申請日', 'worried', 'sun'); $('#fa-cert').focus(); return; }
+    const badTime = $$('#fa-steps .se-time').find(el => el.value.trim() && normTime(el.value) === null);
+    if (badTime) { toast('有節點的時間看不懂，請輸入像 930 或 14:30 的格式', 'worried', 'sun'); badTime.focus(); return; }
     const old = a ? (a.steps || []) : [];
     const steps = $$('#fa-steps .step-ed').map(r => {
       const id = r.dataset.sid; const prev = old.find(s => s.id === id) || {};
       const done = $('.se-done', r).checked;
-      return { id, date: $('.se-date', r).value, time: $('.se-time', r).value, title: $('.se-title', r).value.trim(), done, doneAt: done ? (prev.doneAt || iso()) : null };
+      return { id, date: $('.se-date', r).value, time: normTime($('.se-time', r).value) || '', title: $('.se-title', r).value.trim(), done, doneAt: done ? (prev.doneAt || iso()) : null };
     }).filter(s => s.title || s.date);
     const colorEl = document.querySelector('input[name="fa-color"]:checked');
     const status = val('fa-status');
@@ -1767,7 +1823,7 @@ function applyImport(mode) {
   const d = pendingImport; if (!d) return;
   if (mode === 'replace') { S.items = d.items; S.apps = d.apps; S.certs = d.certs; }
   else ['items', 'apps', 'certs'].forEach(col => d[col].forEach(doc => { const i = S[col].findIndex(x => x.id === doc.id); if (i < 0) S[col].push(doc); else S[col][i] = doc; }));
-  pendingImport = null; commit(); closeLayer($('#modal'));
+  pendingImport = null; migrateItems(); commit(); closeLayer($('#modal'));
   toast(`匯入完成：事項 ${d.items.length}、認證申請 ${d.apps.length}、證書 ${d.certs.length} 筆`, 'happy', 'mint', 'check');
 }
 /* --- iCalendar --- */
@@ -1783,9 +1839,12 @@ function icsFold(line) {
 }
 const icsDate = d => d.replace(/-/g, '');
 const icsStamp = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
-function vevent({ uid: u, date, time, summary, desc, location, url, rrule, alarms, durMin = 30 }) {
+function vevent({ uid: u, date, time, endTime, summary, desc, location, url, rrule, alarms, durMin = 30 }) {
   const L = ['BEGIN:VEVENT', `UID:${u}@mobile-secretary`, `DTSTAMP:${icsStamp()}`];
-  if (time) { L.push(`DTSTART:${icsDate(date)}T${time.replace(':', '')}00`, `DURATION:PT${durMin}M`); }
+  if (time) {
+    L.push(`DTSTART:${icsDate(date)}T${time.replace(':', '')}00`);
+    L.push(endTime && endTime > time ? `DTEND:${icsDate(date)}T${endTime.replace(':', '')}00` : `DURATION:PT${durMin}M`);
+  }
   else { L.push(`DTSTART;VALUE=DATE:${icsDate(date)}`, `DTEND;VALUE=DATE:${icsDate(addDays(date, 1))}`); }
   if (rrule) L.push(`RRULE:${rrule}`);
   L.push(`SUMMARY:${icsText(summary)}`);
@@ -1807,16 +1866,18 @@ function exportEventsICS() {
   for (const it of S.items) {
     if (!isDate(it.date)) continue;
     const base = { desc: [it.cat && `類別：${it.cat}`, it.target && `對象：${it.target}`, it.company && `公司：${it.company}`, it.phone && `電話：${it.phone}`, it.link && `連結：${it.link}`, it.note].filter(Boolean).join('\n'), location: it.location, url: appUrl() };
-    const summary = `${(it.scope || 'work') === 'personal' ? '' : '【工作】'}${it.title}`;
+    const sc = it.scope || 'work';
+    const summary = `${sc === 'personal' ? '' : `【${scopeOf(sc).t}】`}${it.title}`;
+    const time = it.allDay ? '' : (it.time || ''), endTime = it.allDay ? '' : (it.endTime || '');
     if (isRep(it)) {
       if (isDate(it.until) && it.until < TODAY) continue;
       const freq = { daily: 'FREQ=DAILY', weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', weekly: 'FREQ=WEEKLY', monthly: 'FREQ=MONTHLY', yearly: 'FREQ=YEARLY' }[it.repeat];
       const rr = freq + (isDate(it.until) ? `;UNTIL=${icsDate(it.until)}T235959` : '');
-      const al = ['monthly', 'yearly'].includes(it.repeat) ? [twoDays(it.time), dayOf(it.time)] : [it.time ? 'PT0M' : 'PT9H'];
-      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time: it.time, summary, rrule: rr, alarms: al }, base)));
+      const al = ['monthly', 'yearly'].includes(it.repeat) ? [twoDays(time), dayOf(time)] : [time ? 'PT0M' : 'PT9H'];
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary, rrule: rr, alarms: al }, base)));
     } else {
       if (it.done || it.date < TODAY || it.date > hi) continue;
-      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time: it.time, summary, alarms: [twoDays(it.time), dayOf(it.time)] }, base)));
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary, alarms: [twoDays(time), dayOf(time)] }, base)));
     }
   }
   for (const a of S.apps) {
@@ -2001,6 +2062,13 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'sndToggle') { prefs.snd = ev.target.checked; savePrefs(); if (ev.target.checked) chime(); }
   if (ev.target.id === 'agDone') { UI.agDone = ev.target.checked; render(); }
   if (ev.target.id === 'importFile') handleImportFile(ev.target.files && ev.target.files[0]);
+});
+document.addEventListener('focusout', ev => {
+  const el = ev.target;
+  if (!el.classList || !el.classList.contains('time-in')) return;
+  const t = normTime(el.value);
+  if (t === null) el.setAttribute('aria-invalid', 'true');
+  else { el.removeAttribute('aria-invalid'); el.value = t; }
 });
 window.addEventListener('storage', ev => { if (ev.key === DATA_KEY && loadData()) render(); });
 window.addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installEvt = ev; if (UI.view === 'settings') render(); });

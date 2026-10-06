@@ -17,7 +17,8 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 ```
 
 ## 資料模型（localStorage key: `msec.data.v1`，偏好設定：`msec.prefs.v1`）
-- `items`：事項。scope `work|personal`、cat、date、time、title、target、company、location、phone、link、note、star。
+- `items`：事項。scope `work|personal|shinnyo`（屬性與類別定義在 `SCOPES`／`CATS`）、cat、date、
+  allDay（整日）、time（開始）、endTime（約略結束，選填）、title、target、company、location、phone、link、note、star。
   重複：repeat `none|daily|weekdays|weekly|monthly|yearly`、until；重複事項的完成記在 `doneDates[YYYY-MM-DD]`，
   一般事項用 `done`/`doneAt`。
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
