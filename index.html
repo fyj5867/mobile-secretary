@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="行動祕書">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -458,6 +458,10 @@ td.proj{font-weight:700}
 .stamp.cert .st-tx{fill:var(--sun-tx)}
 .stamp.cert .st-star{fill:var(--sun)}
 .mascot{display:block;overflow:visible}
+.mphoto{position:relative;flex:none;border-radius:32%;background:#F1ECE4;box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--ring),0 6px 14px -8px rgba(0,0,0,.4)}
+.mphoto img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.mphoto .m-badge{position:absolute;right:-16%;bottom:-14%;width:50%;height:55%;overflow:visible;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))}
+.mphoto .m-badge.top{bottom:auto;top:-22%;right:-12%}
 .bob{animation:bob 3.2s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .foot{margin-top:28px;font-size:12.5px;color:var(--sub);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;text-align:center}
@@ -669,56 +673,14 @@ const IC = {
 };
 
 /* ================= mascot & stamp ================= */
-/* 吉祥物：使用者的白色雪納瑞（卡通化）。mood 決定表情，color 決定領巾顏色，prop 是右下角的小徽章 */
+/* 吉祥物：使用者的白色雪納瑞（AI 仿真照片，mascot/*.jpg）。
+   mood 決定用哪張照片，color 是貼紙外框顏色，prop 是右下角的小徽章（zzz 在右上）。
+   目前只有 happy／worried／sleepy 三張；calm 先用 happy、shock 先用 worried，之後有新照片再補。 */
 const INK = '#2A2C40';
 const BAND = { pink: '#FF7FA6', mint: '#34C79C', sun: '#FFC53D', coral: '#FF8A7A', lilac: '#A98BFF', sky: '#6FA8FF' };
-const FUR = '#FFFFFF', FUR_LINE = '#B3B8C8', EAR_TIP = '#CDD1DC', NOSE = '#25273A';
-// 毛茸茸的橢圓：沿著橢圓畫 n 個向外鼓起的小弧
-function fluff(cx, cy, rx, ry, n, amp) {
-  let d = '';
-  for (let i = 0; i <= n; i++) {
-    const t = 2 * Math.PI * i / n, x = cx + rx * Math.cos(t), y = cy + ry * Math.sin(t);
-    if (!i) { d += `M${x.toFixed(1)} ${y.toFixed(1)}`; continue; }
-    const tm = 2 * Math.PI * (i - .5) / n;
-    d += `Q${(cx + (rx + amp) * Math.cos(tm)).toFixed(1)} ${(cy + (ry + amp) * Math.sin(tm)).toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)}`;
-  }
-  return d + 'Z';
-}
-const DOG = {
-  head: fluff(50, 45, 28, 19, 20, 2.6), beard: fluff(50, 71, 23, 16, 13, 4.2),
-  tuftL: fluff(41, 66.5, 9, 5.2, 8, 2.4), tuftR: fluff(59, 66.5, 9, 5.2, 8, 2.4),
-  // 折耳：三角形耳朵往外側攤開、耳尖帶一點灰
-  ear: `<path d="M34 26Q20 18.5 10 26.5Q18 36.5 29.5 38Z" fill="${FUR}" stroke="${FUR_LINE}" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 26.5Q14.5 23.6 19.5 23.4Q17.5 28.6 14 30.4Z" fill="${EAR_TIP}"/>`,
-  // 濃眉：柔和的灰色毛束，順著眼睛往外掃
-  brow: `<path d="M-8.5 2.2Q-6 -4 0.5 -3.6Q6.5 -3.2 8.5 0.6Q4 -0.6 0 0.8Q-4.5 2.4 -8.5 2.2Z" fill="#D5D9E3"/><path d="M-5.5 0.4Q-2 -2.6 3.5 -2" fill="none" stroke="#BFC4D2" stroke-width=".9" stroke-linecap="round"/>`
-};
+const PHOTO = { happy: 'happy', calm: 'happy', worried: 'worried', shock: 'worried', sleepy: 'sleepy' };
 function mascot(mood = 'calm', color = 'pink', prop = '', cls = '') {
   const band = BAND[color] || BAND.pink;
-  const eye = (x, r) => `<circle cx="${x}" cy="52.5" r="${r}" fill="${NOSE}"/><circle cx="${(x + r * .35).toFixed(1)}" cy="${(52.5 - r * .4).toFixed(1)}" r="${(r * .38).toFixed(1)}" fill="#fff"/>`;
-  const line = d => `<path d="${d}" fill="none" stroke="${NOSE}" stroke-width="1.9" stroke-linecap="round"/>`;
-  let eyes, mouth = '', extra = '', browY = 44.5, browA = 0;
-  if (mood === 'happy') {
-    eyes = eye(39, 4.6) + eye(61, 4.6);
-    browY = 43; browA = -5;
-    mouth = `<path d="M42.5 69.5Q50 81 57.5 69.5Z" fill="#6B2337"/><path d="M45.8 72.5Q45.6 84.5 50 84.5Q54.4 84.5 54.2 72.5Z" fill="#FF8DA8" stroke="#E86A8C" stroke-width=".8"/><path d="M50 75v6.5" stroke="#E86A8C" stroke-width=".9" stroke-linecap="round"/>`;
-  } else if (mood === 'worried') {
-    eyes = eye(39, 3.7) + eye(61, 3.7);
-    browA = -15;
-    mouth = line('M44.5 76.5q2.75-2.4 5.5 0t5.5 0');
-    extra = `<path d="M19 38q4 7 0 10q-4-3 0-10z" fill="#7CC7FF" stroke="#fff" stroke-width="1.4"/>`;
-  } else if (mood === 'shock') {
-    eyes = eye(39, 5.3) + eye(61, 5.3);
-    browY = 40.5; browA = -8;
-    mouth = `<ellipse cx="50" cy="75" rx="3.6" ry="4.6" fill="#6B2337"/>`;
-  } else if (mood === 'sleepy') {
-    eyes = line('M34 53Q39 56.5 44 53M56 53Q61 56.5 66 53');
-    browY = 46; browA = 5;
-    mouth = line('M47 76h6');
-  } else {
-    eyes = eye(39, 4.1) + eye(61, 4.1);
-    mouth = line('M46 75.5Q50 78.5 54 75.5');
-  }
-  const brow = (x, a, flip) => `<g transform="translate(${x} ${browY}) rotate(${a})${flip ? ' scale(-1 1)' : ''}">${DOG.brow}</g>`;
   const P = {
     check: `<g transform="translate(78 27)"><circle r="13" fill="#2FBF95" stroke="#fff" stroke-width="3"/><path d="M-6 0l4 4.5 8-9" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g>`,
     bell: `<g transform="translate(79 27) rotate(14)"><path d="M-10 6q2-3 2-9a8 8 0 0 1 16 0q0 6 2 9z" fill="#FFC93C" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><circle cy="9" r="3" fill="#E89B00"/><path d="M-14-8q-3 4-1 9M14-8q3 4 1 9" fill="none" stroke="#FFB000" stroke-width="2.2" stroke-linecap="round"/></g>`,
@@ -733,19 +695,8 @@ function mascot(mood = 'calm', color = 'pink', prop = '', cls = '') {
     heart: `<g transform="translate(79 26)"><path d="M0 10C-12 2-12-8-5-9c3-.5 4.5 1.5 5 3 .5-1.5 2-3.5 5-3 7 1 7 11-5 19z" fill="#FF7FA6" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></g>`,
     phone: `<g transform="translate(79 27) rotate(12)"><rect x="-8" y="-13" width="16" height="26" rx="4" fill="#fff" stroke="#3F7BE0" stroke-width="2.4"/><path d="M-2 9h4" stroke="#3F7BE0" stroke-width="2" stroke-linecap="round"/></g>`
   };
-  const badge = !P[prop] ? '' : prop === 'zzz' ? P.zzz : `<g transform="translate(6 46)">${P[prop]}</g>`;
-  return `<svg class="mascot ${cls}" viewBox="0 0 100 100" aria-hidden="true">` +
-    `<ellipse cx="50" cy="96" rx="24" ry="3" fill="${INK}" opacity=".10"/>` +
-    `<path d="M23 79L77 79L50 100Z" fill="${band}" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><circle cx="28" cy="82.5" r="1.4" fill="#fff" opacity=".85"/><circle cx="72" cy="82.5" r="1.4" fill="#fff" opacity=".85"/><circle cx="50" cy="96" r="1.2" fill="#fff" opacity=".85"/>` +
-    DOG.ear + `<g transform="translate(100 0) scale(-1 1)">${DOG.ear}</g>` +
-    `<g fill="${FUR_LINE}" stroke="${FUR_LINE}" stroke-width="3" stroke-linejoin="round"><path d="${DOG.head}"/><path d="${DOG.beard}"/></g>` +
-    `<g fill="${FUR}"><path d="${DOG.head}"/><path d="${DOG.beard}"/></g>` +
-    `<path d="M45 30.5q1.4-2.8 3.3-3.8M50 29.8v-4.2M55 30.5q-1.4-2.8-3.3-3.8" fill="none" stroke="${FUR_LINE}" stroke-width="1.1" stroke-linecap="round"/>` +
-    `<ellipse cx="29" cy="60" rx="5" ry="3" fill="#FF8FB0" opacity=".35"/><ellipse cx="71" cy="60" rx="5" ry="3" fill="#FF8FB0" opacity=".35"/>` +
-    eyes + brow(38.5, browA) + brow(61.5, -browA, true) + mouth +
-    `<g fill="${FUR}" stroke="${FUR_LINE}" stroke-width=".9"><path d="${DOG.tuftL}"/><path d="${DOG.tuftR}"/></g>` +
-    `<path d="M43.5 59.5Q50 55 56.5 59.5Q56.5 65.5 50 66.5Q43.5 65.5 43.5 59.5Z" fill="${NOSE}"/><ellipse cx="47.5" cy="59.3" rx="2.4" ry="1.3" fill="#fff" opacity=".45"/>` +
-    extra + badge + `</svg>`;
+  const badge = P[prop] ? `<svg class="m-badge${prop === 'zzz' ? ' top' : ''}" viewBox="60 5 40 44" aria-hidden="true">${P[prop]}</svg>` : '';
+  return `<span class="mascot mphoto ${cls}" style="--ring:${band}" aria-hidden="true"><img src="mascot/${PHOTO[mood] || 'happy'}.jpg" alt="" decoding="async">${badge}</span>`;
 }
 function stamp(txt = '完成', cls = '') {
   return `<svg class="stamp ${cls}" viewBox="0 0 64 64" aria-hidden="true"><g transform="rotate(-12 32 32)"><circle cx="32" cy="32" r="28" class="st-bg"/><circle cx="32" cy="32" r="22.5" class="st-ring"/><text x="32" y="38.5" text-anchor="middle" class="st-tx">${txt}</text><path d="M32 9.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" class="st-star"/></g></svg>`;

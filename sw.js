@@ -1,6 +1,7 @@
 // 行動祕書 Service Worker — App 外殼離線快取（network-first），字型 cache-first
-const CACHE = 'msec-v6';
-const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './icon-180.png', './icon-192.png', './icon-512.png'];
+const CACHE = 'msec-v7';
+const SHELL = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png',
+  './mascot/happy.jpg', './mascot/worried.jpg', './mascot/sleepy.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
