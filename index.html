@@ -229,15 +229,16 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .today-date{font-family:var(--f-num);color:var(--sub);font-size:14px;margin-top:2px}
 .summary{margin-top:6px;color:var(--sub);max-width:60ch}
 .summary b{font-family:var(--f-num);color:var(--ink);font-weight:600;font-size:15px}
-.slots{display:flex;flex-direction:column;gap:6px;align-items:stretch}
-.slots-h{font-size:12px;color:var(--sub);text-align:center}
-.slot-row{display:flex;gap:6px}
-.slot{display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 10px;border-radius:14px;border:1px solid var(--line);background:var(--card-2);min-width:62px;cursor:pointer}
-.slot .t{font-family:var(--f-num);font-weight:600;font-size:15px}
-.slot .l{font-size:11.5px;color:var(--sub);white-space:nowrap}
-.slot.past .t{color:var(--faint)}
-.slot.next{border-color:var(--accent);background:var(--accent-soft)}
-.slot.next .l{color:var(--accent-tx)}
+.next-ntf{width:250px;max-width:100%;background:var(--card-2);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
+.nn-h{display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--sub);margin-bottom:4px}
+.nn-h .doodle{width:20px;height:20px}
+.nn-list{display:flex;flex-direction:column}
+.nn-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}
+.nn-list .nn-row:first-child{border-top:0}
+.nn-t{color:var(--accent-tx);font-weight:600;white-space:nowrap}
+.nn-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.nn-k{font-size:11px;color:var(--sub);white-space:nowrap}
+.nn-empty{font-size:12.5px;color:var(--sub);padding:4px 0}
 .grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-top:16px}
 .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
 .mini-app{display:flex;flex-direction:column;gap:6px;padding:10px 0;border:0;border-top:1px dashed var(--line);cursor:pointer;background:none;text-align:left;width:100%}
@@ -414,7 +415,6 @@ td.proj{font-weight:700}
 /* ---------- layers ---------- */
 .overlay{position:fixed;inset:0;background:var(--scrim);z-index:45;backdrop-filter:blur(2px)}
 .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(700px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;background:var(--card);border-radius:24px;box-shadow:0 30px 80px -24px rgba(0,0,0,.5);z-index:55;padding:20px 22px;animation:rise .22s ease-out;overscroll-behavior:contain}
-.modal.slot{z-index:52;width:min(500px,calc(100vw - 24px));padding:0}
 @keyframes rise{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
 .sheet-h{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .sheet-h .mascot{width:56px;height:56px;flex:none}
@@ -462,16 +462,6 @@ td.proj{font-weight:700}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(430px,100vw);background:var(--bg);z-index:50;overflow:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 18px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:-24px 0 60px -30px rgba(0,0,0,.55);animation:slide .25s ease-out;overscroll-behavior:contain}
 @keyframes slide{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
 .drawer .panel{margin-bottom:14px}
-.slot-top{position:relative;display:flex;align-items:center;gap:14px;padding:22px 20px 18px;border-radius:24px 24px 0 0;background:var(--slot-bg)}
-.slot-top .slot-dd{position:absolute;right:16px;top:12px;width:40px;height:40px;transform:rotate(8deg)}
-.slot-top .slot-dd2{position:absolute;right:58px;top:30px;width:18px;height:18px}
-.slot-top .mascot{width:92px;height:92px;flex:none}
-.slot-top .t{font-family:var(--f-num);font-weight:600;font-size:14px;color:var(--sub)}
-.slot-top h2{margin:2px 0 0;font-family:var(--f-display);font-weight:700;font-size:21px;line-height:1.3;padding-right:36px}
-.slot-top p{margin:4px 0 0;color:var(--sub);font-size:13px}
-.slot-body{padding:6px 20px 4px}
-.sl-sec h3{font-family:var(--f-display);font-weight:400;font-size:15px;margin:12px 0 2px;display:flex;align-items:center;gap:6px}
-.sl-sec h3 .n{font-family:var(--f-num);font-size:12.5px;color:var(--sub)}
 .slot-foot{display:flex;gap:8px;justify-content:flex-end;padding:12px 20px 18px;flex-wrap:wrap}
 
 /* ---------- toasts & celebration ---------- */
@@ -526,9 +516,7 @@ td.proj{font-weight:700}
   .hero{grid-template-columns:auto minmax(0,1fr);padding:16px}
   .hero > .mascot{width:72px;height:72px}
   .hello{font-size:21px}
-  .slots{grid-column:1/-1}
-  .slot-row{justify-content:space-between}
-  .slot{flex:1;min-width:0;padding:6px 4px}
+  .next-ntf{grid-column:1/-1;width:auto}
   .tiles,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px -20px rgba(0,0,0,.4)}
   .bnav button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;color:var(--sub);font-family:var(--f-display);font-size:11.5px;position:relative;border-radius:12px}
@@ -541,7 +529,7 @@ td.proj{font-weight:700}
   .add-menu{position:fixed;top:auto;right:16px;bottom:calc(var(--nav-h) + 86px + env(safe-area-inset-bottom,0px))}
   .toasts{bottom:calc(var(--nav-h) + 90px + env(safe-area-inset-bottom,0px))}
   .modal{top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:92dvh;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:sheet .25s ease-out}
-  .modal.slot,.modal.daily{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
+  .modal.daily{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
   @keyframes sheet{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
   .form-grid{grid-template-columns:minmax(0,1fr)}
   .checks{padding-top:2px}
@@ -597,7 +585,6 @@ td.proj{font-weight:700}
 <button class="fab" id="fab" data-act="add-menu" aria-label="新增"></button>
 <div id="overlay" class="overlay" hidden></div>
 <aside id="drawer" class="drawer layer" role="dialog" aria-modal="true" aria-label="提醒通知" hidden></aside>
-<div id="slotPop" class="modal slot layer" role="dialog" aria-modal="true" aria-label="時段提醒" hidden></div>
 <div id="dailyPop" class="modal daily layer" role="dialog" aria-modal="true" aria-label="今日一句" hidden></div>
 <div id="modal" class="modal layer" role="dialog" aria-modal="true" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
@@ -674,12 +661,6 @@ const SCHEMES = ['CB', 'UL / cUL', 'CE (LVD)', 'CE (RED)', 'CE (EMC)', 'FCC', 'B
 const STEP_TPL = [
   [0, '申請表／授權書簽回'], [.15, '關鍵零件清單（BOM / CDF）'], [.3, '送樣（主機＋Adapter＋電池）'],
   [.5, '使用手冊／標籤圖／警語'], [.75, '測試報告初稿確認'], [.95, '證書草稿確認']
-];
-const SLOTS = [
-  { k: '07', t: '07:00', name: '早安', title: '早安！今天也一起加油', sub: '先看看今天和接下來兩天的安排', mood: 'happy', color: 'sun', prop: 'sun', bg: 'var(--sun-soft)', dd: ['sun', 'flower'] },
-  { k: '12', t: '12:00', name: '午間', title: '午安～上午進度檢查', sub: '吃飯前確認一下還沒完成的事', mood: 'calm', color: 'mint', prop: 'coffee', bg: 'var(--mint-soft)', dd: ['onigiri', 'leaf'] },
-  { k: '17', t: '17:00', name: '收尾', title: '快下班了，來收尾吧', sub: '今天剩下的事、明天要準備的東西', mood: 'calm', color: 'pink', prop: 'bell', bg: 'var(--accent-soft)', dd: ['tea', 'plane'] },
-  { k: '21', t: '21:00', name: '晚安', title: '晚安～回顧今天、預告明天', sub: '把沒做完的排進明天，好好休息', mood: 'sleepy', color: 'sky', prop: 'moon', bg: 'var(--sky-soft)', dd: ['moon', 'sparkle'] }
 ];
 const CHEERS = ['太棒了！', '完成一件，拍拍手～', '進度 +1，繼續保持！', '漂亮收尾！', '又往前進一步！', '效率滿分！'];
 
@@ -802,7 +783,7 @@ const savePrefs = () => ls.set(PREF_KEY, JSON.stringify(prefs));
 const UI = {
   view: 'today', scope: prefs.scope || 'all', month: TODAY.slice(0, 8) + '01', sel: TODAY,
   certTab: 'apps', appFilter: 'active', certQ: '', agQ: '', agDays: 30, agDone: false,
-  repMode: 'week', repAnchor: TODAY, slotOpen: null, slotLate: false
+  repMode: 'week', repAnchor: TODAY
 };
 function loadData() {
   try {
@@ -1064,9 +1045,6 @@ function vToday() {
   else { mood = 'happy'; color = 'sky'; prop = 'heart'; line = '今天行程很輕鬆～'; }
   const h = new Date().getHours();
   const greet = h < 5 ? '夜深了' : h < 11 ? '早安' : h < 14 ? '午安' : h < 18 ? '午後好' : '晚安';
-  const hm = nowHM();
-  const nextSlot = SLOTS.find(s => s.t > hm);
-  const slots = SLOTS.map(s => `<button class="slot ${s.t <= hm ? 'past' : ''} ${nextSlot === s ? 'next' : ''}" data-act="slot" data-k="${s.k}" aria-label="開啟 ${s.t} 提醒"><span class="t">${s.t}</span><span class="l">${nextSlot === s ? '下一次' : s.name}</span></button>`).join('');
   const samples = S.items.filter(x => x.sample).length + S.apps.filter(x => x.sample).length + S.certs.filter(x => x.sample).length;
   const sampleBar = samples ? `<div class="banner" style="margin-top:16px">${mascot('calm', 'sun', 'doc')}<p>目前有 <b class="num">${samples}</b> 筆標示「【範例】」的示範資料（含工作與個人）。看完功能後可以一鍵清除；證書效期資料可以到「設定」匯入。</p><div class="acts"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}匯入資料</button><button class="btn sm danger" data-act="clear-samples">清除範例</button></div></div>` : '';
   const soonByDay = [1, 2].map(n => {
@@ -1089,7 +1067,7 @@ function vToday() {
       <div class="today-date">${full(TODAY)}<span class="hero-dd">${doodle(timeDoodle())}</span></div>
       <div class="summary">${scopeWord() ? `【${scopeWord()}】` : ''}今天有 <b>${pending.length}</b> 件待辦${doneT.length ? `、已完成 <b>${doneT.length}</b> 件` : ''}；兩天內即將到期 <b>${soon.length}</b> 件${overdue.length ? `；逾期 <b>${overdue.length}</b> 件要先處理` : ''}。</div>
     </div>
-    <div class="slots"><div class="slots-h">每日提醒時段</div><div class="slot-row">${slots}</div></div>
+    <div class="next-ntf"><div class="nn-h">${doodle('bell')}接下來的推播</div>${nextNoticesHtml(3)}</div>
   </section>
   ${quoteCard()}
   ${sampleBar}
@@ -1507,15 +1485,15 @@ function vSettings() {
     </section>
     <section class="panel">
       <div class="panel-h">${ph('plane')}<h2>提醒與通知</h2></div>
-      <p>App 開著時，每天 07:00／12:00／17:00／21:00 會跳出時段提醒卡；事項到期前 2 天開始提醒。</p>
+      <p>每件事項、認證節點、預計取證日都會推播兩次：<b>前一天</b>（同一時間）與<b>開始前 2 小時</b>。整日或沒填時間的事：前一天 09:00、當天 08:00。每天／每週重複的事只在當天提醒一次。</p>
+      <p>App 開著或在背景時由 App 跳通知（請開啟系統通知）；<b>App 關著時</b>由 iPhone 行事曆推播，請用上方「雲端同步 → 訂閱到 iPhone 行事曆」。</p>
       <div class="set-acts" style="margin-bottom:12px">
         ${notif === 'granted' ? '<span class="tag done">系統通知已開啟</span>' : notif === 'unsupported' ? '<span class="tag later">這個瀏覽器不支援系統通知</span>' : notif === 'denied' ? '<span class="tag overdue">系統通知已被封鎖，請到瀏覽器設定允許</span>' : `<button class="btn" data-act="notify">${IC.bell}開啟系統通知</button>`}
         <label class="chk-inline"><input type="checkbox" id="sndToggle" ${snd ? 'checked' : ''}> 提醒時播放提示音</label>
       </div>
-      <p><b>App 關著也要準時提醒？</b>把行程匯入手機內建行事曆，由行事曆負責響鈴：</p>
+      <p><b>沒開雲端同步？</b>也可以一次匯出行程到手機行事曆（行程有變動要重新匯出）：</p>
       <div class="set-acts">
-        <button class="btn" data-act="ics-events">${IC.cal}匯出未來 180 天行程（含提前兩天提醒）</button>
-        <button class="btn" data-act="ics-daily">${IC.bell}匯出每日四時段提醒</button>
+        <button class="btn" data-act="ics-events">${IC.cal}匯出未來 180 天行程（前一天＋2 小時前提醒）</button>
       </div>
       <p class="muted" style="margin-top:8px;font-size:12.5px">iPhone 的主畫面 App 匯出 .ics 常常沒反應，請改用 <b>Safari</b> 開這個網址再匯出；開啟雲端同步後，建議改用「訂閱到 iPhone 行事曆」，會自動更新。</p>
     </section>
@@ -1571,14 +1549,12 @@ function render() {
     ${SCOPES.map(s => `<button data-act="new-item" data-scope="${s.k}">${mascot('happy', s.color, s.prop)}<span><b>${s.t} 事項</b><small>${s.hint}</small></span></button>`).join('')}
     <button data-act="new-app">${mascot('calm', 'sun', 'cert')}<span><b>認證申請</b><small>申請日 → 取證日＋提交節點</small></span></button>
     <button data-act="new-cert">${mascot('calm', 'lilac', 'hourglass')}<span><b>證書效期</b><small>到期日提示</small></span></button>`;
-  const nx = SLOTS.find(s => s.t > nowHM());
-  $('#foot').innerHTML = `<span>到期前 <b>${LEAD}</b> 天開始提醒</span><span>每日提醒 <b>07:00</b>・<b>12:00</b>・<b>17:00</b>・<b>21:00</b>（下一次 <b>${nx ? nx.t : '明天 07:00'}</b>）</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
+  $('#foot').innerHTML = `<span>事項在 <b>前一天</b> 與 <b>開始前 2 小時</b> 推播</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
-  if (UI.slotOpen) fillSlot(UI.slotOpen, UI.slotLate);
 }
 function go(view) {
   UI.view = view; prefs.view = view; savePrefs();
-  closeLayer($('#slotPop')); closeLayer($('#drawer'));
+  closeLayer($('#drawer'));
   render(); window.scrollTo({ top: 0 });
 }
 
@@ -1592,8 +1568,6 @@ function closeLayer(el) {
   if (!el || el.hidden) return;
   el.hidden = true;
   const i = layers.indexOf(el); if (i >= 0) layers.splice(i, 1);
-  if (el.id === 'slotPop') UI.slotOpen = null;
-  if (el.id === 'dailyPop') setTimeout(() => maybeSlot(true), 300);
   if (!layers.length) { $('#overlay').hidden = true; document.body.classList.remove('locked'); }
 }
 const closeTop = () => closeLayer(layers[layers.length - 1]);
@@ -1610,41 +1584,63 @@ function fillDrawer() {
     ${grp('逾期', od, 'var(--red)', false)}${grp('今天', td, 'var(--accent)', true)}${grp('明天・' + md(addDays(TODAY, 1)), t1, 'var(--sun)', true)}${grp('後天・' + md(addDays(TODAY, 2)), t2, 'var(--sun)', true)}
     ${A.certs.length ? `<section class="panel"><div class="panel-h">${ph('hourglass')}<h2>證書到期（90 天內與已過期）</h2><span class="n">${A.certs.length}</span></div><div class="rows">${A.certs.map(c => evRow(certEv(c))).join('')}</div></section>` : ''}
     ${!A.count ? `<section class="panel">${emptyBox('一切都在掌握中', '<div>到期前兩天的事、逾期的事、90 天內到期的證書都會出現在這裡。</div>', 'happy', 'mint', 'check')}</section>` : ''}
-    <div class="set-acts">${SLOTS.map(s => `<button class="btn sm" data-act="slot" data-k="${s.k}">看 ${s.t} 提醒</button>`).join('')}</div>`;
+    <section class="panel"><div class="panel-h">${ph('bell')}<h2>接下來的推播</h2></div>${nextNoticesHtml(6)}
+      <p class="muted" style="margin:8px 0 0;font-size:12.5px">每件事在前一天、以及開始前 2 小時推播（整日事項：前一天 09:00、當天 08:00）。</p></section>`;
 }
 
-/* ================= slot reminders ================= */
-const shownSlots = new Set();
-function slotSummary() {
-  const live = EV.filter(e => e.k !== 'cert' && e.live);
-  const todays = live.filter(e => e.date === TODAY);
-  return {
-    todays, pend: todays.filter(e => !e.done), doneN: todays.filter(e => e.done).length,
-    tmr: live.filter(e => e.date === addDays(TODAY, 1) && !e.done),
-    aft: live.filter(e => e.date === addDays(TODAY, 2) && !e.done),
-    od: EV.filter(e => lvl(e) === 'overdue'),
-    cw: S.certs.filter(c => ['expired', 'warn'].includes(certLvl(c)))
-  };
+/* ================= 推播提醒：前一天＋開始前 2 小時 =================
+   App 開著或在背景時由 App 發通知；App 關著時靠 iPhone 行事曆（訂閱或匯出的 .ics，見 alarmsFor）。
+   整日／沒填時間：前一天 09:00＋當天 08:00。每天／每個工作日／每週重複的只在當天提醒一次。 */
+const NTF_KEY = 'msec.ntf.v1';
+function noticeTimes(e) {
+  if (!['item', 'step', 'certday'].includes(e.k) || e.done || !e.live) return [];
+  const [y, m, d] = e.date.split('-').map(Number);
+  const often = e.rep && ['daily', 'weekdays', 'weekly'].includes(e.ref.repeat);
+  const out = [];
+  if (e.time && !e.allDay) {
+    const [h, mi] = e.time.split(':').map(Number);
+    const start = new Date(y, m - 1, d, h, mi).getTime();
+    if (!often) out.push({ at: new Date(start - 864e5), kind: 'day' });
+    out.push({ at: new Date(start - 2 * 36e5), kind: 'soon' });
+  } else {
+    if (!often) out.push({ at: new Date(y, m - 1, d - 1, 9, 0), kind: 'day' });
+    out.push({ at: new Date(y, m - 1, d, 8, 0), kind: 'soon' });
+  }
+  return out;
 }
-function fillSlot(s, late) {
-  const pop = $('#slotPop');
-  const { todays, pend, doneN, tmr, aft, od, cw } = slotSummary();
-  const sec = (t, arr, empty) => arr.length ? `<div class="sl-sec"><h3>${t}<span class="n">${arr.length}</span></h3><div class="rows">${arr.slice(0, 6).map(e => evRow(e, { noDate: t !== '逾期未完成', noEdit: true })).join('')}</div>${arr.length > 6 ? `<div class="more">還有 ${arr.length - 6} 項…</div>` : ''}</div>` : (empty ? `<div class="sl-sec"><h3>${t}</h3><div class="muted">${empty}</div></div>` : '');
-  let body = '', note = '';
-  if (s.k === '07') { body = sec('今日待辦', pend, '今天沒有排定的事項～') + sec('明天', tmr) + sec('後天', aft) + sec('逾期未完成', od); }
-  else if (s.k === '12') { body = sec('今天還沒完成', pend, '今天的事都完成了，下午輕鬆一點！') + sec('逾期未完成', od); note = `上午已完成 ${doneN} 件`; }
-  else if (s.k === '17') { body = sec('今天還沒完成', pend, '今天的待辦都清空了，準時下班！') + sec('明天要準備', tmr) + sec('後天', aft); }
-  else { body = sec('今天沒做完的', pend, '今天全數完成，辛苦了！') + sec('明天預告', tmr) + sec('後天預告', aft); note = `今天完成 ${doneN}／${todays.length} 件`; }
-  if (cw.length) body += `<div class="sl-sec"><h3>證書到期<span class="n">${cw.length}</span></h3><div class="muted">90 天內到期或已過期的證書有 ${cw.length} 筆，記得安排續證。</div></div>`;
-  pop.style.setProperty('--slot-bg', s.bg);
-  pop.innerHTML = `<div class="slot-top">${doodle(s.dd[0], 'slot-dd')}${doodle(s.dd[1], 'slot-dd2')}${mascot(s.mood, s.color, s.prop, 'bob')}<div><div class="t">${s.t} ${s.name}提醒${late ? '・補提醒' : ''}</div><h2>${s.title}</h2><p>${s.sub}${note ? `・${note}` : ''}</p></div></div>
-    <div class="slot-body">${body}</div>
-    <div class="slot-foot"><button class="btn" data-act="close">知道了</button><button class="btn primary" data-act="slot-go">查看今日</button></div>`;
+const noticeName = e => e.k === 'certday' ? `預計取證：${appName(e.app)}` : e.k === 'step' ? `${appName(e.app)}｜${e.title}` : e.title;
+function noticeText(e, n) {
+  const when = n.kind === 'day' ? '明天' : (e.time && !e.allDay ? '2 小時後' : '今天');
+  const t = timeLabel(e);
+  return `${when}${t ? ' ' + t : ''}｜${noticeName(e)}`;
 }
-function openSlot(s, late) {
-  UI.slotOpen = s; UI.slotLate = !!late;
-  fillSlot(s, late);
-  openLayer($('#slotPop'));
+function upcomingNotices(limit) {
+  const now = Date.now(), hi = addDays(TODAY, 3), list = [];
+  EV.filter(e => e.date >= TODAY && e.date <= hi).forEach(e => noticeTimes(e).forEach(n => { if (n.at.getTime() > now) list.push({ e, n }); }));
+  return list.sort((a, b) => a.n.at - b.n.at).slice(0, limit);
+}
+const fmtAt = d => { const s = ymd(d); return `${s === TODAY ? '今天' : s === addDays(TODAY, 1) ? '明天' : `${md(s)}（${wd(s)}）`} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+function nextNoticesHtml(limit) {
+  const ups = upcomingNotices(limit);
+  if (!ups.length) return '<div class="nn-empty">三天內沒有需要推播的事</div>';
+  return `<div class="nn-list">${ups.map(x => `<div class="nn-row"><span class="nn-t num">${fmtAt(x.n.at)}</span><span class="nn-n">${esc(noticeName(x.e))}</span><span class="nn-k">${x.n.kind === 'day' ? '前一天' : (x.e.time && !x.e.allDay ? '2 小時前' : '當天')}</span></div>`).join('')}</div>`;
+}
+function checkNotices() {
+  let sent = {}; try { sent = JSON.parse(ls.get(NTF_KEY)) || {}; } catch (e) { sent = {}; }
+  const now = Date.now(), lo = addDays(TODAY, -1), hi = addDays(TODAY, 2), due = [];
+  EV.filter(e => e.date >= lo && e.date <= hi).forEach(e => noticeTimes(e).forEach(n => {
+    const key = `${e.key}|${e.date}|${n.kind}`, t = n.at.getTime();
+    // 過了提醒時間 6 小時內才補發，太舊的就不發了
+    if (t <= now && now - t < 6 * 36e5 && !sent[key]) { due.push({ e, n }); sent[key] = e.date; }
+  }));
+  const cutoff = addDays(TODAY, -3);
+  Object.keys(sent).forEach(k => { if (sent[k] < cutoff) delete sent[k]; });
+  ls.set(NTF_KEY, JSON.stringify(sent));
+  if (!due.length) return;
+  const lines = due.map(x => noticeText(x.e, x.n));
+  if (due.length === 1) { sysNotify('行動祕書提醒', lines[0]); toast(lines[0], 'calm', 'sun', 'bell'); }
+  else { sysNotify(`行動祕書：${due.length} 則提醒`, lines.slice(0, 4).join('\n')); toast(`${due.length} 則提醒：${lines[0]}…`, 'calm', 'sun', 'bell'); }
+  chime();
 }
 /* 今日一句：0:00 之後第一次開 App（或 App 開著跨過 0:00）跳出一次 */
 const shownDaily = new Set();
@@ -1668,22 +1664,6 @@ function maybeDaily() {
   sysNotify(QUOTE_HEAD, quoteOf(TODAY).text.trim().slice(0, 120));
   return true;
 }
-function maybeSlot(onLoad) {
-  if (!$('#dailyPop').hidden) return;
-  const hm = nowHM();
-  const passed = SLOTS.filter(s => s.t <= hm); if (!passed.length) return;
-  const s = passed[passed.length - 1];
-  const key = `msec.slot:${TODAY}:${s.k}`;
-  if (shownSlots.has(key) || ls.get(key)) return;
-  shownSlots.add(key); ls.set(key, '1');
-  const [h, m] = s.t.split(':').map(Number); const now = new Date();
-  const mins = now.getHours() * 60 + now.getMinutes() - (h * 60 + m);
-  if (onLoad && mins > 180) return;
-  openSlot(s, mins > 15);
-  chime();
-  const sm = slotSummary();
-  sysNotify(`${s.t} ${s.name}提醒`, `今天待辦 ${sm.pend.length} 件・兩天內 ${sm.tmr.length + sm.aft.length} 件${sm.od.length ? `・逾期 ${sm.od.length} 件` : ''}`);
-}
 let audioCtx = null;
 function chime() {
   if (prefs.snd === false) return;
@@ -1704,7 +1684,7 @@ function sysNotify(title, body) {
   try {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.ready.then(r => r.showNotification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'msec-slot' })).catch(() => {});
+      navigator.serviceWorker.ready.then(r => r.showNotification(title, { body, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'msec-' + Date.now() })).catch(() => {});
     } else new Notification(title, { body, icon: 'icon-192.png' });
   } catch (e) {}
 }
@@ -2022,6 +2002,11 @@ function icsFold(line) {
   out.push(cur); return out.join('\r\n');
 }
 const icsDate = d => d.replace(/-/g, '');
+/* 推播規則（使用者指定）：前一天＋開始前 2 小時；整日／沒填時間：前一天 09:00＋當天 08:00；
+   每天／每個工作日／每週重複的事項只在當天提醒一次（避免天天被通知兩次） */
+const alarmDayBefore = t => t ? '-P1D' : '-PT15H';
+const alarmSoon = t => t ? '-PT2H' : 'PT8H';
+const alarmsFor = (t, repeat) => ['daily', 'weekdays', 'weekly'].includes(repeat) ? [alarmSoon(t)] : [alarmDayBefore(t), alarmSoon(t)];
 const icsStamp = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
 function vevent({ uid: u, date, time, endTime, summary, desc, location, url, rrule, alarms, durMin = 30 }) {
   const L = ['BEGIN:VEVENT', `UID:${u}@mobile-secretary`, `DTSTAMP:${icsStamp()}`];
@@ -2047,8 +2032,6 @@ function icsWrap(events, name, feed) {
 const appUrl = () => location.protocol.startsWith('http') ? location.href.split('#')[0] : '';
 function exportEventsICS() {
   const hi = addDays(TODAY, 180); const evs = []; const seen = new Set();
-  const twoDays = t => t ? '-P2D' : '-P1DT15H';
-  const dayOf = t => t ? '-PT15M' : 'PT9H';
   for (const it of S.items) {
     if (!isDate(it.date)) continue;
     const base = { desc: [it.cat && `類別：${it.cat}`, it.target && `對象：${it.target}`, it.company && `公司：${it.company}`, it.phone && `電話：${it.phone}`, it.link && `連結：${it.link}`, it.note].filter(Boolean).join('\n'), location: it.location, url: appUrl() };
@@ -2059,20 +2042,20 @@ function exportEventsICS() {
       if (isDate(it.until) && it.until < TODAY) continue;
       const freq = { daily: 'FREQ=DAILY', weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', weekly: 'FREQ=WEEKLY', monthly: 'FREQ=MONTHLY', yearly: 'FREQ=YEARLY' }[it.repeat];
       const rr = freq + (isDate(it.until) ? `;UNTIL=${icsDate(it.until)}T235959` : '');
-      const al = ['monthly', 'yearly'].includes(it.repeat) ? [twoDays(time), dayOf(time)] : [time ? 'PT0M' : 'PT9H'];
+      const al = alarmsFor(time, it.repeat);
       evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary, rrule: rr, alarms: al }, base)));
     } else {
       if (it.done || it.date < TODAY || it.date > hi) continue;
-      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary, alarms: [twoDays(time), dayOf(time)] }, base)));
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary, alarms: alarmsFor(time) }, base)));
     }
   }
   for (const a of S.apps) {
     if (!isLive(a)) continue;
     (a.steps || []).forEach(st => {
       if (!isDate(st.date) || st.done || st.date < TODAY || st.date > hi) return;
-      evs.push(vevent({ uid: `step-${a.id}-${st.id}`, date: st.date, time: st.time, summary: `【認證】${appName(a)}｜${st.title}`, desc: [a.company && `實驗室：${a.company}`, a.target && `窗口：${a.target}`, a.phone && `電話：${a.phone}`].filter(Boolean).join('\n'), url: appUrl(), alarms: [twoDays(st.time), dayOf(st.time)] }));
+      evs.push(vevent({ uid: `step-${a.id}-${st.id}`, date: st.date, time: st.time, summary: `【認證】${appName(a)}｜${st.title}`, desc: [a.company && `實驗室：${a.company}`, a.target && `窗口：${a.target}`, a.phone && `電話：${a.phone}`].filter(Boolean).join('\n'), url: appUrl(), alarms: alarmsFor(st.time) }));
     });
-    if (isDate(a.certDate) && a.certDate >= TODAY && a.certDate <= hi) evs.push(vevent({ uid: 'certday-' + a.id, date: a.certDate, summary: `【取證日】${appName(a)}`, url: appUrl(), alarms: [twoDays(''), dayOf('')] }));
+    if (isDate(a.certDate) && a.certDate >= TODAY && a.certDate <= hi) evs.push(vevent({ uid: 'certday-' + a.id, date: a.certDate, summary: `【取證日】${appName(a)}`, url: appUrl(), alarms: alarmsFor('') }));
   }
   for (const c of S.certs) {
     if (!isDate(c.due) || certLvl(c) === 'retired' || c.due < TODAY) continue;
@@ -2082,11 +2065,6 @@ function exportEventsICS() {
   if (!evs.length) { toast('目前沒有需要匯出的行程', 'calm', 'sky'); return; }
   shareOrDownload(`行動祕書_行程_${TODAY}.ics`, icsWrap(evs, '行動祕書'), 'text/calendar');
   toast(`已產生 ${evs.length} 筆行事曆項目，開啟後選「加入全部」`, 'happy', 'sky', 'bell');
-}
-function exportDailyICS() {
-  const evs = SLOTS.map(s => vevent({ uid: 'slot-' + s.k, date: TODAY, time: s.t, durMin: 5, summary: `${s.t} ${s.name}提醒｜打開行動祕書`, desc: s.sub, url: appUrl(), rrule: 'FREQ=DAILY', alarms: ['PT0M'] }));
-  shareOrDownload('行動祕書_每日提醒.ics', icsWrap(evs, '行動祕書提醒'), 'text/calendar');
-  toast('每天 07:00／12:00／17:00／21:00 會由手機行事曆響鈴提醒', 'happy', 'sun', 'bell');
 }
 
 /* ================= cloud sync (GitHub secret gist) =================
@@ -2287,7 +2265,7 @@ function openSubscribe() {
   m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sun', 'bell')}<div><h2>訂閱到 iPhone 行事曆</h2><p>行程會自動出現在 iPhone 內建的行事曆，App 改了它也跟著更新</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <ol class="set-list">
       <li><b>在 iPhone 上</b>按下方「在 iPhone 訂閱」，跳出視窗時選 <b>「訂閱」</b>。</li>
-      <li>設定畫面若有 <b>「移除提示」</b>，請<b>關閉</b>，到期前兩天才會響鈴。</li>
+      <li>設定畫面若有 <b>「移除提示」</b>，請<b>關閉</b>，前一天和 2 小時前才會推播。</li>
       <li>按「加入」完成。之後可到 iPhone「設定 → 行事曆 → 帳號 → 已訂閱的行事曆」調整更新頻率（建議每 15 分鐘）。</li>
       <li>按鈕沒反應時：複製下方網址，到「設定 → 行事曆 → 帳號 → 加入帳號 → 其他 → 加入已訂閱的行事曆」貼上。</li>
     </ol>
@@ -2309,8 +2287,6 @@ async function copyText(text, okMsg) {
 function buildFeed() {
   const lo = addDays(TODAY, -60), hi = addDays(TODAY, 400);
   const evs = [];
-  const twoDays = t => t ? '-P2D' : '-P1DT15H';
-  const dayOf = t => t ? '-PT15M' : 'PT9H';
   const url = location.protocol.startsWith('http') ? location.origin + location.pathname : '';
   for (const it of S.items) {
     if (!isDate(it.date)) continue;
@@ -2323,12 +2299,12 @@ function buildFeed() {
       const freq = { daily: 'FREQ=DAILY', weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', weekly: 'FREQ=WEEKLY', monthly: 'FREQ=MONTHLY', yearly: 'FREQ=YEARLY' }[it.repeat];
       if (!freq) continue;
       const rr = freq + (isDate(it.until) ? `;UNTIL=${icsDate(it.until)}T235959` : '');
-      const al = ['monthly', 'yearly'].includes(it.repeat) ? [twoDays(time), dayOf(time)] : [time ? 'PT0M' : 'PT9H'];
+      const al = alarmsFor(time, it.repeat);
       evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary: pre + it.title, rrule: rr, alarms: al }, base)));
     } else {
       if (it.date < lo || it.date > hi) continue;
       const future = it.date >= TODAY && !it.done;
-      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary: (it.done ? '✓ ' : '') + pre + it.title, alarms: future ? [twoDays(time), dayOf(time)] : [] }, base)));
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary: (it.done ? '✓ ' : '') + pre + it.title, alarms: future ? alarmsFor(time) : [] }, base)));
     }
   }
   for (const a of S.apps) {
@@ -2337,10 +2313,10 @@ function buildFeed() {
     (a.steps || []).forEach(st => {
       if (!isDate(st.date) || st.date < lo || st.date > hi) return;
       const future = live && !st.done && st.date >= TODAY;
-      evs.push(vevent({ uid: `step-${a.id}-${st.id}`, date: st.date, time: st.time, summary: `${st.done ? '✓ ' : ''}【認證】${appName(a)}｜${st.title}`, desc: '認證提交節點', url, alarms: future ? [twoDays(st.time), dayOf(st.time)] : [] }));
+      evs.push(vevent({ uid: `step-${a.id}-${st.id}`, date: st.date, time: st.time, summary: `${st.done ? '✓ ' : ''}【認證】${appName(a)}｜${st.title}`, desc: '認證提交節點', url, alarms: future ? alarmsFor(st.time) : [] }));
     });
     const cd = endOf(a);
-    if (isDate(cd) && cd >= lo && cd <= hi) evs.push(vevent({ uid: 'certday-' + a.id, date: cd, summary: `${a.status === 'obtained' ? '【取證】' : '【預計取證】'}${appName(a)}`, url, alarms: live && cd >= TODAY ? [twoDays(''), dayOf('')] : [] }));
+    if (isDate(cd) && cd >= lo && cd <= hi) evs.push(vevent({ uid: 'certday-' + a.id, date: cd, summary: `${a.status === 'obtained' ? '【取證】' : '【預計取證】'}${appName(a)}`, url, alarms: live && cd >= TODAY ? alarmsFor('') : [] }));
   }
   for (const c of S.certs) {
     if (!isDate(c.due) || certLvl(c) === 'retired' || c.due < lo) continue;
@@ -2468,8 +2444,6 @@ const ACT = {
   'app-filter': b => { UI.appFilter = b.dataset.f; render(); },
   'app-obtain': b => { const a = S.apps.find(x => x.id === b.dataset.id); if (a) openAppForm(a, { status: 'obtained', actualCertDate: a.actualCertDate || TODAY, focus: 'fa-expiry' }); },
   'ag-days': b => { UI.agDays = Number(b.dataset.n); render(); },
-  slot: b => { const s = SLOTS.find(x => x.k === b.dataset.k); if (s) openSlot(s, false); },
-  'slot-go': () => go('today'),
   'rep-mode': b => { UI.repMode = b.dataset.m; render(); },
   'rep-prev': () => { const d = parse(UI.repAnchor); UI.repAnchor = UI.repMode === 'week' ? addDays(UI.repAnchor, -7) : ymd(new Date(d.getFullYear(), d.getMonth() - 1, 1)); render(); },
   'rep-next': () => { const d = parse(UI.repAnchor); UI.repAnchor = UI.repMode === 'week' ? addDays(UI.repAnchor, 7) : ymd(new Date(d.getFullYear(), d.getMonth() + 1, 1)); render(); },
@@ -2486,7 +2460,6 @@ const ACT = {
   'import-merge': () => applyImport('merge'),
   'import-replace': b => arm(b, '確定取代？再按一次', () => applyImport('replace')),
   'ics-events': () => exportEventsICS(),
-  'ics-daily': () => exportDailyICS(),
   notify: () => enableNotify(),
   install: async () => { if (!installEvt) return; installEvt.prompt(); try { await installEvt.userChoice; } catch (e) {} installEvt = null; render(); },
   'sync-connect': b => connectSync(($('#syncInput') || {}).value, b),
@@ -2571,7 +2544,7 @@ UI.view = VIEWS[hashView] ? hashView : (VIEWS[prefs.view] ? prefs.view : 'today'
 if (incomingPair) UI.view = 'settings';
 render();
 if (incomingPair) openPairIn(incomingPair);
-else setTimeout(() => { if (!maybeDaily()) maybeSlot(true); }, 900);
+else setTimeout(() => { maybeDaily(); checkNotices(); }, 900);
 if (syncCfg) setTimeout(() => syncNow(false), 300);
 setInterval(() => { if (syncCfg && !document.hidden) syncNow(false); }, 60000);
 window.addEventListener('online', () => { if (syncCfg) syncNow(false); });
@@ -2582,7 +2555,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 function tick() {
   const t = ymd(new Date());
   if (t !== TODAY) { TODAY = t; UI.sel = t; render(); }
-  if (!maybeDaily()) maybeSlot(false);
+  maybeDaily(); checkNotices();
 }
 setInterval(tick, 20000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (!layers.length) render(); if (syncCfg) syncNow(false); } });
