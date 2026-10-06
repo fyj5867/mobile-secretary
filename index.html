@@ -200,6 +200,26 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .hero .hero-clip{position:absolute;top:-16px;right:30px;width:30px;height:44px}
 .hero-dd{display:inline-block;width:22px;height:22px;vertical-align:-5px;margin-left:8px}
 .hero-dd .doodle{width:100%;height:100%}
+.quote-card{position:relative;margin-top:16px;padding:22px 22px 12px}
+.quote-card::before{content:"";position:absolute;top:-9px;right:64px;width:84px;height:20px;transform:rotate(3deg);background-color:var(--tape-2);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;opacity:.9}
+.quote-card .q-dd{position:absolute;right:16px;top:12px;width:30px;height:30px;transform:rotate(10deg)}
+.q-head{font-family:var(--f-display);font-weight:700;font-size:15.5px;color:var(--accent-tx);letter-spacing:.06em;padding-right:40px;text-wrap:balance}
+.q-text{margin-top:6px;font-family:var(--f-display);font-size:17px;line-height:32px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);background-image:linear-gradient(transparent 31px,var(--line) 31px);background-size:100% 32px;background-position:0 -1px}
+.q-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:12.5px;color:var(--sub)}
+.q-foot .link-btn{display:inline-flex;align-items:center;gap:4px}
+.q-foot .link-btn svg{width:14px;height:14px}
+.modal.daily{z-index:53;width:min(500px,calc(100vw - 24px));padding:0}
+.daily-paper{position:relative;padding:34px 26px 4px}
+.daily-paper::before{content:"";position:absolute;top:-8px;left:50%;width:110px;height:22px;transform:translateX(-50%) rotate(-2deg);background-color:var(--tape-3);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;opacity:.92}
+.daily-paper .q-date{font-family:var(--f-num);font-size:13px;color:var(--sub);margin-bottom:6px}
+.daily-paper .q-head{font-size:18px}
+.daily-paper .q-text{font-size:18.5px;line-height:34px;background-size:100% 34px;background-image:linear-gradient(transparent 33px,var(--line) 33px);margin:10px 0 6px}
+.daily-paper .slot-foot{padding:14px 0 18px}
+.daily-paper .d-dd1{position:absolute;right:22px;top:20px;width:34px;height:34px;transform:rotate(12deg)}
+.daily-paper .d-dd2{position:absolute;right:58px;top:36px;width:20px;height:20px;transform:rotate(-14deg)}
+.q-list{display:flex;flex-direction:column;margin-top:12px;border-top:1px dashed var(--line)}
+.q-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;color:var(--sub)}
+.q-item span{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .page-end{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:26px;opacity:.85}
 .page-end .doodle{width:28px;height:28px}
 .page-end .doodle:nth-child(odd){transform:rotate(-8deg)}
@@ -521,7 +541,7 @@ td.proj{font-weight:700}
   .add-menu{position:fixed;top:auto;right:16px;bottom:calc(var(--nav-h) + 86px + env(safe-area-inset-bottom,0px))}
   .toasts{bottom:calc(var(--nav-h) + 90px + env(safe-area-inset-bottom,0px))}
   .modal{top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:92dvh;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:sheet .25s ease-out}
-  .modal.slot{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
+  .modal.slot,.modal.daily{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
   @keyframes sheet{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
   .form-grid{grid-template-columns:minmax(0,1fr)}
   .checks{padding-top:2px}
@@ -578,6 +598,7 @@ td.proj{font-weight:700}
 <div id="overlay" class="overlay" hidden></div>
 <aside id="drawer" class="drawer layer" role="dialog" aria-modal="true" aria-label="提醒通知" hidden></aside>
 <div id="slotPop" class="modal slot layer" role="dialog" aria-modal="true" aria-label="時段提醒" hidden></div>
+<div id="dailyPop" class="modal daily layer" role="dialog" aria-modal="true" aria-label="今日一句" hidden></div>
 <div id="modal" class="modal layer" role="dialog" aria-modal="true" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <input type="file" id="importFile" accept=".json,application/json" hidden>
@@ -750,12 +771,32 @@ const DOODLES = {
 };
 const doodle = (name, cls = '') => DOODLES[name] ? `<svg class="doodle ${cls}" viewBox="0 0 40 40" aria-hidden="true">${DOODLES[name]}</svg>` : '';
 const ph = name => `<span class="ph-ic">${doodle(name)}</span>`;
+/* 每日一句：段落由使用者自己貼進 App（存在 S.quotes，隨雲端同步，不寫進程式碼）。
+   每天 0:00 換一段；用日期當種子洗牌，所有裝置同一天看到同一段，一輪內不重複。 */
+const QUOTE_HEAD = '與真如繼主同在，這時候，深呼吸';
+function seededShuffle(arr, seed) {
+  const a = arr.slice(); let x = (seed * 9301 + 49297) % 233280;
+  const rnd = () => (x = (x * 9301 + 49297) % 233280) / 233280;
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function quoteOf(date) {
+  const qs = S.quotes.filter(q => q.text && q.text.trim()).slice().sort((a, b) => a.id < b.id ? -1 : 1);
+  if (!qs.length) return null;
+  const n = qs.length, d = diff('2024-01-01', date), c = Math.floor(d / n);
+  if (n === 2) return qs[((d % 2) + 2) % 2];
+  const order = seededShuffle(qs, c + 7);
+  // 新一輪的第一段若剛好等於上一輪最後一段，就和第二段對調，避免連兩天同一段
+  if (n > 1 && order[0] === seededShuffle(qs, c + 6)[n - 1]) [order[0], order[1]] = [order[1], order[0]];
+  return order[((d % n) + n) % n];
+}
 const timeDoodle = () => { const h = new Date().getHours(); return h < 11 ? 'sun' : h < 14 ? 'onigiri' : h < 18 ? 'tea' : 'moon'; };
 
 /* ================= state & local storage ================= */
 const DATA_KEY = 'msec.data.v1';
 const PREF_KEY = 'msec.prefs.v1';
-const S = { items: [], apps: [], certs: [], deleted: {}, savedAt: null };
+const S = { items: [], apps: [], certs: [], quotes: [], deleted: {}, savedAt: null };
+const COLS = ['items', 'apps', 'certs', 'quotes'];
 const prefs = (() => { try { return JSON.parse(ls.get(PREF_KEY)) || {}; } catch (e) { return {}; } })();
 const savePrefs = () => ls.set(PREF_KEY, JSON.stringify(prefs));
 const UI = {
@@ -769,6 +810,7 @@ function loadData() {
     if (!raw) return false;
     const d = JSON.parse(raw);
     S.items = Array.isArray(d.items) ? d.items : [];
+    S.quotes = Array.isArray(d.quotes) ? d.quotes : [];
     S.apps = Array.isArray(d.apps) ? d.apps : [];
     S.certs = Array.isArray(d.certs) ? d.certs : [];
     S.deleted = d.deleted && typeof d.deleted === 'object' ? d.deleted : {};
@@ -785,7 +827,7 @@ function migrateItems() {
 }
 function saveData() {
   S.savedAt = iso();
-  const ok = ls.set(DATA_KEY, JSON.stringify({ app: 'mobile-secretary', v: 2, savedAt: S.savedAt, items: S.items, apps: S.apps, certs: S.certs, deleted: S.deleted }));
+  const ok = ls.set(DATA_KEY, JSON.stringify({ app: 'mobile-secretary', v: 2, savedAt: S.savedAt, items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, deleted: S.deleted }));
   if (!ok) toast('儲存失敗：這個瀏覽器不允許儲存資料（可能是無痕模式或空間已滿）', 'worried', 'coral');
   return ok;
 }
@@ -1049,6 +1091,7 @@ function vToday() {
     </div>
     <div class="slots"><div class="slots-h">每日提醒時段</div><div class="slot-row">${slots}</div></div>
   </section>
+  ${quoteCard()}
   ${sampleBar}
   <div class="grid2">
     <div class="stack">
@@ -1076,6 +1119,15 @@ function vToday() {
   <div class="page-end" aria-hidden="true">${['leaf', 'paw', 'onigiri', 'fuji', 'tea', 'bone', 'flower', 'sparkle'].map(n => doodle(n)).join('')}</div>`;
 }
 
+function quoteCard() {
+  const q = quoteOf(TODAY);
+  if (!q) return `<section class="panel quote-card q-empty">${doodle('flower', 'q-dd')}<div class="q-head">${QUOTE_HEAD}</div>
+    <p class="muted" style="margin:6px 0 10px">還沒有段落。到「設定 → 每日一句」貼上你喜歡的段落，每天 0:00 會換一段。</p>
+    <button class="btn sm" data-act="tab" data-view="settings">${IC.plus}貼上段落</button></section>`;
+  return `<section class="panel quote-card">${doodle('flower', 'q-dd')}<div class="q-head">${QUOTE_HEAD}</div>
+    <div class="q-text">${esc(q.text.trim())}</div>
+    <div class="q-foot"><span>${full(TODAY)}・今日一句</span><button class="link-btn" data-act="quote-copy">${IC.copy}複製</button></div></section>`;
+}
 function vAgenda() {
   const q = UI.agQ.trim().toLowerCase();
   const hay = e => {
@@ -1430,8 +1482,20 @@ function vSettings() {
         <button class="btn primary" data-act="sync-connect">連線</button>
       </div>
     </section>`;
+  const qs = S.quotes.slice().sort((a, b) => (a.updatedAt || '') < (b.updatedAt || '') ? 1 : -1);
+  const qShown = UI.quoteAll ? qs : qs.slice(0, 6);
+  const quotePanel = `
+    <section class="panel span2">
+      <div class="panel-h">${ph('flower')}<h2>每日一句（這時候，深呼吸）</h2><span class="n">${S.quotes.length} 段</span></div>
+      <p>每天 0:00 從這裡隨機選一段，以「${QUOTE_HEAD}」開頭顯示在今日頁，並在當天第一次打開 App 時跳出。段落只存在你自己的資料與私密同步裡，不會出現在公開網站上。</p>
+      <div class="field"><label for="quoteBulk">貼上段落（每段以「-」開頭，或每段之間<b>空一行</b>；可以一次貼很多段）</label><textarea id="quoteBulk" rows="5" placeholder="把書中喜歡的段落貼在這裡…">${esc(UI.quoteBulk || '')}</textarea></div>
+      <div class="set-acts" style="margin-top:10px"><button class="btn primary" data-act="quote-add">${IC.plus}加入</button>${S.quotes.length ? `<button class="btn" data-act="quote-preview">預覽今天的句子</button>` : ''}</div>
+      ${qs.length ? `<div class="q-list">${qShown.map(q => `<div class="q-item"><span>${esc((q.text || '').trim())}</span><button class="ico" data-act="quote-del" data-id="${esc(q.id)}" aria-label="刪除這段">${IC.x}</button></div>`).join('')}</div>
+        ${qs.length > 6 ? `<button class="link-btn" data-act="quote-all" style="margin-top:8px">${UI.quoteAll ? '收起' : `顯示全部 ${qs.length} 段`}</button>` : ''}` : ''}
+    </section>`;
   return `<div class="set-grid">
     ${syncPanel}
+    ${quotePanel}
     <section class="panel">
       <div class="panel-h">${ph('pencil')}<h2>安裝到手機主畫面</h2>${standalone ? '<span class="tag done">已安裝</span>' : ''}</div>
       ${installEvt ? `<p>這台裝置可以直接安裝成 App。</p><div class="set-acts" style="margin-bottom:10px"><button class="btn primary" data-act="install">${IC.phoneDev}安裝行動祕書</button></div>` : ''}
@@ -1529,6 +1593,7 @@ function closeLayer(el) {
   el.hidden = true;
   const i = layers.indexOf(el); if (i >= 0) layers.splice(i, 1);
   if (el.id === 'slotPop') UI.slotOpen = null;
+  if (el.id === 'dailyPop') setTimeout(() => maybeSlot(true), 300);
   if (!layers.length) { $('#overlay').hidden = true; document.body.classList.remove('locked'); }
 }
 const closeTop = () => closeLayer(layers[layers.length - 1]);
@@ -1581,7 +1646,30 @@ function openSlot(s, late) {
   fillSlot(s, late);
   openLayer($('#slotPop'));
 }
+/* 今日一句：0:00 之後第一次開 App（或 App 開著跨過 0:00）跳出一次 */
+const shownDaily = new Set();
+function openDaily() {
+  const q = quoteOf(TODAY); if (!q) return false;
+  const pop = $('#dailyPop');
+  pop.innerHTML = `<div class="daily-paper">${doodle('flower', 'd-dd1')}${doodle('leaf', 'd-dd2')}
+    <div class="q-date">${full(TODAY)}・今日一句</div>
+    <div class="q-head">${QUOTE_HEAD}</div>
+    <div class="q-text">${esc(q.text.trim())}</div>
+    <div class="slot-foot"><button class="btn" data-act="quote-copy">${IC.copy}複製</button><button class="btn primary" data-act="close">深呼吸，開始今天</button></div></div>`;
+  openLayer(pop);
+  return true;
+}
+function maybeDaily() {
+  if (!quoteOf(TODAY)) return false;
+  const key = `msec.daily:${TODAY}`;
+  if (shownDaily.has(key) || ls.get(key)) return false;
+  shownDaily.add(key); ls.set(key, '1');
+  openDaily(); chime();
+  sysNotify(QUOTE_HEAD, quoteOf(TODAY).text.trim().slice(0, 120));
+  return true;
+}
 function maybeSlot(onLoad) {
+  if (!$('#dailyPop').hidden) return;
   const hm = nowHM();
   const passed = SLOTS.filter(s => s.t <= hm); if (!passed.length) return;
   const s = passed[passed.length - 1];
@@ -1882,7 +1970,7 @@ async function shareOrDownload(filename, text, type) {
   downloadFile(filename, text, type);
 }
 function backup() {
-  const txt = JSON.stringify({ app: 'mobile-secretary', v: 1, exportedAt: iso(), items: S.items, apps: S.apps, certs: S.certs }, null, 2);
+  const txt = JSON.stringify({ app: 'mobile-secretary', v: 1, exportedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes }, null, 2);
   shareOrDownload(`行動祕書備份_${TODAY}.json`, txt, 'application/json');
   toast('備份檔已產生，請存到雲端硬碟或傳給自己', 'happy', 'mint', 'check');
 }
@@ -1896,13 +1984,13 @@ function handleImportFile(file) {
   fr.onload = () => {
     let d;
     try { d = JSON.parse(String(fr.result).replace(/^\uFEFF/, '')); } catch (e) { toast('讀不懂這個檔案，請選擇 .json 備份檔', 'worried', 'coral'); return; }
-    const data = { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs) };
-    const total = data.items.length + data.apps.length + data.certs.length;
+    const data = { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes) };
+    const total = COLS.reduce((n, col) => n + data[col].length, 0);
     if (!total) { toast('這個檔案裡沒有可以匯入的資料', 'worried', 'sun'); return; }
     pendingImport = data;
     const m = $('#modal'); m.setAttribute('aria-label', '匯入資料');
     m.innerHTML = `<div class="sheet-h">${mascot('happy', 'mint', 'doc')}<div><h2>匯入資料</h2><p>${esc(file.name)}</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
-      <div class="stat-line"><span>事項 <b>${data.items.length}</b></span><span>認證申請 <b>${data.apps.length}</b></span><span>證書 <b>${data.certs.length}</b></span></div>
+      <div class="stat-line"><span>事項 <b>${data.items.length}</b></span><span>認證申請 <b>${data.apps.length}</b></span><span>證書 <b>${data.certs.length}</b></span><span>每日一句 <b>${data.quotes.length}</b></span></div>
       <p class="muted">「合併」會保留目前資料，相同項目以檔案內容更新；「取代」會先清空這台裝置的資料再匯入。</p>
       <div class="form-foot"><button class="btn ghost" data-act="close">取消</button><button class="btn danger" data-act="import-replace">取代全部</button><button class="btn primary" data-act="import-merge">合併匯入</button></div>`;
     openLayer(m);
@@ -1913,14 +2001,14 @@ function handleImportFile(file) {
 function applyImport(mode) {
   const d = pendingImport; if (!d) return;
   const now = iso();
-  ['items', 'apps', 'certs'].forEach(col => d[col].forEach(doc => { doc.updatedAt = now; }));
+  COLS.forEach(col => d[col].forEach(doc => { doc.updatedAt = now; }));
   if (mode === 'replace') {
-    ['items', 'apps', 'certs'].forEach(col => S[col].forEach(x => { if (!d[col].some(n => n.id === x.id)) tomb(col, x.id); }));
-    S.items = d.items; S.apps = d.apps; S.certs = d.certs;
+    COLS.forEach(col => S[col].forEach(x => { if (!d[col].some(n => n.id === x.id)) tomb(col, x.id); }));
+    COLS.forEach(col => { S[col] = d[col]; });
   }
-  else ['items', 'apps', 'certs'].forEach(col => d[col].forEach(doc => { const i = S[col].findIndex(x => x.id === doc.id); if (i < 0) S[col].push(doc); else S[col][i] = doc; }));
+  else COLS.forEach(col => d[col].forEach(doc => { const i = S[col].findIndex(x => x.id === doc.id); if (i < 0) S[col].push(doc); else S[col][i] = doc; }));
   pendingImport = null; migrateItems(); commit(); closeLayer($('#modal'));
-  toast(`匯入完成：事項 ${d.items.length}、認證申請 ${d.apps.length}、證書 ${d.certs.length} 筆`, 'happy', 'mint', 'check');
+  toast(`匯入完成：事項 ${d.items.length}、認證申請 ${d.apps.length}、證書 ${d.certs.length}、每日一句 ${d.quotes.length} 筆`, 'happy', 'mint', 'check');
 }
 /* --- iCalendar --- */
 const icsText = s => String(s || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
@@ -2027,11 +2115,11 @@ async function readRemote(g) {
   if (!f) return null;
   let txt = f.content;
   if (f.truncated && f.raw_url) txt = await fetch(f.raw_url, { cache: 'no-store' }).then(r => r.text());
-  try { const d = JSON.parse(txt); return { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), deleted: d.deleted && typeof d.deleted === 'object' ? d.deleted : {} }; }
+  try { const d = JSON.parse(txt); return { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes), deleted: d.deleted && typeof d.deleted === 'object' ? d.deleted : {} }; }
   catch (e) { return null; }
 }
-const snapshot = () => ({ items: S.items, apps: S.apps, certs: S.certs, deleted: S.deleted });
-function applyData(m) { S.items = m.items; S.apps = m.apps; S.certs = m.certs; S.deleted = m.deleted; }
+const snapshot = () => ({ items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, deleted: S.deleted });
+function applyData(m) { COLS.forEach(col => { S[col] = m[col] || []; }); S.deleted = m.deleted; }
 function mergeData(L, R) {
   if (!R) return L;
   const del = Object.assign({}, R.deleted || {});
@@ -2039,7 +2127,7 @@ function mergeData(L, R) {
   const cutoff = new Date(Date.now() - 120 * 864e5).toISOString();
   Object.keys(del).forEach(k => { if (del[k] < cutoff) delete del[k]; });
   const out = { deleted: del };
-  ['items', 'apps', 'certs'].forEach(col => {
+  COLS.forEach(col => {
     const m = new Map();
     (R[col] || []).forEach(d => m.set(d.id, d));
     (L[col] || []).forEach(d => { const r = m.get(d.id); if (!r || (d.updatedAt || '') >= (r.updatedAt || '')) m.set(d.id, d); });
@@ -2053,9 +2141,9 @@ function stable(v) {
   return JSON.stringify(v === undefined ? null : v);
 }
 const byId = (a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
-const canon = d => stable({ items: (d.items || []).slice().sort(byId), apps: (d.apps || []).slice().sort(byId), certs: (d.certs || []).slice().sort(byId), deleted: d.deleted || {} });
-const payload = () => JSON.stringify({ app: 'mobile-secretary', v: 2, syncedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, deleted: S.deleted });
-const onlySamples = () => ['items', 'apps', 'certs'].every(col => S[col].every(x => x.sample));
+const canon = d => stable(Object.assign({ deleted: d.deleted || {} }, ...COLS.map(col => ({ [col]: (d[col] || []).slice().sort(byId) }))));
+const payload = () => JSON.stringify({ app: 'mobile-secretary', v: 2, syncedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, deleted: S.deleted });
+const onlySamples = () => ['items', 'apps', 'certs'].every(col => S[col].every(x => x.sample)) && !S.quotes.length;
 
 function scheduleSync(delay = 1500) {
   if (!syncCfg) return;
@@ -2140,7 +2228,7 @@ async function connectSync(raw, btn) {
     let first = false;
     if (gistId) {
       const remote = await readRemote(await gh('GET', '/gists/' + gistId, null, token));
-      if (remote && onlySamples()) applyData(mergeData({ items: [], apps: [], certs: [], deleted: {} }, remote)); // 新裝置：直接用雲端資料
+      if (remote && onlySamples()) applyData(mergeData({ items: [], apps: [], certs: [], quotes: [], deleted: {} }, remote)); // 新裝置：直接用雲端資料
     } else {
       const created = await gh('POST', '/gists', { description: GIST_DESC, public: false, files: { [DATA_FILE]: { content: payload() }, [ICS_FILE]: { content: buildFeed() } } }, token);
       gistId = created.id; first = true;
@@ -2327,8 +2415,8 @@ function clearSamples(btn) {
 }
 function clearAll(btn) {
   arm(btn, '全部刪除？再按一次', () => {
-    ['items', 'apps', 'certs'].forEach(col => S[col].forEach(x => tomb(col, x.id)));
-    S.items = []; S.apps = []; S.certs = []; commit();
+    COLS.forEach(col => S[col].forEach(x => tomb(col, x.id)));
+    COLS.forEach(col => { S[col] = []; }); commit();
     toast(syncCfg ? '已清除全部資料（已連動的裝置也會一起清除）' : '已清除全部資料', 'calm', 'sky');
   });
 }
@@ -2409,8 +2497,30 @@ const ACT = {
   'copy-in-pair': () => copyText(UI.incomingPair || '', '配對碼已複製，請打開主畫面的行動祕書 App → 設定 → 雲端同步 → 貼上'),
   'pair-here': b => connectSync(UI.incomingPair, b),
   subscribe: () => openSubscribe(),
-  'copy-feed': () => copyText(feedUrl(), '訂閱網址已複製')
+  'copy-feed': () => copyText(feedUrl(), '訂閱網址已複製'),
+  'quote-copy': () => { const q = quoteOf(TODAY); if (q) copyText(`${QUOTE_HEAD}\n${q.text.trim()}`, '已複製今日一句'); },
+  'quote-preview': () => openDaily(),
+  'quote-add': () => addQuotes(),
+  'quote-del': b => arm(b, '確定刪除？', () => Store.del('quotes', b.dataset.id)),
+  'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); }
 };
+function addQuotes() {
+  const raw = ($('#quoteBulk') || {}).value || '';
+  const clean = raw.replace(/\r/g, '');
+  // 兩種格式：每段以「-」開頭（像使用者的 Word 檔），或段落之間空一行
+  const dashed = (clean.match(/^[ \t　]*-/gm) || []).length >= 2;
+  const parts = (dashed ? clean.split(/^[ \t　]*-+[ \t　]*/m) : clean.split(/\n[ \t　]*\n+/))
+    .map(s => s.replace(/\n{3,}/g, '\n\n').trim().replace(/\{/g, '「').replace(/\}/g, '」')).filter(Boolean);
+  if (!parts.length) { toast('請先貼上段落（每段之間空一行）', 'worried', 'sun'); return; }
+  const have = new Set(S.quotes.map(q => (q.text || '').trim()));
+  const fresh = Array.from(new Set(parts)).filter(t => !have.has(t));
+  const now = iso();
+  fresh.forEach((text, i) => S.quotes.push({ id: uid('q') + i, text, updatedAt: now }));
+  UI.quoteBulk = '';
+  const key = `msec.daily:${TODAY}`; shownDaily.add(key); ls.set(key, '1'); // 剛貼完就不用再跳今天的卡片
+  commit();
+  toast(fresh.length ? `已加入 ${fresh.length} 段${parts.length > fresh.length ? `（${parts.length - fresh.length} 段重複，略過）` : ''}，每天 0:00 換一段` : '這些段落都已經加過了', 'happy', 'mint', 'check');
+}
 document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-act]');
   if (!$('#addMenu').hidden && !ev.target.closest('#addWrap') && !ev.target.closest('#fab')) closeAddMenu();
@@ -2426,6 +2536,7 @@ document.addEventListener('input', ev => {
   if (ev.target.id === 'certSearch') { UI.certQ = ev.target.value; render(); }
   if (ev.target.id === 'agSearch') { UI.agQ = ev.target.value; render(); }
   if (ev.target.id === 'syncInput') UI.syncInput = ev.target.value;
+  if (ev.target.id === 'quoteBulk') UI.quoteBulk = ev.target.value;
   if (ev.target.type === 'date') updateWdHint(ev.target);
 });
 function updateWdHint(el) {
@@ -2460,7 +2571,7 @@ UI.view = VIEWS[hashView] ? hashView : (VIEWS[prefs.view] ? prefs.view : 'today'
 if (incomingPair) UI.view = 'settings';
 render();
 if (incomingPair) openPairIn(incomingPair);
-else setTimeout(() => maybeSlot(true), 900);
+else setTimeout(() => { if (!maybeDaily()) maybeSlot(true); }, 900);
 if (syncCfg) setTimeout(() => syncNow(false), 300);
 setInterval(() => { if (syncCfg && !document.hidden) syncNow(false); }, 60000);
 window.addEventListener('online', () => { if (syncCfg) syncNow(false); });
@@ -2471,7 +2582,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 function tick() {
   const t = ymd(new Date());
   if (t !== TODAY) { TODAY = t; UI.sel = t; render(); }
-  maybeSlot(false);
+  if (!maybeDaily()) maybeSlot(false);
 }
 setInterval(tick, 20000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (!layers.length) render(); if (syncCfg) syncNow(false); } });

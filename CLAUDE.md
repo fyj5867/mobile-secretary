@@ -25,6 +25,11 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
 - `certs`：證書效期。project、cert、due、no、state `normal|renewing|retired`、note。
+- `quotes`：每日一句（{id, text}）。內容是使用者自己提供的《這時候，深呼吸》段落，**有版權，絕對不要寫進程式碼或 commit**；
+  只透過 App 匯入（`_private/每日一句_這時候深呼吸.json`，33 段，id br001～br033）或設定頁貼上。
+  `quoteOf(date)` 以日期為種子洗牌，每天 0:00 換、各裝置同一段、一輪不重複；當天第一次開 App 跳 `#dailyPop`，關掉後才接時段提醒。
+  顯示格式（使用者指定）：第一行「與真如繼主同在，這時候，深呼吸」，下面是段落。
+- 所有資料集合列在 `COLS`；新增集合時要一起加進 COLS、readRemote、snapshot、payload、backup、import。
 - 範例資料帶 `sample: true`，首次開啟自動放入，可一鍵清除。
 - 每筆資料都有 `updatedAt`；刪除記在 `deleted["<col>:<id>"] = 時間`（墓碑，保留 120 天）。
   **任何寫入都要經過 Store.set/patch/del 或自行補上 updatedAt／tomb()，否則雲端同步會被舊資料蓋回去。**
