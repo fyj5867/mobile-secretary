@@ -1,0 +1,12 @@
+# 私人資料（證書清單、舊版網頁原始檔）——絕對不要上傳到公開的 GitHub
+_private/
+
+# App 匯出的備份與行事曆檔
+行動祕書備份_*.json
+行動祕書_*.ics
+*.ics
+
+# 本機設定
+.claude/settings.local.json
+Thumbs.db
+.DS_Store
