@@ -399,6 +399,11 @@ td.proj{font-weight:700}
 .set-list li{margin-bottom:4px}
 .stat-line{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--sub);margin-bottom:10px}
 .stat-line b{font-family:var(--f-num);color:var(--ink);font-weight:600}
+.excel-note{display:flex;align-items:center;gap:6px;margin:-4px 0 14px;font-size:12.5px;color:var(--sub)}
+.excel-note b{color:var(--ink);font-weight:500}
+.diff-list{list-style:none;margin:0 0 6px;padding:0;border-top:1px dashed var(--line)}
+.diff-list li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:6px 2px;border-bottom:1px dashed var(--line);font-size:13px}
+.diff-list li .num{margin-left:auto;color:var(--accent-tx);white-space:nowrap}
 .file-btn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .set-grid .span2{grid-column:1/-1}
 .sync-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -589,6 +594,7 @@ td.proj{font-weight:700}
 <div id="modal" class="modal layer" role="dialog" aria-modal="true" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <input type="file" id="importFile" accept=".json,application/json" hidden>
+<input type="file" id="excelFile" accept=".xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
 
 <script>
 (() => {
@@ -1292,7 +1298,8 @@ function vCerts() {
     <div class="tile t-sky">${mascot('calm', 'sky', 'hourglass')}<div><div class="v">${n('watch')}</div><div class="l">180 天內到期</div></div></div>
     <div class="tile t-mint">${mascot('happy', 'mint', 'check')}<div><div class="v">${n('ok')}</div><div class="l">正常</div></div></div>
   </div>
-  <div class="toolbar"><label class="search">${IC.search}<input id="certSearch" type="search" placeholder="搜尋機型、認證項目、證書編號" value="${esc(UI.certQ)}" aria-label="搜尋證書"></label><div class="grow"></div><button class="btn primary" data-act="new-cert">＋ 新增證書</button></div>
+  <div class="toolbar"><label class="search">${IC.search}<input id="certSearch" type="search" placeholder="搜尋機型、認證項目、證書編號" value="${esc(UI.certQ)}" aria-label="搜尋證書"></label><div class="grow"></div><button class="btn" data-act="excel-import">${IC.ul}從效期表更新</button><button class="btn primary" data-act="new-cert">＋ 新增證書</button></div>
+  <p class="excel-note">${ph('memo')}${prefs.lastExcel ? `上次從效期表更新：<b>${esc(prefs.lastExcel.name)}</b>（${new Date(prefs.lastExcel.at).toLocaleDateString('zh-TW')}）` : '每月審查完，按「從效期表更新」選最新的《TWINHEAD 安規認證到期管理》Excel，到期日就會同步到這裡和手機。'}</p>
   ${groups || `<section class="panel">${emptyBox(q ? '找不到符合的證書' : '還沒有證書資料', q ? '<div>換個關鍵字試試看。</div>' : '<div>到「設定 → 匯入資料」載入證書效期檔，或按「＋ 新增證書」。180 天內開始追蹤、90 天內列入每日提醒。</div>', 'calm', 'lilac', 'hourglass')}${!q ? `<div class="set-acts" style="margin-top:10px"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}前往匯入</button></div>` : ''}</section>`}`;
 }
 
@@ -1704,6 +1711,7 @@ function toast(msg, mood = 'happy', color = 'mint', prop = '') {
   el.innerHTML = mascot(mood, color, prop) + `<span>${esc(msg)}</span>`;
   $('#toasts').appendChild(el);
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 400); }, 3800);
+  return el;
 }
 function celebrate(btn, title, word = '完成') {
   if (!reduceMotion()) {
@@ -1957,6 +1965,98 @@ function backup() {
 const validId = s => typeof s === 'string' && /^[\w.-]{1,80}$/.test(s);
 function cleanDocs(arr) { return Array.isArray(arr) ? arr.filter(x => x && typeof x === 'object' && validId(x.id)) : []; }
 let pendingImport = null;
+/* ===== 從《TWINHEAD 安規認證到期管理》Excel 更新證書效期（單向：Excel 是主資料） =====
+   讀「到期提醒總覽」工作表：標題列含「機型」「到期日」；到期日是公式，讀 Excel 存檔時的計算結果。
+   以「機型＋認證項目」比對；App 裡的續證狀態、證書編號、備註保留。新證書的 id 由比對鍵雜湊而來，多台裝置匯入不會重複。 */
+const XLSX_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+const normTxt = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
+const certKey = (p, c) => normTxt(p).toUpperCase() + '|' + normTxt(c).toUpperCase();
+const hashId = s => { let h = 5381; for (const ch of s) h = ((h << 5) + h + ch.codePointAt(0)) >>> 0; return 'tw' + h.toString(36); };
+function excelDate(v) {
+  if (v == null || v === '') return '';
+  if (typeof v === 'number' && v > 20000 && v < 80000) { const d = new Date(Date.UTC(1899, 11, 30) + Math.round(v) * 864e5); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`; }
+  if (v instanceof Date) return ymd(v);
+  const m = String(v).match(/(\d{4})\s*[\/.\-年]\s*(\d{1,2})\s*[\/.\-月]\s*(\d{1,2})/);
+  return m ? `${m[1]}-${pad(+m[2])}-${pad(+m[3])}` : '';
+}
+async function readReviewWorkbook(file) {
+  if (!window.XLSX) await loadScript(XLSX_LIB);
+  const wb = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+  const sheet = wb.SheetNames.find(n => n.includes('到期提醒總覽')) || wb.SheetNames.find(n => n.includes('到期'));
+  if (!sheet) throw new Error('nosheet');
+  const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, raw: true, defval: '' });
+  const hi = rows.findIndex(r => r.some(c => String(c).includes('機型')) && r.some(c => String(c).includes('到期日')));
+  if (hi < 0) throw new Error('noheader');
+  const H = rows[hi].map(c => String(c));
+  const col = re => H.findIndex(h => re.test(h));
+  const cP = col(/機型/), cC = col(/認證|憑證/), cD = col(/到期日/), cN = col(/備註|計算依據/);
+  const out = [];
+  rows.slice(hi + 1).forEach(r => {
+    const project = normTxt(r[cP]), cert = normTxt(r[cC]);
+    if (project && cert) out.push({ project, cert, due: excelDate(r[cD]), note: cN >= 0 ? normTxt(r[cN]) : '' });
+  });
+  return { sheet, rows: out };
+}
+function certDiff(rows) {
+  const byKey = new Map(S.certs.map(c => [certKey(c.project, c.cert), c]));
+  const seen = new Set(), added = [], changed = [], skipped = [];
+  let same = 0;
+  rows.forEach(r => {
+    if (!isDate(r.due)) { skipped.push(r); return; }
+    const k = certKey(r.project, r.cert);
+    if (seen.has(k)) return; seen.add(k);
+    const c = byKey.get(k);
+    if (!c) added.push(r); else if (c.due !== r.due) changed.push({ c, r }); else same++;
+  });
+  skipped.forEach(r => seen.add(certKey(r.project, r.cert)));
+  const missing = S.certs.filter(c => !c.sample && (c.state || 'normal') !== 'retired' && !seen.has(certKey(c.project, c.cert)));
+  return { added, changed, same, skipped, missing };
+}
+async function handleExcelFile(file) {
+  if (!file) return;
+  const reading = toast('讀取效期表中…', 'calm', 'sky', 'doc');
+  let res;
+  try { res = await readReviewWorkbook(file); reading.remove(); }
+  catch (e) {
+    reading.remove();
+    toast(e.message === 'nosheet' ? '這個 Excel 裡找不到「到期提醒總覽」工作表' : e.message === 'noheader' ? '找不到「機型／到期日」標題列，請確認是安規認證到期管理的檔案' : '讀不懂這個檔案，請選 .xlsx 檔（也請確認網路連線）', 'worried', 'coral');
+    return;
+  }
+  const d = certDiff(res.rows); d.fileName = file.name; d.sheet = res.sheet; d.total = res.rows.length;
+  UI.certDiff = d;
+  const li = (arr, f, max = 8) => arr.length ? `<ul class="diff-list">${arr.slice(0, max).map(f).join('')}${arr.length > max ? `<li class="muted">…還有 ${arr.length - max} 筆</li>` : ''}</ul>` : '';
+  const dd = s => isDate(s) ? s.replace(/-/g, '/') : '—';
+  const m = $('#modal'); m.setAttribute('aria-label', '從效期表更新');
+  m.innerHTML = `<div class="sheet-h">${mascot('calm', 'sky', 'hourglass')}<div><h2>從效期表更新</h2><p>${esc(file.name)}・「${esc(res.sheet)}」${res.rows.length} 筆</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="stat-line"><span>新增 <b>${d.added.length}</b></span><span>到期日變更 <b>${d.changed.length}</b></span><span>不變 <b>${d.same}</b></span><span>表中沒有 <b>${d.missing.length}</b></span>${d.skipped.length ? `<span>沒有到期日（略過）<b>${d.skipped.length}</b></span>` : ''}</div>
+    ${d.added.length ? `<div class="sub-h">新增的證書</div>${li(d.added, r => `<li><b>${esc(r.project)}</b>｜${esc(r.cert)}<span class="num">${dd(r.due)}</span></li>`)}` : ''}
+    ${d.changed.length ? `<div class="sub-h">到期日變更</div>${li(d.changed, x => `<li><b>${esc(x.r.project)}</b>｜${esc(x.r.cert)}<span class="num">${dd(x.c.due)} → ${dd(x.r.due)}</span></li>`)}` : ''}
+    ${d.missing.length ? `<div class="sub-h">App 裡有、但效期表中沒有的（不會自動刪除）</div><ul class="diff-list">${d.missing.map(c => `<li><label class="chk-inline"><input type="checkbox" data-retire="${esc(c.id)}"> 標為不續證／停用</label><span><b>${esc(c.project)}</b>｜${esc(c.cert)}</span><span class="num">${dd(c.due)}</span></li>`).join('')}</ul>` : ''}
+    ${!d.added.length && !d.changed.length && !d.missing.length ? `<p class="muted">App 裡的證書效期已經和這份效期表一致。</p>` : ''}
+    <div class="form-foot"><button class="btn ghost" data-act="close">取消</button><button class="btn primary" data-act="excel-apply">套用更新</button></div>`;
+  openLayer(m);
+}
+function applyCertDiff() {
+  const d = UI.certDiff; if (!d) return;
+  const now = iso();
+  d.added.forEach(r => {
+    const id = hashId(certKey(r.project, r.cert));
+    const doc = { id, project: r.project, cert: r.cert, due: r.due, no: '', state: 'normal', note: r.note, src: 'excel', updatedAt: now };
+    const i = S.certs.findIndex(c => c.id === id);
+    if (i < 0) S.certs.push(doc); else S.certs[i] = Object.assign({}, S.certs[i], doc);
+  });
+  d.changed.forEach(({ c, r }) => {
+    // 到期日往後延，代表續證完成：續證中 → 追蹤中
+    if (c.state === 'renewing' && r.due > c.due) c.state = 'normal';
+    c.due = r.due; if (!c.note && r.note) c.note = r.note; c.updatedAt = now;
+  });
+  let retired = 0;
+  $$('#modal input[data-retire]:checked').forEach(el => { const c = S.certs.find(x => x.id === el.dataset.retire); if (c) { c.state = 'retired'; c.updatedAt = now; retired++; } });
+  prefs.lastExcel = { name: d.fileName, at: now }; savePrefs();
+  UI.certDiff = null;
+  commit(); closeLayer($('#modal'));
+  toast(`效期表已套用：新增 ${d.added.length}、到期日變更 ${d.changed.length}${retired ? `、停用 ${retired}` : ''} 筆${syncCfg ? '，會同步到手機' : ''}`, 'happy', 'mint', 'check');
+}
 function handleImportFile(file) {
   if (!file) return;
   if (file.size > 8 * 1024 * 1024) { toast('檔案太大了，請確認是行動祕書的備份檔', 'worried', 'sun'); return; }
@@ -2475,7 +2575,9 @@ const ACT = {
   'quote-preview': () => openDaily(),
   'quote-add': () => addQuotes(),
   'quote-del': b => arm(b, '確定刪除？', () => Store.del('quotes', b.dataset.id)),
-  'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); }
+  'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); },
+  'excel-import': () => { const f = $('#excelFile'); f.value = ''; f.click(); },
+  'excel-apply': () => applyCertDiff()
 };
 function addQuotes() {
   const raw = ($('#quoteBulk') || {}).value || '';
@@ -2521,6 +2623,7 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'sndToggle') { prefs.snd = ev.target.checked; savePrefs(); if (ev.target.checked) chime(); }
   if (ev.target.id === 'agDone') { UI.agDone = ev.target.checked; render(); }
   if (ev.target.id === 'importFile') handleImportFile(ev.target.files && ev.target.files[0]);
+  if (ev.target.id === 'excelFile') handleExcelFile(ev.target.files && ev.target.files[0]);
 });
 document.addEventListener('focusout', ev => {
   const el = ev.target;

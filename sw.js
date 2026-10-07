@@ -1,5 +1,5 @@
 // 行動祕書 Service Worker — App 外殼離線快取（network-first），字型 cache-first
-const CACHE = 'msec-v10';
+const CACHE = 'msec-v11';
 const SHELL = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png',
   './mascot/happy.jpg', './mascot/worried.jpg', './mascot/sleepy.jpg'];
 

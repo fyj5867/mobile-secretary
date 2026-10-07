@@ -25,6 +25,12 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
 - `certs`：證書效期。project、cert、due、no、state `normal|renewing|retired`、note。
+  **主資料是使用者每月審查的 Excel《TWINHEAD_安規認證到期管理_YYYYMMDD.xlsx》**（存在她的 Google Drive，每月一份新檔）。
+  證書效期頁「從效期表更新」用 SheetJS（cdnjs xlsx 0.18.5，點按鈕才載入）讀「到期提醒總覽」工作表：
+  標題列含「機型／認證‧憑證項目／到期日／備註」，到期日是公式（讀存檔時的計算值）。以「機型＋認證項目」比對（`certKey`），
+  先顯示差異（新增／到期日變更／不變／表中沒有）再套用；新證書 id = `hashId(certKey)`（tw 開頭，跨裝置一致）。
+  單向：不寫回 Excel（Excel 的到期日是公式，寫回會弄壞）。App 的續證狀態／證書編號／備註保留；到期日往後延時「續證中」自動變回「追蹤中」；
+  表中沒有的不自動刪，讓使用者勾選「不續證／停用」。Excel 檔本身不要放進版控。
 - `quotes`：每日一句（{id, text}）。內容是使用者自己提供的《這時候，深呼吸》段落，**有版權，絕對不要寫進程式碼或 commit**；
   只透過 App 匯入（`_private/每日一句_這時候深呼吸.json`，33 段，id br001～br033）或設定頁貼上。
   `quoteOf(date)` 以日期為種子洗牌，每天 0:00 換、各裝置同一段、一輪不重複；當天第一次開 App 跳 `#dailyPop`，關掉後才接時段提醒。
