@@ -594,6 +594,7 @@ td.proj{font-weight:700}
 <div id="modal" class="modal layer" role="dialog" aria-modal="true" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <input type="file" id="importFile" accept=".json,application/json" hidden>
+<input type="file" id="quoteFile" accept=".docx,.json,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/json" hidden>
 <input type="file" id="excelFile" accept=".xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
 
 <script>
@@ -1106,8 +1107,8 @@ function vToday() {
 function quoteCard() {
   const q = quoteOf(TODAY);
   if (!q) return `<section class="panel quote-card q-empty">${doodle('flower', 'q-dd')}<div class="q-head">${QUOTE_HEAD}</div>
-    <p class="muted" style="margin:6px 0 10px">還沒有段落。到「設定 → 每日一句」貼上你喜歡的段落，每天 0:00 會換一段。</p>
-    <button class="btn sm" data-act="tab" data-view="settings">${IC.plus}貼上段落</button></section>`;
+    <p class="muted" style="margin:6px 0 10px">第一次使用：選你的《這時候，深呼吸》Word 檔載入<b>一次</b>。之後 App 每天 0:00 會自動隨機貼一篇在這裡，不用再手動。</p>
+    <button class="btn sm primary" data-act="quote-file">${IC.ul}載入 Word 檔</button></section>`;
   return `<section class="panel quote-card">${doodle('flower', 'q-dd')}<div class="q-head">${QUOTE_HEAD}</div>
     <div class="q-text">${esc(q.text.trim())}</div>
     <div class="q-foot"><span>${full(TODAY)}・今日一句</span><button class="link-btn" data-act="quote-copy">${IC.copy}複製</button></div></section>`;
@@ -1472,9 +1473,10 @@ function vSettings() {
   const quotePanel = `
     <section class="panel span2">
       <div class="panel-h">${ph('flower')}<h2>每日一句（這時候，深呼吸）</h2><span class="n">${S.quotes.length} 段</span></div>
-      <p>每天 0:00 從這裡隨機選一段，以「${QUOTE_HEAD}」開頭顯示在今日頁，並在當天第一次打開 App 時跳出。段落只存在你自己的資料與私密同步裡，不會出現在公開網站上。</p>
+      <p><b>全自動：</b>App 每天 0:00 從這裡隨機抽一篇，以「${QUOTE_HEAD}」開頭貼到今日頁，當天第一次打開 App 時跳出、並發通知，不用每天手動。</p>
+      <p>第一次只要按「載入 Word 檔」選《這時候，深呼吸》的 .docx 一次；內容存在你自己的資料與私密同步裡，所有裝置都會有，不會出現在公開網站上。</p>
       <div class="field"><label for="quoteBulk">貼上段落（每段以「-」開頭，或每段之間<b>空一行</b>；可以一次貼很多段）</label><textarea id="quoteBulk" rows="5" placeholder="把書中喜歡的段落貼在這裡…">${esc(UI.quoteBulk || '')}</textarea></div>
-      <div class="set-acts" style="margin-top:10px"><button class="btn primary" data-act="quote-add">${IC.plus}加入</button>${S.quotes.length ? `<button class="btn" data-act="quote-preview">預覽今天的句子</button>` : ''}</div>
+      <div class="set-acts" style="margin-top:10px"><button class="btn primary" data-act="quote-file">${IC.ul}載入 Word 檔</button><button class="btn" data-act="quote-add">${IC.plus}加入貼上的段落</button>${S.quotes.length ? `<button class="btn" data-act="quote-preview">預覽今天的一篇</button>` : ''}</div>
       ${qs.length ? `<div class="q-list">${qShown.map(q => `<div class="q-item"><span>${esc((q.text || '').trim())}</span><button class="ico" data-act="quote-del" data-id="${esc(q.id)}" aria-label="刪除這段">${IC.x}</button></div>`).join('')}</div>
         ${qs.length > 6 ? `<button class="link-btn" data-act="quote-all" style="margin-top:8px">${UI.quoteAll ? '收起' : `顯示全部 ${qs.length} 段`}</button>` : ''}` : ''}
     </section>`;
@@ -2574,28 +2576,66 @@ const ACT = {
   'quote-copy': () => { const q = quoteOf(TODAY); if (q) copyText(`${QUOTE_HEAD}\n${q.text.trim()}`, '已複製今日一句'); },
   'quote-preview': () => openDaily(),
   'quote-add': () => addQuotes(),
+  'quote-file': () => { const f = $('#quoteFile'); f.value = ''; f.click(); },
   'quote-del': b => arm(b, '確定刪除？', () => Store.del('quotes', b.dataset.id)),
   'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); },
   'excel-import': () => { const f = $('#excelFile'); f.value = ''; f.click(); },
   'excel-apply': () => applyCertDiff()
 };
-function addQuotes() {
-  const raw = ($('#quoteBulk') || {}).value || '';
-  const clean = raw.replace(/\r/g, '');
-  // 兩種格式：每段以「-」開頭（像使用者的 Word 檔），或段落之間空一行
+// 文字拆成段落：每段以「-」開頭（使用者 Word 檔的格式），或段落之間空一行
+function splitPassages(raw) {
+  const clean = String(raw || '').replace(/\r/g, '');
   const dashed = (clean.match(/^[ \t　]*-/gm) || []).length >= 2;
-  const parts = (dashed ? clean.split(/^[ \t　]*-+[ \t　]*/m) : clean.split(/\n[ \t　]*\n+/))
+  return (dashed ? clean.split(/^[ \t　]*-+[ \t　]*/m) : clean.split(/\n[ \t　]*\n+/))
     .map(s => s.replace(/\n{3,}/g, '\n\n').trim().replace(/\{/g, '「').replace(/\}/g, '」')).filter(Boolean);
-  if (!parts.length) { toast('請先貼上段落（每段之間空一行）', 'worried', 'sun'); return; }
+}
+// 存進使用者自己的資料（不寫進程式碼），之後每天 0:00 由 quoteOf() 自動抽一篇
+function addQuoteTexts(parts, showToday) {
   const have = new Set(S.quotes.map(q => (q.text || '').trim()));
   const fresh = Array.from(new Set(parts)).filter(t => !have.has(t));
   const now = iso();
   fresh.forEach((text, i) => S.quotes.push({ id: uid('q') + i, text, updatedAt: now }));
-  UI.quoteBulk = '';
-  const key = `msec.daily:${TODAY}`; shownDaily.add(key); ls.set(key, '1'); // 剛貼完就不用再跳今天的卡片
+  const key = `msec.daily:${TODAY}`; shownDaily.add(key); ls.set(key, '1');
   commit();
-  toast(fresh.length ? `已加入 ${fresh.length} 段${parts.length > fresh.length ? `（${parts.length - fresh.length} 段重複，略過）` : ''}，每天 0:00 換一段` : '這些段落都已經加過了', 'happy', 'mint', 'check');
+  if (showToday && fresh.length) openDaily();
+  toast(fresh.length ? `已載入 ${fresh.length} 篇${parts.length > fresh.length ? `（${parts.length - fresh.length} 篇重複，略過）` : ''}，之後每天 0:00 自動換一篇` : '這些段落都已經載入過了', 'happy', 'mint', 'check');
 }
+function addQuotes() {
+  const parts = splitPassages(($('#quoteBulk') || {}).value || '');
+  if (!parts.length) { toast('請先貼上段落', 'worried', 'sun'); return; }
+  UI.quoteBulk = '';
+  addQuoteTexts(parts, false);
+}
+/* 直接讀使用者的 Word 檔（.docx）或段落檔（.json）。docx 是 zip，取 word/document.xml 的段落文字 */
+const JSZIP_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+async function docxText(file) {
+  if (!window.JSZip) await loadScript(JSZIP_LIB);
+  const zip = await window.JSZip.loadAsync(await file.arrayBuffer());
+  const doc = zip.file('word/document.xml');
+  if (!doc) throw new Error('notdocx');
+  const xml = await doc.async('string');
+  const unesc = s => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+  return Array.from(xml.matchAll(/<w:p[ >][\s\S]*?<\/w:p>/g)).map(m => {
+    let t = '';
+    for (const r of m[0].matchAll(/<w:t(?: [^>]*)?>([\s\S]*?)<\/w:t>|<w:tab\/>|<w:br\/>/g)) t += r[1] !== undefined ? unesc(r[1]) : (r[0] === '<w:tab/>' ? ' ' : '\n');
+    return t.replace(/ /g, ' ').trim();
+  }).join('\n');
+}
+async function handleQuoteFile(file) {
+  if (!file) return;
+  let parts = [];
+  try {
+    if (/\.docx$/i.test(file.name)) parts = splitPassages(await docxText(file));
+    else {
+      const d = JSON.parse((await file.text()).replace(/^﻿/, ''));
+      const list = Array.isArray(d) ? d : (d.quotes || []);
+      parts = list.map(q => normTxtKeepLines(typeof q === 'string' ? q : q && q.text)).filter(Boolean);
+    }
+  } catch (e) { toast('讀不懂這個檔案，請選《這時候，深呼吸》的 Word 檔（.docx）', 'worried', 'coral'); return; }
+  if (!parts.length) { toast('檔案裡找不到段落', 'worried', 'sun'); return; }
+  addQuoteTexts(parts, true);
+}
+const normTxtKeepLines = s => String(s || '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
 document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-act]');
   if (!$('#addMenu').hidden && !ev.target.closest('#addWrap') && !ev.target.closest('#fab')) closeAddMenu();
@@ -2624,6 +2664,7 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'agDone') { UI.agDone = ev.target.checked; render(); }
   if (ev.target.id === 'importFile') handleImportFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'excelFile') handleExcelFile(ev.target.files && ev.target.files[0]);
+  if (ev.target.id === 'quoteFile') handleQuoteFile(ev.target.files && ev.target.files[0]);
 });
 document.addEventListener('focusout', ev => {
   const el = ev.target;
