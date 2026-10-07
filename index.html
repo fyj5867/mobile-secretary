@@ -195,10 +195,10 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .banner .acts{display:flex;gap:8px;flex-wrap:wrap}
 
 /* ---------- today ---------- */
-.hero{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 20px;align-items:center;padding:24px 22px 18px}
+.hero{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 18px;align-items:center;padding:20px 20px 14px}
 .hero::before{content:"";position:absolute;top:-10px;left:30px;width:112px;height:22px;transform:rotate(-4deg);background-color:var(--tape-3);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;opacity:.9;box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .hero .hero-clip{position:absolute;top:-16px;right:30px;width:30px;height:44px}
-.hero-dd{display:inline-block;width:22px;height:22px;vertical-align:-5px;margin-left:8px}
+.hero-dd{display:inline-block;width:18px;height:18px;vertical-align:-4px;margin-left:6px}
 .hero-dd .doodle{width:100%;height:100%}
 .quote-card{position:relative;margin-top:16px;padding:22px 22px 12px}
 .quote-card::before{content:"";position:absolute;top:-9px;right:64px;width:84px;height:20px;transform:rotate(3deg);background-color:var(--tape-2);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;opacity:.9}
@@ -224,11 +224,12 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .page-end .doodle{width:28px;height:28px}
 .page-end .doodle:nth-child(odd){transform:rotate(-8deg)}
 .page-end .doodle:nth-child(even){transform:rotate(7deg) translateY(4px)}
-.hero > .mascot{width:104px;height:104px}
-.hello{font-family:var(--f-display);font-size:27px;line-height:1.25;text-wrap:balance}
-.today-date{font-family:var(--f-num);color:var(--sub);font-size:14px;margin-top:2px}
-.summary{margin-top:6px;color:var(--sub);max-width:60ch}
-.summary b{font-family:var(--f-num);color:var(--ink);font-weight:600;font-size:15px}
+.hero > .mascot{width:72px;height:72px}
+/* 精簡提醒列：問候語一行小字，不佔版面（使用者要求） */
+.hello{font-family:var(--f-display);font-weight:700;font-size:16px;line-height:1.35;color:var(--ink)}
+.today-date{font-family:var(--f-num);color:var(--sub);font-size:12.5px;margin-top:1px}
+.summary{margin-top:4px;color:var(--sub);max-width:60ch;font-size:12.5px;line-height:1.5}
+.summary b{font-family:var(--f-num);color:var(--ink);font-weight:600;font-size:13px}
 .next-ntf{width:250px;max-width:100%;background:var(--card-2);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
 .nn-h{display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--sub);margin-bottom:4px}
 .nn-h .doodle{width:20px;height:20px}
@@ -518,9 +519,9 @@ td.proj{font-weight:700}
   .tabs,#addBtn,.foot{display:none}
   .scope{order:3;width:100%;justify-content:stretch}
   .scope button{flex:1}
-  .hero{grid-template-columns:auto minmax(0,1fr);padding:16px}
-  .hero > .mascot{width:72px;height:72px}
-  .hello{font-size:21px}
+  .hero{grid-template-columns:auto minmax(0,1fr);gap:6px 12px;padding:16px 14px 12px}
+  .hero > .mascot{width:52px;height:52px;align-self:start;margin-top:2px}
+  .hello{font-size:15px}
   .next-ntf{grid-column:1/-1;width:auto}
   .tiles,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px -20px rgba(0,0,0,.4)}
