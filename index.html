@@ -1495,7 +1495,7 @@ function vSettings() {
     </section>
     <section class="panel">
       <div class="panel-h">${ph('plane')}<h2>提醒與通知</h2></div>
-      <p>每件事項、認證節點、預計取證日都會推播兩次：<b>前一天</b>（同一時間）與<b>開始前 2 小時</b>。整日或沒填時間的事：前一天 09:00、當天 08:00。每天／每週重複的事只在當天提醒一次。</p>
+      <p>每件事項、認證節點、預計取證日都在<b>前一天</b>推播一次：有時間的事在前一天同一時間，整日或沒填時間的事在前一天 09:00。</p>
       <p>App 開著或在背景時由 App 跳通知（請開啟系統通知）；<b>App 關著時</b>由 iPhone 行事曆推播，請用上方「雲端同步 → 訂閱到 iPhone 行事曆」。</p>
       <div class="set-acts" style="margin-bottom:12px">
         ${notif === 'granted' ? '<span class="tag done">系統通知已開啟</span>' : notif === 'unsupported' ? '<span class="tag later">這個瀏覽器不支援系統通知</span>' : notif === 'denied' ? '<span class="tag overdue">系統通知已被封鎖，請到瀏覽器設定允許</span>' : `<button class="btn" data-act="notify">${IC.bell}開啟系統通知</button>`}
@@ -1503,7 +1503,7 @@ function vSettings() {
       </div>
       <p><b>沒開雲端同步？</b>也可以一次匯出行程到手機行事曆（行程有變動要重新匯出）：</p>
       <div class="set-acts">
-        <button class="btn" data-act="ics-events">${IC.cal}匯出未來 180 天行程（前一天＋2 小時前提醒）</button>
+        <button class="btn" data-act="ics-events">${IC.cal}匯出未來 180 天行程（前一天提醒）</button>
       </div>
       <p class="muted" style="margin-top:8px;font-size:12.5px">iPhone 的主畫面 App 匯出 .ics 常常沒反應，請改用 <b>Safari</b> 開這個網址再匯出；開啟雲端同步後，建議改用「訂閱到 iPhone 行事曆」，會自動更新。</p>
     </section>
@@ -1559,7 +1559,7 @@ function render() {
     ${SCOPES.map(s => `<button data-act="new-item" data-scope="${s.k}">${mascot('happy', s.color, s.prop)}<span><b>${s.t} 事項</b><small>${s.hint}</small></span></button>`).join('')}
     <button data-act="new-app">${mascot('calm', 'sun', 'cert')}<span><b>認證申請</b><small>申請日 → 取證日＋提交節點</small></span></button>
     <button data-act="new-cert">${mascot('calm', 'lilac', 'hourglass')}<span><b>證書效期</b><small>到期日提示</small></span></button>`;
-  $('#foot').innerHTML = `<span>事項在 <b>前一天</b> 與 <b>開始前 2 小時</b> 推播</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
+  $('#foot').innerHTML = `<span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
 }
 function go(view) {
@@ -1595,32 +1595,25 @@ function fillDrawer() {
     ${A.certs.length ? `<section class="panel"><div class="panel-h">${ph('hourglass')}<h2>證書到期（90 天內與已過期）</h2><span class="n">${A.certs.length}</span></div><div class="rows">${A.certs.map(c => evRow(certEv(c))).join('')}</div></section>` : ''}
     ${!A.count ? `<section class="panel">${emptyBox('一切都在掌握中', '<div>到期前兩天的事、逾期的事、90 天內到期的證書都會出現在這裡。</div>', 'happy', 'mint', 'check')}</section>` : ''}
     <section class="panel"><div class="panel-h">${ph('bell')}<h2>接下來的推播</h2></div>${nextNoticesHtml(6)}
-      <p class="muted" style="margin:8px 0 0;font-size:12.5px">每件事在前一天、以及開始前 2 小時推播（整日事項：前一天 09:00、當天 08:00）。</p></section>`;
+      <p class="muted" style="margin:8px 0 0;font-size:12.5px">每件事在前一天推播一次（整日事項：前一天 09:00）。</p></section>`;
 }
 
-/* ================= 推播提醒：前一天＋開始前 2 小時 =================
-   App 開著或在背景時由 App 發通知；App 關著時靠 iPhone 行事曆（訂閱或匯出的 .ics，見 alarmsFor）。
-   整日／沒填時間：前一天 09:00＋當天 08:00。每天／每個工作日／每週重複的只在當天提醒一次。 */
+/* ================= 推播提醒：只在前一天提醒一次（使用者要求） =================
+   有時間的事：前一天同一時間；整日／沒填時間：前一天 09:00。重複事項每次各提醒一次。
+   App 開著或在背景時由 App 發通知；App 關著時靠 iPhone 行事曆（訂閱或匯出的 .ics，見 alarmsFor）。 */
 const NTF_KEY = 'msec.ntf.v1';
 function noticeTimes(e) {
   if (!['item', 'step', 'certday'].includes(e.k) || e.done || !e.live) return [];
   const [y, m, d] = e.date.split('-').map(Number);
-  const often = e.rep && ['daily', 'weekdays', 'weekly'].includes(e.ref.repeat);
-  const out = [];
   if (e.time && !e.allDay) {
     const [h, mi] = e.time.split(':').map(Number);
-    const start = new Date(y, m - 1, d, h, mi).getTime();
-    if (!often) out.push({ at: new Date(start - 864e5), kind: 'day' });
-    out.push({ at: new Date(start - 2 * 36e5), kind: 'soon' });
-  } else {
-    if (!often) out.push({ at: new Date(y, m - 1, d - 1, 9, 0), kind: 'day' });
-    out.push({ at: new Date(y, m - 1, d, 8, 0), kind: 'soon' });
+    return [{ at: new Date(new Date(y, m - 1, d, h, mi).getTime() - 864e5), kind: 'day' }];
   }
-  return out;
+  return [{ at: new Date(y, m - 1, d - 1, 9, 0), kind: 'day' }];
 }
 const noticeName = e => e.k === 'certday' ? `預計取證：${appName(e.app)}` : e.k === 'step' ? `${appName(e.app)}｜${e.title}` : e.title;
 function noticeText(e, n) {
-  const when = n.kind === 'day' ? '明天' : (e.time && !e.allDay ? '2 小時後' : '今天');
+  const when = '明天';
   const t = timeLabel(e);
   return `${when}${t ? ' ' + t : ''}｜${noticeName(e)}`;
 }
@@ -1633,7 +1626,7 @@ const fmtAt = d => { const s = ymd(d); return `${s === TODAY ? '今天' : s === 
 function nextNoticesHtml(limit) {
   const ups = upcomingNotices(limit);
   if (!ups.length) return '<div class="nn-empty">三天內沒有需要推播的事</div>';
-  return `<div class="nn-list">${ups.map(x => `<div class="nn-row"><span class="nn-t num">${fmtAt(x.n.at)}</span><span class="nn-n">${esc(noticeName(x.e))}</span><span class="nn-k">${x.n.kind === 'day' ? '前一天' : (x.e.time && !x.e.allDay ? '2 小時前' : '當天')}</span></div>`).join('')}</div>`;
+  return `<div class="nn-list">${ups.map(x => `<div class="nn-row"><span class="nn-t num">${fmtAt(x.n.at)}</span><span class="nn-n">${esc(noticeName(x.e))}</span><span class="nn-k">${md(x.e.date)}（${wd(x.e.date)}）的事</span></div>`).join('')}</div>`;
 }
 function checkNotices() {
   let sent = {}; try { sent = JSON.parse(ls.get(NTF_KEY)) || {}; } catch (e) { sent = {}; }
@@ -2105,11 +2098,10 @@ function icsFold(line) {
   out.push(cur); return out.join('\r\n');
 }
 const icsDate = d => d.replace(/-/g, '');
-/* 推播規則（使用者指定）：前一天＋開始前 2 小時；整日／沒填時間：前一天 09:00＋當天 08:00；
-   每天／每個工作日／每週重複的事項只在當天提醒一次（避免天天被通知兩次） */
+/* 推播規則（使用者指定）：只在前一天提醒一次——有時間：前一天同一時間；整日／沒填時間：前一天 09:00 */
 const alarmDayBefore = t => t ? '-P1D' : '-PT15H';
-const alarmSoon = t => t ? '-PT2H' : 'PT8H';
-const alarmsFor = (t, repeat) => ['daily', 'weekdays', 'weekly'].includes(repeat) ? [alarmSoon(t)] : [alarmDayBefore(t), alarmSoon(t)];
+const alarmsFor = t => [alarmDayBefore(t)];
+const FEED_VER = 2; // 提醒規則改變時 +1，讓訂閱的行事曆立刻拿到新的提醒時間
 const icsStamp = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
 function vevent({ uid: u, date, time, endTime, summary, desc, location, url, rrule, alarms, durMin = 30 }) {
   const L = ['BEGIN:VEVENT', `UID:${u}@mobile-secretary`, `DTSTAMP:${icsStamp()}`];
@@ -2243,12 +2235,12 @@ async function syncNow(manual) {
     const mStr = canon(merged);
     if (mStr !== canon(local)) { applyData(merged); saveData(); render(); }
     const needData = !remote || mStr !== canon(remote);
-    const needFeed = needData || !g.files[ICS_FILE] || syncCfg.feedDay !== TODAY;
+    const needFeed = needData || !g.files[ICS_FILE] || syncCfg.feedDay !== TODAY || syncCfg.feedVer !== FEED_VER;
     if (needData || needFeed) {
       const files = { [ICS_FILE]: { content: buildFeed() } };
       if (needData) files[DATA_FILE] = { content: payload() };
       await gh('PATCH', '/gists/' + syncCfg.gistId, { files });
-      syncCfg.feedDay = TODAY;
+      syncCfg.feedDay = TODAY; syncCfg.feedVer = FEED_VER;
     }
     syncCfg.lastSync = iso(); saveSyncCfg();
     sync.err = null; sync.errToast = null;
@@ -2368,7 +2360,7 @@ function openSubscribe() {
   m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sun', 'bell')}<div><h2>訂閱到 iPhone 行事曆</h2><p>行程會自動出現在 iPhone 內建的行事曆，App 改了它也跟著更新</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <ol class="set-list">
       <li><b>在 iPhone 上</b>按下方「在 iPhone 訂閱」，跳出視窗時選 <b>「訂閱」</b>。</li>
-      <li>設定畫面若有 <b>「移除提示」</b>，請<b>關閉</b>，前一天和 2 小時前才會推播。</li>
+      <li>設定畫面若有 <b>「移除提示」</b>，請<b>關閉</b>，前一天才會推播提醒。</li>
       <li>按「加入」完成。之後可到 iPhone「設定 → 行事曆 → 帳號 → 已訂閱的行事曆」調整更新頻率（建議每 15 分鐘）。</li>
       <li>按鈕沒反應時：複製下方網址，到「設定 → 行事曆 → 帳號 → 加入帳號 → 其他 → 加入已訂閱的行事曆」貼上。</li>
     </ol>
