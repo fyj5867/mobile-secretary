@@ -21,7 +21,7 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 - `items`：事項。scope `work|personal|shinnyo`（屬性與類別定義在 `SCOPES`／`CATS`）、cat、date、
   allDay（整日）、time（開始）、endTime（約略結束，選填）、title、target、company、location、phone、link、note、star。
   重複：repeat `none|daily|weekdays|weekly|monthly|yearly`、until；重複事項的完成記在 `doneDates[YYYY-MM-DD]`，
-  一般事項用 `done`/`doneAt`。
+  一般事項用 `done`/`doneAt`。從 Google 主日曆帶進來的事項另有 `gsrc: 'primary'`、`gev`（Google 事件 id），見下方「Google 日曆連動」。
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
 - `certs`：證書效期。project、cert、due、no、state `normal|renewing|retired`、note。
@@ -51,6 +51,30 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   iPhone 主畫面 App 與 Safari 的儲存空間是分開的，所以從 Safari 開的配對頁會提供「複製配對碼」給主畫面 App 貼上。
 - 行事曆訂閱網址：`https://gist.githubusercontent.com/<login>/<gistId>/raw/msec-calendar.ics`（webcal://）。
   內容只放標題、時間、地點、屬性・類別，不放電話／對象／備註（使用者隱私偏好）。單向：iPhone 端修改不會回 App。
+
+## Google 日曆連動（雙向，2026/10 新增；使用者的個人 Gmail）
+- **不用 Google Cloud 專案**：使用者把 index.html 裡的 `GAS_CODE` 貼到自己帳號的 Apps Script（script.new），在「服務」加入
+  Google Calendar API（進階服務），部署成網頁應用程式（執行身分：我／誰可以存取：所有人）。App 用 POST（text/plain，免 CORS 預檢）送
+  `{key, tz, ops}`，ops：hello／list／get／upsert／patch／remove。
+- `KEY` 是 App 產生的隨機密碼，只寫在她自己的 Apps Script 裡；`msec.gcal.v1`（url、key、me、scope、lastSync）只存在裝置，
+  不進 Gist、不進備份、不進程式碼。配對碼 MSEC1 的 `s` 欄位會帶上 Google 連動；單獨的連動碼是 `MSECG1.` + base64url({u, k})。
+- **改 GAS_CODE 時要把裡面的 VER +1，並請使用者在 Apps Script 貼上新版 →「部署 → 管理部署作業 → 編輯 → 版本：新版本」**（網址不變）。
+- App → Google：寫到專用日曆「行動祕書」（第一次自動建立，id 記在 Script Properties）。事件 id 由資料 id 推得：
+  `ms`+base32hex(事項 id)、`st`(認證 id/節點 id)、`cd`(認證 id，取證日)、`ce`(證書 id)；多台裝置重複寫入也只有一筆
+  （insert 遇到 already exists 就改成更新並恢復）。事項雙向；節點、取證日、證書單向（以 App 為準）。只新寫 30 天前之後的資料。
+  描述只放「屬性・類別」，不放對象、電話、備註（和 iPhone 訂閱同樣的隱私原則）。顏色：工作 9、個人 2、Shinnyo 3、認證 5、證書 11。
+  提醒同 App 規則（前一天）；證書為 28 天前＋前一天 09:00（Google 最多只能提前 4 週）。
+- Google → App：主日曆「過去 7 天～未來 90 天」（singleEvents 展開，重複行程每次一筆）帶進來成為事項：id `g_<事件 id>`（太長用 `gh_<hash>`），
+  新帶進來的 updatedAt 用 Google 的 updated（別台已補的屬性／備註合併時不會被蓋掉）。婉拒的、workingLocation 不帶；說明只在第一次帶進備註。
+  在 Google「行動祕書」日曆直接新增的行程（沒有邀請對象、重複規則簡單）會收編成一般事項（`ga<hash>`）。
+  gsrc 事項不放進 iPhone 訂閱與 .ics 匯出（Google 帳號加到 iPhone 就看得到，避免重複），日期過了自動視為完成（不算逾期）。
+- 比對欄位：標題、日期、整日、開始／結束時間（剛好一小時視同沒填）、地點；行動祕書日曆另比重複規則（Google 上改成 App 表達不了的規則就不比）。
+  兩邊不同時以較晚修改的為準（Google `updated` vs App `updatedAt`）。別人邀請的會議改不了（403）→ 還原成 Google 的內容並提示。
+- **只有明確的刪除才刪**：Google 狀態 cancelled → 刪 App 事項；App 墓碑 → 刪 Google 事件。這台不認得的事件一律不動（可能是別台較新的資料）。
+  一次刪超過 15 筆且超過 30% → 暫停，在設定頁讓使用者選「一起刪除／保留」。
+- 開了 GitHub 同步時，這次開 App 要先 Gist 同步成功一次（`sync.okOnce`）才跑 Google 同步，避免用舊資料改 Google。
+  時機：存檔後 3 秒、Gist 同步帶來變更後、畫面開著每 2 分鐘、切回 App。
+- 測試：沒有可用的 Google 帳號時，用本機假的 Apps Script（直接執行 GAS_CODE ＋ 假 Calendar 服務）測；`gUrlOk` 在 localhost 允許 `http://localhost:<port>/exec`。
 
 ## 視覺風格（使用者指定）
 日系手帳風、有質感、很多可愛小貼圖；**不要粉紅色系、不要粉色外框**。

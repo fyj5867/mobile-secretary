@@ -410,6 +410,9 @@ td.proj{font-weight:700}
 .sync-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .sync-row input{flex:1;min-width:220px;background:var(--card-2);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;outline:0;font-size:16px}
 .sync-row input:focus{border-color:var(--accent)}
+.field textarea.gcode{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;overflow:auto;min-height:120px}
+.g-steps li{margin-bottom:6px}
+.set-list code{font-size:12px;background:var(--card-2);padding:0 4px;border-radius:4px}
 .round .sdot{position:absolute;right:-1px;bottom:-1px;width:12px;height:12px;border-radius:50%;background:var(--mint);border:2px solid var(--bg)}
 .round .sdot.busy{background:var(--sun)}
 .round .sdot.err{background:var(--red)}
@@ -832,7 +835,7 @@ const Store = {
   patch(col, id, data) { const x = S[col].find(v => v.id === id); if (x) Object.assign(x, data, { updatedAt: iso() }); commit(); },
   del(col, id) { S[col] = S[col].filter(x => x.id !== id); tomb(col, id); commit(); }
 };
-function commit() { saveData(); render(); scheduleSync(); }
+function commit() { saveData(); render(); scheduleSync(); scheduleGsync(); }
 async function write(fn) {
   try { await fn(); return true; }
   catch (e) { toast('儲存沒有成功，請再試一次', 'worried', 'coral'); return false; }
@@ -916,7 +919,7 @@ function buildEvents() {
     const rep = isRep(it);
     const dates = rep ? occurrences(it, lo, hi) : [it.date];
     for (const d of dates) {
-      const done = rep ? !!(it.doneDates && it.doneDates[d]) : !!it.done;
+      const done = rep ? !!(it.doneDates && it.doneDates[d]) : (!!it.done || (!!it.gsrc && it.date < TODAY));
       out.push({ k: 'item', key: rep ? `item:${it.id}:${d}` : `item:${it.id}`, id: it.id, date: d, allDay: !!it.allDay, time: it.allDay ? '' : (it.time || ''), endTime: it.allDay ? '' : (it.endTime || ''), title: it.title || '（未命名事項）', done, live: true, ref: it, rep, scope: it.scope || 'work' });
     }
   }
@@ -1483,6 +1486,7 @@ function vSettings() {
     </section>`;
   return `<div class="set-grid">
     ${syncPanel}
+    ${gPanel()}
     ${quotePanel}
     <section class="panel">
       <div class="panel-h">${ph('pencil')}<h2>安裝到手機主畫面</h2>${standalone ? '<span class="tag done">已安裝</span>' : ''}</div>
@@ -1523,7 +1527,7 @@ function vSettings() {
         ${samples ? `<button class="btn danger" data-act="clear-samples">清除 ${samples} 筆範例資料</button>` : ''}
         <button class="btn danger" data-act="clear-all">清除全部資料</button>
       </div>
-      <p class="muted" style="margin-top:12px;font-size:12.5px">行動祕書 v${APP_VERSION}・提醒規則：事項前 2 天、證書 180／90 天</p>
+      <p class="muted" style="margin-top:12px;font-size:12.5px">行動祕書 v${APP_VERSION}・提醒規則：事項前一天、證書 180／90 天</p>
     </section>
   </div>`;
 }
@@ -1770,7 +1774,7 @@ function openItemForm(it, date, scope) {
   const m = $('#modal');
   m.setAttribute('aria-label', it ? '編輯事項' : '新增事項');
   m.innerHTML = `<form id="fItem" autocomplete="off" novalidate>
-    <div class="sheet-h">${mascot(it ? 'calm' : 'happy', so.color, so.prop)}<div><h2>${it ? '編輯事項' : '新增事項'}</h2><p>到期前兩天開始提醒，也可以設定重複</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="sheet-h">${mascot(it ? 'calm' : 'happy', so.color, so.prop)}<div><h2>${it ? '編輯事項' : '新增事項'}</h2><p>${it && it.gsrc ? '來自 Google 日曆：標題、日期、時間、地點會同步回 Google' : '前一天提醒，也可以設定重複'}</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <div class="form-grid">
       <div class="field full"><label>屬性</label><div class="radio-seg" role="radiogroup" aria-label="屬性">${SCOPES.map(s => `<label><input type="radio" name="fi-scope" value="${s.k}" ${sc === s.k ? 'checked' : ''}><span>${s.t}</span></label>`).join('')}</div></div>
       ${fld('fi-title', '內容 <span class="req">*</span>', inp('fi-title', v.title, 'maxlength="200" placeholder="例如：與實驗室確認測試排程、繳電話費"'), 'full')}
@@ -2128,7 +2132,7 @@ const appUrl = () => location.protocol.startsWith('http') ? location.href.split(
 function exportEventsICS() {
   const hi = addDays(TODAY, 180); const evs = []; const seen = new Set();
   for (const it of S.items) {
-    if (!isDate(it.date)) continue;
+    if (!isDate(it.date) || it.gsrc) continue;
     const base = { desc: [it.cat && `類別：${it.cat}`, it.target && `對象：${it.target}`, it.company && `公司：${it.company}`, it.phone && `電話：${it.phone}`, it.link && `連結：${it.link}`, it.note].filter(Boolean).join('\n'), location: it.location, url: appUrl() };
     const sc = it.scope || 'work';
     const summary = `${sc === 'personal' ? '' : `【${scopeOf(sc).t}】`}${it.title}`;
@@ -2233,7 +2237,8 @@ async function syncNow(manual) {
     const local = snapshot();
     const merged = mergeData(local, remote);
     const mStr = canon(merged);
-    if (mStr !== canon(local)) { applyData(merged); saveData(); render(); }
+    const changed = mStr !== canon(local);
+    if (changed) { applyData(merged); saveData(); render(); }
     const needData = !remote || mStr !== canon(remote);
     const needFeed = needData || !g.files[ICS_FILE] || syncCfg.feedDay !== TODAY || syncCfg.feedVer !== FEED_VER;
     if (needData || needFeed) {
@@ -2243,7 +2248,8 @@ async function syncNow(manual) {
       syncCfg.feedDay = TODAY; syncCfg.feedVer = FEED_VER;
     }
     syncCfg.lastSync = iso(); saveSyncCfg();
-    sync.err = null; sync.errToast = null;
+    sync.err = null; sync.errToast = null; sync.okOnce = true;
+    if (gReady() && (changed || gs.waiting || Date.now() - gs.last > 110000)) scheduleGsync(changed ? 1500 : 600);
     if (manual) toast('同步完成，所有裝置都是最新資料', 'happy', 'mint', 'check');
   } catch (e) {
     sync.err = e.status === 401 || e.status === 403 ? 'auth' : e.status === 404 ? 'missing' : 'net';
@@ -2276,9 +2282,12 @@ function paintSync() {
 }
 const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64u = s => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
-const pairCode = () => 'MSEC1.' + b64u(JSON.stringify({ t: syncCfg.token, g: syncCfg.gistId }));
+const pairCode = () => 'MSEC1.' + b64u(JSON.stringify(Object.assign({ t: syncCfg.token, g: syncCfg.gistId }, gReady() ? { s: { u: gcal.url, k: gcal.key } } : {})));
 function readPairCode(code) {
-  try { const o = JSON.parse(unb64u(String(code).trim().replace(/^MSEC1\./, ''))); return o && o.t && o.g ? { token: o.t, gistId: o.g } : null; }
+  try {
+    const o = JSON.parse(unb64u(String(code).trim().replace(/^MSEC1\./, '')));
+    return o && o.t && o.g ? { token: o.t, gistId: o.g, gs: o.s && o.s.u && o.s.k ? { url: o.s.u, key: o.s.k } : null } : null;
+  }
   catch (e) { return null; }
 }
 const APP_HOME = 'https://fyj5867.github.io/mobile-secretary/';
@@ -2287,8 +2296,8 @@ const feedUrl = () => `https://gist.githubusercontent.com/${syncCfg.login}/${syn
 
 async function connectSync(raw, btn) {
   const s = String(raw || '').trim();
-  let token = s, gistId = null;
-  if (s.startsWith('MSEC1.')) { const p = readPairCode(s); if (!p) { toast('配對碼不完整，請重新複製一次', 'worried', 'sun'); return; } token = p.token; gistId = p.gistId; }
+  let token = s, gistId = null, gsIn = null;
+  if (s.startsWith('MSEC1.')) { const p = readPairCode(s); if (!p) { toast('配對碼不完整，請重新複製一次', 'worried', 'sun'); return; } token = p.token; gistId = p.gistId; gsIn = p.gs; }
   if (!/^(ghp_|github_pat_)[A-Za-z0-9_]{20,}$/.test(token)) { toast('這看起來不是 GitHub 金鑰：金鑰是 ghp_ 開頭的一長串，配對碼是 MSEC1. 開頭', 'worried', 'sun'); return; }
   if (btn) { btn.disabled = true; btn.textContent = '連線中…'; }
   try {
@@ -2307,10 +2316,12 @@ async function connectSync(raw, btn) {
       gistId = created.id; first = true;
     }
     syncCfg = { token, gistId, login: user.login, since: iso() }; saveSyncCfg();
+    const withG = gsIn && !gReady();
+    if (withG) { gcal = { url: gsIn.url, key: gsIn.key, scope: (gcal && gcal.scope) || 'personal', since: iso() }; saveGcal(); }
     UI.syncInput = '';
     saveData(); render();
     await syncNow(false);
-    toast(first ? `已在 ${user.login} 的 GitHub 建立同步空間，這台裝置開始同步` : `已連線到 ${user.login} 的同步資料，這台裝置開始同步`, 'happy', 'mint', 'check');
+    toast(first ? `已在 ${user.login} 的 GitHub 建立同步空間，這台裝置開始同步` : `已連線到 ${user.login} 的同步資料，這台裝置開始同步${withG ? '（Google 日曆也一起連動）' : ''}`, 'happy', 'mint', 'check');
     closeLayer($('#modal'));
   } catch (e) {
     toast(e.status === 401 ? '金鑰無效：請確認整串複製完整、沒有過期' : e.status === 403 ? '金鑰權限不足：建立時要勾選「gist」' : '連線失敗，請確認網路後再試一次', 'worried', 'coral');
@@ -2334,6 +2345,7 @@ async function openPairOut() {
       <li>在 Safari 跳出的視窗按 <b>「複製配對碼」</b>。</li>
       <li>打開<b>主畫面上的行動祕書 App</b> → 設定 → 雲端同步 → 貼上 → 連線。</li>
       <li>沒辦法掃描時：按下方「複製配對碼」，用 LINE 或 Email 傳給自己，在手機上貼上即可。</li>
+      ${gReady() ? '<li>這台已連動 Google 日曆，配對後另一台也會一起連動。</li>' : ''}
     </ol></div>
     <p class="muted" style="font-size:12.5px">配對碼裡含有你的同步金鑰，只傳給你自己，不要分享給別人。</p>
     <div class="form-foot"><button class="btn" data-act="copy-pair">${IC.copy}複製配對碼</button><button class="btn primary" data-act="close">完成</button></div>`;
@@ -2384,7 +2396,7 @@ function buildFeed() {
   const evs = [];
   const url = location.protocol.startsWith('http') ? location.origin + location.pathname : '';
   for (const it of S.items) {
-    if (!isDate(it.date)) continue;
+    if (!isDate(it.date) || it.gsrc) continue;
     const sc = it.scope || 'work';
     const pre = (sc === 'personal' ? '' : `【${scopeOf(sc).t}】`) + (it.star ? '★' : '');
     const time = it.allDay ? '' : (it.time || ''), endTime = it.allDay ? '' : (it.endTime || '');
@@ -2418,6 +2430,663 @@ function buildFeed() {
     evs.push(vevent({ uid: 'cert-' + c.id, date: c.due, summary: `【證書到期】${c.project}｜${c.cert}`, url, alarms: c.due >= TODAY ? ['-P89DT15H', '-P29DT15H', '-P1DT15H'] : [] }));
   }
   return icsWrap(evs, '行動祕書', true);
+}
+
+/* ================= Google 日曆連動（雙向，透過使用者自己的 Apps Script） =================
+   不需要 Google Cloud 專案：使用者在自己的 Google 帳號貼上 GAS_CODE、部署成「網頁應用程式」，
+   App 用 POST（純文字 body，瀏覽器不做 CORS 預檢）送 {key, ops}，由它代為讀寫 Google 日曆。
+   - App → Google：事項（雙向）、認證節點／預計取證日／證書到期（單向，以 App 為準）寫到專用的「行動祕書」日曆。
+     事件 id 由資料 id 推得（ms／st／cd／ce + base32hex），多台裝置重複寫入也只會有一筆。
+   - Google → App：主日曆「過去 7 天～未來 90 天」的行程帶進來成為事項（id g_<事件 id>，gsrc: 'primary'）。
+     在「行動祕書」日曆直接新增的行程，會被收編成一般事項（ga<hash>）。
+   - 比較標題、日期、時間、地點（行動祕書日曆另比重複規則）；兩邊不同時，以較晚修改的一方為準。
+   - 只有明確的刪除（Google 狀態 cancelled、App 墓碑）才會刪資料；不認得的資料一律不動（可能是別台裝置較新的資料）。
+   - 連動網址與密碼只存在這台裝置（msec.gcal.v1），配對其他裝置時隨配對碼帶過去；不進 Gist、不進備份。 */
+const GCAL_KEY = 'msec.gcal.v1';
+const G_PAST = 7, G_FUTURE = 90, G_PUSH_PAST = 30;
+const G_COLOR = { work: '9', personal: '2', shinnyo: '3', step: '5', cert: '11' };
+const GAS_URL_RE = /^https:\/\/script\.google\.com\/(?:a\/macros\/[^/]+|macros)\/s\/[\w-]{20,}\/exec$/;
+let gcal = (() => { try { const c = JSON.parse(ls.get(GCAL_KEY)); return c && c.key ? c : null; } catch (e) { return null; } })();
+const gReady = () => !!(gcal && gcal.url && gcal.key);
+const saveGcal = () => gcal ? ls.set(GCAL_KEY, JSON.stringify(gcal)) : ls.del(GCAL_KEY);
+const gs = { busy: false, again: false, waiting: false, err: null, errMsg: '', errToast: null, timer: null, last: 0, pendingDel: null };
+const gUrlOk = u => GAS_URL_RE.test(u) || (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && /^http:\/\/(localhost|127\.0\.0\.1):\d+\/exec$/.test(u));
+const newKey = () => { const a = new Uint8Array(24); crypto.getRandomValues(a); return Array.from(a, b => 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'[b % 57]).join(''); };
+
+/* 使用者貼到 Apps Script 的程式（不含任何個人資料；KEY 在顯示時才填入） */
+const GAS_CODE = `/**
+ * 行動祕書 × Google 日曆 連動程式 v1
+ * 請整段貼上，不需要修改。KEY 是你的專屬連動密碼，不要分享給別人。
+ * 1. 左側「服務」按 ＋ 加入 Google Calendar API
+ * 2. 部署 → 新增部署作業 → 網頁應用程式（執行身分：我／誰可以存取：所有人）
+ */
+var KEY = '__MSEC_KEY__';
+var CAL_NAME = '行動祕書';
+var VER = 1;
+var calCache = null;
+
+function doGet() {
+  return ContentService.createTextOutput('行動祕書 × Google 日曆：連動程式運作中（v' + VER + '）');
+}
+
+function doPost(e) {
+  var out;
+  try {
+    var req = JSON.parse(e.postData.contents);
+    if (req.key !== KEY) throw new Error('KEY');
+    var lock = LockService.getScriptLock();
+    lock.waitLock(60000);
+    try {
+      out = { ok: true, v: VER, res: (req.ops || []).map(function (op) { return run(op, req.tz); }) };
+    } finally {
+      lock.releaseLock();
+    }
+  } catch (err) {
+    out = { ok: false, v: VER, error: String((err && err.message) || err) };
+  }
+  return ContentService.createTextOutput(JSON.stringify(out)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function run(op, tz) {
+  try {
+    var cal = op.cal === '@app' ? appCal(tz) : op.cal;
+    switch (op.op) {
+      case 'hello': return { ok: true, data: { cal: appCal(tz), me: Calendar.Calendars.get('primary').id } };
+      case 'list': return { ok: true, data: list(cal, op.args || {}) };
+      case 'get': return { ok: true, data: slim(Calendar.Events.get(cal, op.id)) };
+      case 'upsert': return { ok: true, data: upsert(cal, op.id, op.body) };
+      case 'patch': return { ok: true, data: slim(change(cal, op.id, op.body)) };
+      case 'remove': Calendar.Events.remove(cal, op.id); return { ok: true };
+    }
+    return { ok: false, error: 'unknown op' };
+  } catch (err) {
+    return { ok: false, error: String((err && err.message) || err) };
+  }
+}
+
+// 專用的「行動祕書」日曆：第一次自動建立，之後記住它的 id
+function appCal(tz) {
+  if (calCache) return calCache;
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('CAL');
+  if (id) {
+    try {
+      Calendar.Calendars.get(id);
+    } catch (err) {
+      if (!/not found|deleted/i.test(String(err && err.message))) throw err;
+      id = null;
+    }
+  }
+  if (!id) {
+    var mine = Calendar.CalendarList.list({ minAccessRole: 'owner' }).items || [];
+    for (var i = 0; i < mine.length; i++) if (mine[i].summary === CAL_NAME) { id = mine[i].id; break; }
+  }
+  if (!id) id = Calendar.Calendars.insert({ summary: CAL_NAME, description: '由「行動祕書」App 同步', timeZone: tz || 'Asia/Taipei' }).id;
+  props.setProperty('CAL', id);
+  calCache = id;
+  return id;
+}
+
+function list(cal, args) {
+  var out = [], token = null;
+  do {
+    var q = { maxResults: 2500 };
+    for (var k in args) q[k] = args[k];
+    if (token) q.pageToken = token;
+    var r = Calendar.Events.list(cal, q);
+    (r.items || []).forEach(function (ev) { out.push(slim(ev)); });
+    token = r.nextPageToken;
+  } while (token);
+  return out;
+}
+
+// 新增；同一個 id 已經存在（別台裝置先寫了，或在 Google 被刪過）就改成更新並恢復
+function upsert(cal, id, body) {
+  var b = { id: id };
+  for (var k in body) b[k] = body[k];
+  try {
+    return slim(Calendar.Events.insert(b, cal));
+  } catch (err) {
+    if (!/already exists|duplicate/i.test(String(err && err.message))) throw err;
+    var p = { status: 'confirmed' };
+    for (var k2 in body) p[k2] = body[k2];
+    return slim(change(cal, id, p));
+  }
+}
+
+// 改到時間時讀出整筆再整筆寫回（整日 ↔ 有時間 要整個換掉 start/end），其他欄位用 patch
+function change(cal, id, body) {
+  if (!body.start && !body.end) return Calendar.Events.patch(body, cal, id);
+  var ev = Calendar.Events.get(cal, id);
+  for (var k in body) ev[k] = body[k];
+  return Calendar.Events.update(ev, cal, id);
+}
+
+function slim(ev) {
+  if (!ev) return null;
+  var t = function (x) { return x ? { date: x.date || null, dateTime: x.dateTime || null, timeZone: x.timeZone || null } : null; };
+  var guests = ev.attendees || [];
+  var me = guests.filter(function (a) { return a.self; })[0];
+  return {
+    id: ev.id, status: ev.status || 'confirmed', updated: ev.updated || null,
+    summary: ev.summary || '', location: ev.location || '', description: ev.description || '',
+    start: t(ev.start), end: t(ev.end), recurrence: ev.recurrence || null, recurringEventId: ev.recurringEventId || null,
+    colorId: ev.colorId || null, eventType: ev.eventType || 'default', link: ev.hangoutLink || '',
+    guests: guests.length, declined: !!(me && me.responseStatus === 'declined')
+  };
+}
+`;
+const gasCode = () => GAS_CODE.replace('__MSEC_KEY__', gcal ? gcal.key : '');
+
+/* ---- 事件 id：base32hex（Google 只接受 0-9、a-v，長度 5～1024） ---- */
+const B32 = '0123456789abcdefghijklmnopqrstuv';
+function b32(s) {
+  let out = '', bits = 0, val = 0;
+  for (const b of new TextEncoder().encode(s)) {
+    val = (val << 8) | b; bits += 8;
+    while (bits >= 5) { out += B32[(val >>> (bits - 5)) & 31]; bits -= 5; }
+    val &= (1 << bits) - 1;
+  }
+  return bits ? out + B32[(val << (5 - bits)) & 31] : out;
+}
+function unb32(s) {
+  const bytes = []; let bits = 0, val = 0;
+  for (const ch of s) {
+    const v = B32.indexOf(ch); if (v < 0) return null;
+    val = (val << 5) | v; bits += 5;
+    if (bits >= 8) { bytes.push((val >>> (bits - 8)) & 255); bits -= 8; val &= (1 << bits) - 1; }
+  }
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes)); } catch (e) { return null; }
+}
+const G_PRE = { item: 'ms', step: 'st', certday: 'cd', cert: 'ce' };
+const gEv = { item: id => 'ms' + b32(id), step: (a, s) => 'st' + b32(a + '/' + s), certday: a => 'cd' + b32(a), cert: c => 'ce' + b32(c) };
+function gDecode(id) {
+  const kind = Object.keys(G_PRE).find(k => id.startsWith(G_PRE[k]));
+  const raw = kind ? unb32(id.slice(2)) : null;
+  if (!raw) return null;
+  if (kind === 'step') {
+    const i = raw.indexOf('/'); const a = raw.slice(0, i), s = raw.slice(i + 1);
+    return i > 0 && validId(a) && validId(s) ? { kind, id: a, step: s } : null;
+  }
+  return validId(raw) ? { kind, id: raw } : null;
+}
+const gHash = s => { let a = 5381, b = 52711; for (const ch of s) { const c = ch.codePointAt(0); a = ((a << 5) + a + c) >>> 0; b = (((b << 5) + b) ^ c) >>> 0; } return a.toString(36) + b.toString(36); };
+const gItemId = evId => { const id = 'g_' + evId; return validId(id) ? id : 'gh_' + gHash(evId); };
+
+/* ---- 欄位對照 ---- */
+const gHM = d => pad(d.getHours()) + ':' + pad(d.getMinutes());
+const gTZ = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Taipei'; } catch (e) { return 'Asia/Taipei'; } };
+const gT = s => Date.parse(s || '') || 0;
+const gLocal = d => `${ymd(d)}T${gHM(d)}:00`;
+const gPlus = (t, n) => { const [h, m] = t.split(':').map(Number); const x = h * 60 + m + n; return x < 1440 ? pad(Math.floor(x / 60)) + ':' + pad(x % 60) : ''; };
+const gItemF = it => ({ title: it.title || '', location: it.location || '', date: it.date, allDay: !!it.allDay, time: it.time || '', endTime: it.endTime || '', repeat: it.gsrc ? 'none' : (it.repeat || 'none'), until: it.until || '' });
+// 比較用的標準形：沒填時間＝整日；結束時間剛好一小時視同沒填（App 沒填結束時間時寫進 Google 是一小時）
+function gNorm(f) {
+  const allDay = !!f.allDay || !f.time;
+  const time = allDay ? '' : f.time;
+  let endTime = allDay ? '' : (f.endTime || '');
+  if (endTime && (endTime <= time || endTime === gPlus(time, 60))) endTime = '';
+  const repeat = f.repeat && f.repeat !== 'none' ? f.repeat : 'none';
+  return { title: String(f.title || '').trim(), location: String(f.location || '').trim(), date: f.date, allDay, time, endTime, repeat, until: repeat !== 'none' && isDate(f.until) ? f.until : '' };
+}
+const G_GROUPS = { title: ['title'], loc: ['location'], time: ['date', 'allDay', 'time', 'endTime'], rep: ['repeat', 'until'] };
+function gDiff(a, b, withRep) {
+  const x = gNorm(a), y = gNorm(b);
+  return Object.keys(G_GROUPS).filter(g => (g !== 'rep' || withRep) && G_GROUPS[g].some(k => x[k] !== y[k]));
+}
+function gFields(g, groups) {
+  const f = {};
+  if (groups.includes('title')) f.title = g.title;
+  if (groups.includes('loc')) f.location = g.location;
+  if (groups.includes('time')) Object.assign(f, { date: g.date, allDay: g.allDay, time: g.time, endTime: g.endTime });
+  if (groups.includes('rep')) Object.assign(f, { repeat: g.repeat, until: g.until });
+  return f;
+}
+// Google 事件 → App 欄位
+function evF(e) {
+  const s = e.start || {}, en = e.end || {};
+  const f = { title: e.summary || '（無標題）', location: e.location || '', date: '', allDay: true, time: '', endTime: '', repeat: 'none', until: '' };
+  if (s.dateTime) {
+    const d = new Date(s.dateTime); f.date = ymd(d); f.allDay = false; f.time = gHM(d);
+    if (en.dateTime) { const x = new Date(en.dateTime); if (ymd(x) === f.date && gHM(x) > f.time) f.endTime = gHM(x); }
+  } else if (s.date) f.date = s.date;
+  return Object.assign(f, gParseRule(e.recurrence, f.date));
+}
+function gParseRule(rec, date) {
+  const line = (rec || []).find(r => /^RRULE:/i.test(r));
+  if (!line || !isDate(date)) return { repeat: 'none', until: '' };
+  const p = {};
+  line.slice(6).split(';').forEach(kv => { const [k, v] = kv.split('='); p[String(k).toUpperCase()] = String(v || '').toUpperCase(); });
+  let until = '';
+  const m = (p.UNTIL || '').match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z?))?$/);
+  if (m) until = !m[4] ? `${m[1]}-${m[2]}-${m[3]}` : ymd(m[7] ? new Date(Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6])) : new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5], +m[6]));
+  const custom = { repeat: 'custom', until: '' };
+  if ((p.INTERVAL && p.INTERVAL !== '1') || p.COUNT || p.BYSETPOS || p.BYWEEKNO || p.BYYEARDAY || p.BYHOUR || p.BYMINUTE) return custom;
+  const d = parse(date), wdc = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'][d.getDay()];
+  const days = (p.BYDAY || '').split(',').filter(Boolean).sort().join(',');
+  const okDay = !p.BYMONTHDAY || +p.BYMONTHDAY === d.getDate(), okMon = !p.BYMONTH || +p.BYMONTH === d.getMonth() + 1;
+  if (p.FREQ === 'DAILY' && !days && !p.BYMONTHDAY && !p.BYMONTH) return { repeat: 'daily', until };
+  if (p.FREQ === 'WEEKLY' && (!days || days === wdc)) return { repeat: 'weekly', until };
+  if (p.FREQ === 'WEEKLY' && days === 'FR,MO,TH,TU,WE') return { repeat: 'weekdays', until };
+  if (p.FREQ === 'MONTHLY' && !days && okDay && !p.BYMONTH) return { repeat: 'monthly', until };
+  if (p.FREQ === 'YEARLY' && !days && okDay && okMon) return { repeat: 'yearly', until };
+  return custom;
+}
+// App 欄位 → Google 時間（一律用這台裝置的時區）
+function gTimeBody(f, e) {
+  const n = gNorm(f);
+  if (n.allDay) {
+    let span = 1;
+    if (e && e.start && e.start.date && e.end && e.end.date) span = Math.max(1, diff(e.start.date, e.end.date));
+    return { start: { date: n.date }, end: { date: addDays(n.date, span) } };
+  }
+  const [y, mo, d] = n.date.split('-').map(Number), [h, mi] = n.time.split(':').map(Number);
+  const st = new Date(y, mo - 1, d, h, mi);
+  let en;
+  if (f.endTime && f.endTime > n.time) { const [eh, em] = f.endTime.split(':').map(Number); en = new Date(y, mo - 1, d, eh, em); }
+  else {
+    let dur = 60;
+    if (e && e.start && e.start.dateTime && e.end && e.end.dateTime) { const x = (new Date(e.end.dateTime) - new Date(e.start.dateTime)) / 6e4; if (x > 0) dur = x; }
+    en = new Date(st.getTime() + dur * 6e4);
+  }
+  const tz = gTZ();
+  return { start: { dateTime: gLocal(st), timeZone: tz }, end: { dateTime: gLocal(en), timeZone: tz } };
+}
+function gRRule(f) {
+  const n = gNorm(f);
+  const freq = { daily: 'FREQ=DAILY', weekdays: 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', weekly: 'FREQ=WEEKLY', monthly: 'FREQ=MONTHLY', yearly: 'FREQ=YEARLY' }[n.repeat];
+  if (!freq) return [];
+  let u = '';
+  if (n.until) {
+    const [y, m, d] = n.until.split('-').map(Number);
+    u = ';UNTIL=' + (n.allDay ? n.until.replace(/-/g, '') : new Date(y, m - 1, d, 23, 59, 59).toISOString().replace(/\.\d{3}/, '').replace(/[-:]/g, ''));
+  }
+  return ['RRULE:' + freq + u];
+}
+// 提醒：和 App 一樣只在前一天（有時間：前一天同一時間；整日：前一天 09:00）
+const gRem = o => ({ useDefault: false, overrides: (o.rem || [gNorm(o.f).allDay ? 900 : 1440]).map(minutes => ({ method: 'popup', minutes })) });
+function gPatchBody(f, e, groups, withRep, rem) {
+  const n = gNorm(f), b = {};
+  if (groups.includes('title')) b.summary = n.title;
+  if (groups.includes('loc')) b.location = n.location;
+  if (groups.includes('time') || (withRep && groups.includes('rep'))) {
+    Object.assign(b, gTimeBody(f, e));
+    if (withRep) b.recurrence = gRRule(f);
+    if (rem) b.reminders = rem;
+  }
+  return b;
+}
+function gFullBody(o, e) {
+  const n = gNorm(o.f);
+  const b = Object.assign({ summary: n.title, location: n.location, description: o.desc, colorId: o.color, reminders: gRem(o), source: { title: '行動祕書', url: APP_HOME } }, gTimeBody(o.f, e));
+  if (o.kind === 'item') b.recurrence = gRRule(o.f);
+  return b;
+}
+const gDesc = s => String(s || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '\n').replace(/<[^>]+>/g, '')
+  .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&')
+  .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, 600);
+
+/* ---- 要放進「行動祕書」日曆的資料 ---- */
+function gObjItem(it) {
+  const lo = addDays(TODAY, -G_PUSH_PAST), sc = it.scope || 'work';
+  return {
+    kind: 'item', ref: it, upd: it.updatedAt || '', f: gItemF(it), color: G_COLOR[sc] || G_COLOR.work,
+    fresh: isRep(it) ? !(isDate(it.until) && it.until < lo) : it.date >= lo,
+    desc: `${scopeOf(sc).t}・${it.cat || '其他'}\n（由行動祕書同步：標題、日期、時間、地點在這裡或 App 修改都可以）`
+  };
+}
+function gAppObjects() {
+  const out = new Map(), lo = addDays(TODAY, -G_PUSH_PAST);
+  for (const it of S.items) {
+    if (it.sample || it.gsrc || !isDate(it.date) || !String(it.title || '').trim()) continue;
+    out.set(gEv.item(it.id), gObjItem(it));
+  }
+  for (const a of S.apps) {
+    if (a.sample || a.status === 'cancelled') continue;
+    const upd = a.updatedAt || '';
+    (a.steps || []).forEach(st => {
+      if (!isDate(st.date) || !String(st.title || '').trim()) return;
+      out.set(gEv.step(a.id, st.id), { kind: 'step', upd, fresh: st.date >= lo, color: G_COLOR.step, desc: '認證提交節點（由行動祕書同步，請在 App 修改）',
+        f: { title: `${st.done ? '✓ ' : ''}【認證】${appName(a)}｜${st.title}`, date: st.date, time: st.time || '', allDay: !st.time } });
+    });
+    const cd = endOf(a);
+    if (isDate(cd)) out.set(gEv.certday(a.id), { kind: 'certday', upd, fresh: cd >= lo, color: G_COLOR.step, desc: '認證取證日（由行動祕書同步，請在 App 修改）',
+      f: { title: `${a.status === 'obtained' ? '【取證】' : '【預計取證】'}${appName(a)}`, date: cd, allDay: true } });
+  }
+  for (const c of S.certs) {
+    if (c.sample || !isDate(c.due) || certLvl(c) === 'retired') continue;
+    // Google 提醒最多提前 4 週：到期前 28 天與前一天的 09:00
+    out.set(gEv.cert(c.id), { kind: 'cert', upd: c.updatedAt || '', fresh: c.due >= lo, color: G_COLOR.cert, rem: [39780, 900], desc: '證書到期（由行動祕書同步，請在 App 修改）',
+      f: { title: `【證書到期】${c.project || ''}｜${c.cert || ''}`, date: c.due, allDay: true } });
+  }
+  return out;
+}
+
+/* ---- 同步計畫：先讀兩邊，算出要對 Google 做的動作（ops）與要改 App 的地方 ---- */
+const gNewPlan = () => ({ ops: [], errs: [], set: new Map(), add: new Map(), del: new Map(), ro: 0 });
+const gSet = (P, it, f) => { const x = P.set.get(it.id); P.set.set(it.id, { f: Object.assign(x ? x.f : {}, f), upd: it.updatedAt }); };
+const gDel = (P, it) => P.del.set(it.id, it.updatedAt);
+function gPlanApp(evs, P) {
+  const want = gAppObjects();
+  const byId = new Map(evs.map(e => [e.id, e]));
+  for (const [id, o] of want) {
+    const e = byId.get(id);
+    if (!e) { if (o.fresh) P.ops.push({ op: 'upsert', cal: '@app', id, body: gFullBody(o, null) }); continue; }
+    if (e.status === 'cancelled') {
+      // 在 Google 刪掉了：App 之後又改過就放回去；否則事項跟著刪（節點、證書不刪 App 資料，也不再放回）
+      if (gT(o.upd) > gT(e.updated)) { if (o.fresh) P.ops.push({ op: 'upsert', cal: '@app', id, body: gFullBody(o, e) }); }
+      else if (o.kind === 'item') gDel(P, o.ref);
+      continue;
+    }
+    if (!e.start) continue;
+    const g = evF(e), two = o.kind === 'item', withRep = two && g.repeat !== 'custom';
+    const groups = gDiff(o.f, g, withRep);
+    if (groups.length && two && gT(e.updated) > gT(o.upd)) { gSet(P, o.ref, gFields(g, groups)); continue; }
+    const body = groups.length ? gPatchBody(o.f, e, groups, withRep, gRem(o)) : {};
+    if (e.colorId !== o.color) body.colorId = o.color;
+    if (Object.keys(body).length) P.ops.push({ op: 'patch', cal: '@app', id, body });
+  }
+  for (const e of evs) {
+    if (want.has(e.id) || e.status === 'cancelled' || e.recurringEventId) continue;
+    const d = gDecode(e.id);
+    if (d) { if (gGone(d, e)) P.ops.push({ op: 'remove', cal: '@app', id: e.id }); }
+    else gAdopt(e, P);
+  }
+}
+// App 這邊確定刪掉／取消／不續證了才從 Google 移除；只是這台還沒有的資料（可能別台較新）就不動
+function gGone(d, e) {
+  const T = gT(e.updated);
+  if (d.kind === 'item') return !!S.deleted['items:' + d.id];
+  if (d.kind === 'cert') { if (S.deleted['certs:' + d.id]) return true; const c = S.certs.find(x => x.id === d.id); return !!c && gT(c.updatedAt) > T; }
+  if (S.deleted['apps:' + d.id]) return true;
+  const a = S.apps.find(x => x.id === d.id);
+  return !!a && gT(a.updatedAt) > T;
+}
+// 使用者直接在 Google 的「行動祕書」日曆新增的行程：收編成一般事項（有邀請對象或複雜重複規則的不動）
+function gAdopt(e, P) {
+  if (e.guests || !e.start) return;
+  const g = evF(e);
+  if (g.repeat === 'custom' || !isDate(g.date)) return;
+  const id = 'ga' + gHash(e.id);
+  if (S.items.some(x => x.id === id) || S.deleted['items:' + id]) { P.ops.push({ op: 'remove', cal: '@app', id: e.id }); return; }
+  const it = { id, scope: gcal.scope || 'personal', cat: '其他', title: g.title, date: g.date, allDay: g.allDay, time: g.time, endTime: g.endTime, location: g.location,
+    repeat: g.repeat, until: g.until, note: gDesc(e.description), link: safeUrl(e.link), done: false, createdAt: iso(), updatedAt: iso() };
+  P.add.set(id, it);
+  P.ops.push({ op: 'upsert', cal: '@app', id: gEv.item(id), body: gFullBody(gObjItem(it), e),
+    then: r => { if (r.ok) P.ops.push({ op: 'remove', cal: '@app', id: e.id }); else P.errs.push(r.error); } });
+}
+function gPlanPrimary(evs, P, lo, hi) {
+  const items = new Map(S.items.map(x => [x.id, x]));
+  const seen = new Set();
+  for (const e of evs) {
+    if (e.eventType === 'workingLocation') continue;
+    const iid = gItemId(e.id), it = items.get(iid);
+    seen.add(iid);
+    if (e.status === 'cancelled' || e.declined) { if (it && it.gsrc) gDel(P, it); continue; }
+    if (!e.start) continue;
+    if (!it) {
+      const tb = S.deleted['items:' + iid];
+      if (tb && gT(tb) >= gT(e.updated)) P.ops.push({ op: 'remove', cal: 'primary', id: e.id }); // 在 App 刪掉了
+      else gImport(e, P);
+      continue;
+    }
+    if (it.gsrc) gCompareImported(it, e, P);
+  }
+  // 原本在範圍內、這次卻沒出現：可能被刪了或改到很遠的日期，個別查一次
+  for (const it of S.items) {
+    if (!it.gsrc || !it.gev || seen.has(it.id) || !isDate(it.date) || it.date < lo || it.date > hi) continue;
+    P.ops.push({ op: 'get', cal: 'primary', id: it.gev, then: r => {
+      if (r.ok && r.data && r.data.status !== 'cancelled' && !r.data.declined && r.data.start) gCompareImported(it, r.data, P);
+      else if (r.ok || /not ?found|deleted|\b40[14]\b|\b410\b/i.test(r.error || '')) gDel(P, it);
+      else P.errs.push(r.error);
+    } });
+  }
+}
+function gImport(e, P) {
+  const g = evF(e), id = gItemId(e.id);
+  if (!isDate(g.date)) return;
+  P.add.set(id, { id, gsrc: 'primary', gev: e.id, scope: gcal.scope || 'personal', cat: '其他', title: g.title, date: g.date, allDay: g.allDay, time: g.time, endTime: g.endTime,
+    location: g.location, note: gDesc(e.description), link: safeUrl(e.link), repeat: 'none', until: '', done: false, createdAt: iso(),
+    updatedAt: e.updated || iso() }); // 用 Google 的修改時間：別台裝置若已補過屬性、備註，合併時以那邊為準
+}
+function gCompareImported(it, e, P) {
+  const g = evF(e), groups = gDiff(gItemF(it), g, false);
+  if (!groups.length) return;
+  if (gT(e.updated) > gT(it.updatedAt)) { gSet(P, it, gFields(g, groups)); return; }
+  P.ops.push({ op: 'patch', cal: 'primary', id: e.id, body: gPatchBody(gItemF(it), e, groups, false, null), then: r => {
+    if (r.ok) return;
+    // 別人邀請的會議只有主辦人能改：還原成 Google 上的樣子
+    if (/forbidden|403|writer access|organizer|cannot be (changed|modified)/i.test(r.error || '')) { gSet(P, it, gFields(g, groups)); P.ro++; }
+    else P.errs.push(r.error);
+  } });
+}
+
+/* ---- 傳送 ---- */
+async function gPost(url, key, ops) {
+  let res;
+  try { res = await fetch(url, { method: 'POST', body: JSON.stringify({ key, tz: gTZ(), ops }), cache: 'no-store', redirect: 'follow' }); }
+  catch (e) { const er = new Error('fetch'); er.code = navigator.onLine ? 'reach' : 'net'; throw er; }
+  const txt = await res.text();
+  let j; try { j = JSON.parse(txt); } catch (e) { const er = new Error('not json'); er.code = 'reach'; throw er; }
+  if (!j.ok) { const er = new Error(j.error || 'error'); er.code = j.error === 'KEY' ? 'key' : gErrCode(j.error); throw er; }
+  return j;
+}
+function gErrCode(msg) {
+  msg = String(msg || '');
+  if (/Calendar is not defined|has not been used|is disabled|accessNotConfigured/i.test(msg)) return 'svc';
+  if (/insufficient|authoriz|permission|scope/i.test(msg)) return 'auth';
+  return 'gas';
+}
+const gFail = msg => { const er = new Error(msg); er.code = gErrCode(msg); return er; };
+async function gRun(P) {
+  for (let round = 0; round < 4 && P.ops.length; round++) {
+    const ops = P.ops; P.ops = [];
+    for (let i = 0; i < ops.length; i += 25) {
+      const chunk = ops.slice(i, i + 25);
+      const r = await gPost(gcal.url, gcal.key, chunk.map(({ then, ...o }) => o));
+      chunk.forEach((o, j) => {
+        const x = (r.res || [])[j] || { ok: false, error: 'no result' };
+        if (o.then) o.then(x);
+        else if (!x.ok && !(o.op === 'remove' && /not ?found|deleted|\b404\b|\b410\b/i.test(x.error || ''))) P.errs.push(x.error);
+      });
+    }
+  }
+}
+// 套用到 App：同步途中使用者又改過的那筆先跳過，下次再對；一次大量刪除先暫停，請使用者確認
+function gApply(P) {
+  const now = iso(); let n = 0;
+  const stillSame = (id, upd) => { const it = S.items.find(x => x.id === id); return it && it.updatedAt === upd ? it : null; };
+  P.set.forEach((x, id) => { if (P.del.has(id)) return; const it = stillSame(id, x.upd); if (it) { Object.assign(it, x.f, { updatedAt: now }); n++; } });
+  P.add.forEach(it => { if (!S.items.some(x => x.id === it.id)) { S.items.push(it); n++; } });
+  const dels = Array.from(P.del).filter(([id, upd]) => stillSame(id, upd)).map(([id]) => id);
+  const linked = S.items.filter(x => !x.sample).length;
+  if (dels.length > 15 && dels.length > linked * 0.3) gs.pendingDel = dels;
+  else {
+    if (dels.length) { const set = new Set(dels); S.items = S.items.filter(x => !set.has(x.id)); dels.forEach(id => tomb('items', id)); n += dels.length; }
+    gs.pendingDel = null;
+  }
+  if (n) { saveData(); render(); scheduleSync(); }
+  return n;
+}
+function gResolvePending(keep) {
+  const ids = new Set(gs.pendingDel || []); gs.pendingDel = null;
+  if (!ids.size) return;
+  if (keep) {
+    // 保留在 App：時間更新為現在，之後會重新寫回 Google（從主日曆帶來的改成一般事項）
+    S.items.forEach(it => { if (ids.has(it.id)) { delete it.gsrc; delete it.gev; it.updatedAt = iso(); } });
+  } else {
+    S.items = S.items.filter(x => !ids.has(x.id)); ids.forEach(id => tomb('items', id));
+  }
+  commit();
+  toast(keep ? `已保留 ${ids.size} 筆，會重新寫回 Google 日曆` : `已刪除 ${ids.size} 筆`, 'calm', 'sky');
+}
+
+/* ---- 同步主流程 ---- */
+function scheduleGsync(delay = 3000) {
+  if (!gReady()) return;
+  clearTimeout(gs.timer); gs.timer = setTimeout(() => gsyncNow(false), delay);
+}
+async function gsyncNow(manual) {
+  if (!gReady()) return;
+  if (!navigator.onLine) { gs.err = 'net'; paintG(); return; }
+  // 有開 GitHub 同步時，先和其他裝置同步過一次再寫 Google，避免用這台的舊資料去改 Google
+  if (syncCfg && !sync.okOnce && !['auth', 'missing'].includes(sync.err)) {
+    if (manual) toast('先和其他裝置同步資料，完成後會接著同步 Google 日曆', 'calm', 'sky');
+    gs.waiting = true; gs.last = Date.now(); scheduleSync(100); return;
+  }
+  if (gs.busy) { gs.again = true; return; }
+  gs.busy = true; gs.waiting = false; gs.last = Date.now(); paintG();
+  try {
+    const lo = addDays(TODAY, -G_PAST), hi = addDays(TODAY, G_FUTURE);
+    const head = gcal.me ? [] : [{ op: 'hello' }];
+    const r = await gPost(gcal.url, gcal.key, head.concat([
+      { op: 'list', cal: '@app', args: { showDeleted: true } },
+      { op: 'list', cal: 'primary', args: { singleEvents: true, showDeleted: true, timeMin: parse(lo).toISOString(), timeMax: parse(addDays(hi, 1)).toISOString() } }
+    ]));
+    const res = r.res || [];
+    if (head.length && res[0] && res[0].ok) { gcal.me = res[0].data.me; saveGcal(); }
+    const [ra, rp] = res.slice(head.length);
+    if (!ra || !ra.ok) throw gFail(ra ? ra.error : 'no result');
+    if (!rp || !rp.ok) throw gFail(rp ? rp.error : 'no result');
+    const P = gNewPlan();
+    gPlanApp(ra.data || [], P);
+    gPlanPrimary(rp.data || [], P, lo, hi);
+    const pushed = P.ops.filter(o => o.op !== 'get').length;
+    const hadPending = !!gs.pendingDel;
+    await gRun(P);
+    const n = gApply(P);
+    gcal.lastSync = iso(); saveGcal();
+    gs.err = P.errs.length ? 'part' : null; gs.errMsg = P.errs[0] || ''; gs.errToast = null;
+    if (P.ro) toast(`有 ${P.ro} 筆是別人邀請的會議，只有主辦人能改時間或標題，已還原成 Google 上的內容`, 'worried', 'sun');
+    if (gs.pendingDel && !hadPending) toast(`Google 日曆一次刪除了 ${gs.pendingDel.length} 筆行程，請到「設定 → Google 日曆連動」確認要不要也從行動祕書刪除`, 'worried', 'sun', 'bell');
+    if (gs.pendingDel && (manual || UI.view === 'settings') && !layers.length) render();
+    if (manual && !gs.pendingDel) toast(P.errs.length ? `Google 日曆同步完成，但有 ${P.errs.length} 筆沒成功，稍後會再試` : `Google 日曆同步完成${pushed || n ? `（寫入 ${pushed} 筆、帶回 ${n} 筆變更）` : '，兩邊都是最新的'}`, P.errs.length ? 'worried' : 'happy', P.errs.length ? 'sun' : 'mint', P.errs.length ? '' : 'check');
+  } catch (e) {
+    gs.err = e.code || 'net'; gs.errMsg = e.message || '';
+    const msg = {
+      key: 'Google 日曆連動密碼不符：請到「設定 → Google 日曆連動 → 重新設定」把程式碼再貼一次並重新部署',
+      reach: '連不到你的 Google 連動程式：請確認貼的是「網頁應用程式」網址（…/exec），而且「誰可以存取」選「所有人」',
+      svc: 'Apps Script 還沒加入 Google Calendar API：請在 Apps Script 左側「服務」按 ＋ 加入，再重新部署',
+      auth: 'Google 日曆授權失效：請到 Apps Script 按「部署 → 管理部署作業」重新部署並授權',
+      gas: 'Google 日曆同步發生錯誤，稍後會自動再試',
+      net: '暫時連不上 Google，稍後會自動再同步'
+    }[gs.err] || '暫時連不上 Google，稍後會自動再同步';
+    if (manual || gs.errToast !== gs.err) { toast(msg, 'worried', 'coral'); gs.errToast = gs.err; }
+  } finally {
+    gs.busy = false; paintG();
+    if (gs.again) { gs.again = false; scheduleGsync(800); }
+  }
+}
+function gStatusText() {
+  if (!gReady()) return { cls: 'later', txt: '尚未開啟' };
+  if (gs.busy) return { cls: 'soon', txt: '同步中…' };
+  if (gs.err === 'net') return { cls: 'soon', txt: '離線，稍後再試' };
+  if (gs.err === 'part') return { cls: 'soon', txt: '部分未完成' };
+  if (gs.err) return { cls: 'overdue', txt: { key: '密碼不符', reach: '連不到', svc: '缺少日曆服務', auth: '授權失效' }[gs.err] || '同步錯誤' };
+  const t = gcal.lastSync ? new Date(gcal.lastSync) : null;
+  return { cls: 'done', txt: t ? `已同步 ${pad(t.getHours())}:${pad(t.getMinutes())}` : '已連動' };
+}
+const gLastText = () => gcal && gcal.lastSync ? new Date(gcal.lastSync).toLocaleString('zh-TW', { hour12: false }) : '—';
+function paintG() {
+  const st = $('#gStatus');
+  if (st) { const s = gStatusText(); st.className = 'tag ' + s.cls; st.textContent = s.txt; }
+  const last = $('#gLast'), cnt = $('#gCount');
+  if (last) last.textContent = gLastText();
+  if (cnt) cnt.textContent = S.items.filter(x => x.gsrc).length;
+}
+
+/* ---- 設定畫面 ---- */
+const gLinkCode = () => 'MSECG1.' + b64u(JSON.stringify({ u: gcal.url, k: gcal.key }));
+function gReadCode(s) {
+  s = String(s || '').trim();
+  try {
+    if (s.startsWith('MSECG1.')) { const o = JSON.parse(unb64u(s.slice(7))); return o && o.u && o.k ? { url: o.u, key: o.k } : null; }
+    if (s.startsWith('MSEC1.')) { const p = readPairCode(s); return p && p.gs ? p.gs : null; }
+  } catch (e) {}
+  return null;
+}
+function gPanel() {
+  const st = gStatusText();
+  const head = `<div class="panel-h">${ph('sun')}<h2>Google 日曆連動（雙向）</h2><span id="gStatus" class="tag ${st.cls}">${st.txt}</span></div>`;
+  if (!gReady()) return `
+    <section class="panel span2">${head}
+      <p>把行動祕書和你的 Google 日曆接起來：App 的事項、認證節點、證書到期會寫進 Google 日曆裡一個叫<b>「行動祕書」</b>的日曆；Google 主日曆上的行程（例如別人寄來的會議邀請）也會出現在行動祕書。兩邊修改都會互相同步。</p>
+      <p>第一次設定請用<b>電腦</b>，大約 5 分鐘，不用申請任何開發者帳號。</p>
+      <div class="set-acts"><button class="btn primary" data-act="g-setup">${IC.cal}開始設定</button></div>
+      <p class="muted" style="margin:12px 0 6px;font-size:12.5px">已經在另一台裝置設定好了？貼上那台的「連動碼」（MSECG1. 開頭）：</p>
+      <div class="sync-row"><input id="gInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="貼上連動碼（MSECG1.…）" value="${esc(UI.gInput || '')}" aria-label="Google 日曆連動碼"><button class="btn" data-act="g-connect-code">連線</button></div>
+    </section>`;
+  const pend = gs.pendingDel && gs.pendingDel.length ? `<div class="banner" style="margin-top:4px">${mascot('worried', 'sun', 'bell')}<p>Google 日曆這次刪除了 <b>${gs.pendingDel.length}</b> 筆行程，數量比較多，先暫停沒有跟著刪。要也從行動祕書刪除嗎？</p><div class="acts"><button class="btn danger" data-act="g-del-ok">一起刪除</button><button class="btn" data-act="g-del-keep">保留在行動祕書</button></div></div>` : '';
+  return `
+    <section class="panel span2">${head}
+      <div class="stat-line"><span>Google 帳號 <b>${esc(gcal.me || '—')}</b></span><span>最後同步 <b id="gLast">${gLastText()}</b></span><span>從 Google 帶進來 <b id="gCount">${S.items.filter(x => x.gsrc).length}</b> 筆</span></div>
+      ${pend}
+      <ul class="set-list" style="margin-bottom:10px">
+        <li>行動祕書的事項、認證節點、取證日、證書到期 → Google 日曆的<b>「行動祕書」</b>日曆（工作藍、個人綠、Shinnyo 紫）。</li>
+        <li>Google 主日曆上過去 ${G_PAST} 天～未來 ${G_FUTURE} 天的行程 → 行動祕書；日期過了就自動算完成。</li>
+        <li>兩邊改標題、日期、時間、地點都會互相同步（約 2 分鐘內）；在任一邊刪除，另一邊也會刪除。</li>
+      </ul>
+      <div class="field" style="max-width:340px;margin-bottom:12px"><label for="gScope">從 Google 帶進來的行程，屬性預設為</label><select id="gScope">${SCOPES.map(s => `<option value="${s.k}" ${s.k === (gcal.scope || 'personal') ? 'selected' : ''}>${s.t}</option>`).join('')}</select></div>
+      <div class="set-acts">
+        <button class="btn primary" data-act="g-sync">${IC.repeat}立即同步</button>
+        <button class="btn" data-act="g-copy">${IC.copy}複製連動碼</button>
+        <button class="btn" data-act="g-setup">重新設定</button>
+        <button class="btn danger" data-act="g-disconnect">中斷這台的連動</button>
+      </div>
+      <p class="muted" style="margin-top:10px;font-size:12.5px">其他裝置：在這台按上方「配對其他裝置」再掃一次 QR Code，會連同 Google 日曆一起連上；或把「連動碼」貼到那台的這個區塊。連動碼可以讀寫你的 Google 日曆，只傳給自己。</p>
+    </section>`;
+}
+function openGSetup() {
+  if (!gcal || !gcal.key) { gcal = Object.assign({}, gcal || {}, { key: newKey() }); saveGcal(); }
+  const m = $('#modal'); m.setAttribute('aria-label', '連動 Google 日曆');
+  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sky', 'bell')}<div><h2>連動 Google 日曆</h2><p>照著做一次就好，之後全自動同步</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <ol class="set-list g-steps">
+      <li>先在瀏覽器登入<b>要連動的 Google 帳號</b>，再按 <a href="https://script.new" target="_blank" rel="noopener noreferrer"><b>開啟 Apps Script</b></a>（Google 的免費工具），會開一個新專案。點左上角「未命名的專案」，改名為<b>「行動祕書連動」</b>。</li>
+      <li>把編輯器裡原本的 <code>function myFunction() {…}</code> 全部刪掉，按下面的<b>「複製程式碼」</b>貼進去，再按<b>儲存</b>（磁碟圖示）。</li>
+      <li>左側「<b>服務</b>」旁邊的 <b>＋</b> → 選 <b>Google Calendar API</b> → 按<b>新增</b>。</li>
+      <li>右上角<b>部署 → 新增部署作業</b> → 「選取類型」旁的齒輪選<b>網頁應用程式</b>；「執行身分」選<b>我</b>、「誰可以存取」選<b>所有人</b> → 按<b>部署</b>。</li>
+      <li>按<b>授予存取權</b> → 選你的帳號 → 看到「Google 尚未驗證這個應用程式」時按<b>進階</b> →「<b>前往「行動祕書連動」（不安全）</b>」；有勾選框就<b>全部勾選</b> → <b>繼續</b>。這是你自己的程式，只有你能用。</li>
+      <li>複製「<b>網頁應用程式</b>」底下的網址（https://script.google.com/macros/s/…/exec），貼到最下面，按<b>連線</b>。</li>
+    </ol>
+    <div class="field" style="margin-top:12px"><label for="gCode">程式碼（含你的專屬連動密碼，不要分享給別人）</label><textarea id="gCode" class="gcode" readonly rows="5" spellcheck="false">${esc(gasCode())}</textarea></div>
+    <div class="set-acts" style="margin-top:8px"><button class="btn" data-act="g-copy-code">${IC.copy}複製程式碼</button></div>
+    <div class="sync-row" style="margin-top:14px"><input id="gUrl" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url" placeholder="貼上網頁應用程式網址（…/exec）" value="${esc(UI.gUrl || (gcal && gcal.url) || '')}" aria-label="網頁應用程式網址"><button class="btn primary" data-act="g-connect">連線</button></div>`;
+  openLayer(m);
+}
+async function gConnect(raw, btn) {
+  const s = String(raw || '').trim();
+  let url, key;
+  const code = gReadCode(s);
+  if (code) { url = code.url; key = code.key; }
+  else if (/^MSEC/.test(s)) { toast('連動碼不完整，請在原本的裝置重新複製一次', 'worried', 'sun'); return; }
+  else { url = s; key = gcal && gcal.key; }
+  if (/\/dev$/.test(url)) { toast('這是測試網址（/dev）：請到「部署 → 管理部署作業」複製結尾是 /exec 的網址', 'worried', 'sun'); return; }
+  if (!gUrlOk(url)) { toast('網址不對：請貼「網頁應用程式」的網址，開頭是 https://script.google.com/macros/s/，結尾是 /exec', 'worried', 'sun'); return; }
+  if (!key) { toast('請先按「開始設定」複製程式碼', 'worried', 'sun'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '連線中…'; }
+  try {
+    const r = await gPost(url, key, [{ op: 'hello' }]);
+    const h = (r.res || [])[0];
+    if (!h || !h.ok) throw gFail(h ? h.error : 'no result');
+    gcal = { url, key, me: h.data.me, scope: (gcal && gcal.scope) || 'personal', since: iso() }; saveGcal();
+    UI.gUrl = ''; UI.gInput = ''; gs.err = null; gs.errToast = null;
+    closeLayer($('#modal')); render();
+    toast(`已連動 ${h.data.me} 的 Google 日曆，開始第一次同步…`, 'happy', 'mint', 'check');
+    gsyncNow(true);
+  } catch (e) {
+    const c = e.code;
+    toast(c === 'key' ? '連動密碼不符：請確認貼到 Apps Script 的是這裡最新的程式碼，改過程式碼要重新部署' :
+      c === 'svc' ? '還差一步：請在 Apps Script 左側「服務」按 ＋ 加入 Google Calendar API，再重新部署' :
+      c === 'auth' ? '還沒授權：請在部署時按「授予存取權」並允許存取日曆' :
+      c === 'net' ? '目前沒有網路，請連線後再試' :
+      '連不到：請確認貼的是「網頁應用程式」網址（…/exec），而且「誰可以存取」選「所有人」', 'worried', 'coral');
+  } finally { if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = '連線'; } }
+}
+function gDisconnect(btn) {
+  arm(btn, '確定中斷？再按一次', () => {
+    gcal = { key: gcal.key, scope: gcal.scope }; saveGcal(); gs.err = null; gs.pendingDel = null; render();
+    toast('這台裝置已停止 Google 日曆連動（Google 上已有的行程不會被刪除）', 'calm', 'sky');
+  });
 }
 
 /* ================= actions ================= */
@@ -2475,7 +3144,7 @@ function doDelete(btn) {
   arm(btn, '再按一次確認刪除', () => {
     const [k, id] = btn.dataset.key.split(':');
     const col = k === 'item' ? 'items' : k === 'app' ? 'apps' : 'certs';
-    Store.del(col, id); closeLayer($('#modal')); toast('已刪除', 'calm', 'sky');
+    Store.del(col, id); closeLayer($('#modal')); toast(gReady() ? '已刪除（Google 日曆也會一起刪除）' : '已刪除', 'calm', 'sky');
   });
 }
 function clearSamples(btn) {
@@ -2573,7 +3242,16 @@ const ACT = {
   'quote-del': b => arm(b, '確定刪除？', () => Store.del('quotes', b.dataset.id)),
   'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); },
   'excel-import': () => { const f = $('#excelFile'); f.value = ''; f.click(); },
-  'excel-apply': () => applyCertDiff()
+  'excel-apply': () => applyCertDiff(),
+  'g-setup': () => openGSetup(),
+  'g-copy-code': () => copyText(gasCode(), '程式碼已複製，請貼到 Apps Script 的編輯器'),
+  'g-connect': b => gConnect(($('#gUrl') || {}).value, b),
+  'g-connect-code': b => gConnect(($('#gInput') || {}).value, b),
+  'g-sync': () => gsyncNow(true),
+  'g-copy': () => copyText(gLinkCode(), '連動碼已複製，貼到另一台裝置的「設定 → Google 日曆連動」即可'),
+  'g-disconnect': b => gDisconnect(b),
+  'g-del-ok': () => gResolvePending(false),
+  'g-del-keep': () => gResolvePending(true)
 };
 // 文字拆成段落：每段以「-」開頭（使用者 Word 檔的格式），或段落之間空一行
 function splitPassages(raw) {
@@ -2645,6 +3323,8 @@ document.addEventListener('input', ev => {
   if (ev.target.id === 'agSearch') { UI.agQ = ev.target.value; render(); }
   if (ev.target.id === 'syncInput') UI.syncInput = ev.target.value;
   if (ev.target.id === 'quoteBulk') UI.quoteBulk = ev.target.value;
+  if (ev.target.id === 'gUrl') UI.gUrl = ev.target.value;
+  if (ev.target.id === 'gInput') UI.gInput = ev.target.value;
   if (ev.target.type === 'date') updateWdHint(ev.target);
 });
 function updateWdHint(el) {
@@ -2658,6 +3338,7 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'importFile') handleImportFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'excelFile') handleExcelFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'quoteFile') handleQuoteFile(ev.target.files && ev.target.files[0]);
+  if (ev.target.id === 'gScope' && gcal) { gcal.scope = ev.target.value; saveGcal(); toast(`之後從 Google 帶進來的行程會放在「${scopeOf(gcal.scope).t}」`, 'happy', 'sky'); }
 });
 document.addEventListener('focusout', ev => {
   const el = ev.target;
@@ -2683,8 +3364,10 @@ render();
 if (incomingPair) openPairIn(incomingPair);
 else setTimeout(() => { maybeDaily(); checkNotices(); }, 900);
 if (syncCfg) setTimeout(() => syncNow(false), 300);
+else if (gReady()) setTimeout(() => gsyncNow(false), 1200);
 setInterval(() => { if (syncCfg && !document.hidden) syncNow(false); }, 60000);
-window.addEventListener('online', () => { if (syncCfg) syncNow(false); });
+setInterval(() => { if (gReady() && !document.hidden && Date.now() - gs.last > 110000) gsyncNow(false); }, 30000);
+window.addEventListener('online', () => { if (syncCfg) syncNow(false); else if (gReady()) gsyncNow(false); });
 try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
@@ -2695,7 +3378,7 @@ function tick() {
   maybeDaily(); checkNotices();
 }
 setInterval(tick, 20000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (!layers.length) render(); if (syncCfg) syncNow(false); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (!layers.length) render(); if (syncCfg) syncNow(false); else if (gReady() && Date.now() - gs.last > 30000) gsyncNow(false); } });
 let lastMinute = nowHM();
 setInterval(() => { const n = nowHM(); if (n !== lastMinute) { lastMinute = n; if (UI.view === 'today' && !layers.length) render(); } }, 60000);
 })();
