@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>行動祕書</title>
 <meta name="description" content="整合工作與個人的行動祕書：行程、待辦、認證申請、證書效期、每日提醒與週報月報。">
-<meta name="theme-color" content="#F5F1E8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#1D1B18" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F2EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1B1A18" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,62 +16,59 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&family=Quicksand:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;700&display=swap">
 <style>
-/* Layout: a Japanese techo (手帳) — kinari graph paper, sumi ink, indigo accent, dotted washi tape and hand-drawn doodle stickers; bottom tab bar on phones */
+/* Layout: MUJI-like — plain unbleached paper, charcoal ink, flat cards with thin lines, a little deep red (--brand); bottom tab bar on phones */
 :root{
-  --bg:#F5F1E8; --grid:rgba(120,104,78,.075); --card:#FFFDF8; --card-2:#F3EEE3; --line:#E4DCCB;
-  --ink:#3B3630; --sub:#776F63; --faint:#A79F8F;
-  --accent:#3F5B72; --accent-tx:#3A566D; --accent-soft:#E2E9EE; --on:#FFFFFF;
-  --mint:#6F9467; --mint-tx:#4D6E46; --mint-soft:#E5EDDC;
-  --sun:#D2A23A; --sun-tx:#86630F; --sun-soft:#F5EBCF;
-  --red:#C0533B; --red-tx:#9F3F29; --red-soft:#F4E0D7;
-  --sky:#5E8FB3; --sky-tx:#3E6C8E; --sky-soft:#E1EBF2;
-  --lilac:#8678B0; --lilac-tx:#625590; --lilac-soft:#EBE7F3;
-  --peach:#CF8656; --leaf:#7FA36A; --teal:#5F9C8E;
-  --tape-1:#D9C3A0; --tape-2:#C5D6B4; --tape-3:#BCD3E0; --tape-4:#EBD49A; --tape-5:#D4CCE6; --tape-6:#B9D6CB; --tape-ink:#3B3630;
-  --doodle-ink:#4A433A; --paper-hi:rgba(255,255,255,.55);
-  --shadow:0 1px 0 rgba(59,54,48,.04),0 10px 24px -18px rgba(59,54,48,.38);
-  --scrim:rgba(40,34,26,.4);
+  --bg:#F4F2EE; --card:#FBFAF8; --card-2:#F0EDE8; --line:#E1DDD6;
+  --ink:#2F2E2C; --sub:#75716A; --faint:#A8A39A;
+  --accent:#3B3936; --accent-tx:#3B3936; --accent-soft:#E9E5DE; --on:#FFFFFF; --brand:#8B1E2B;
+  --mint:#7A8A6B; --mint-tx:#566447; --mint-soft:#E6EAE0;
+  --sun:#B8944A; --sun-tx:#7A6024; --sun-soft:#F0E9D9;
+  --red:#A04A3C; --red-tx:#8A3B2F; --red-soft:#F1E2DD;
+  --sky:#6F8899; --sky-tx:#4F6878; --sky-soft:#E4E9EC;
+  --lilac:#857D92; --lilac-tx:#645D72; --lilac-soft:#EAE7ED;
+  --peach:#B78A68; --leaf:#899775; --teal:#6E8F86;
+  --tape-1:#D9CDB9; --tape-2:#CDD3C2; --tape-3:#C9D2D8; --tape-4:#E2D8BC; --tape-5:#D6D1DC; --tape-6:#C9D5CF; --tape-ink:#2F2E2C;
+  --shadow:none;
+  --scrim:rgba(30,28,25,.35);
   --nav-h:64px;
-  --f-display:"LXGW WenKai TC","Noto Sans TC","Microsoft JhengHei","PingFang TC",serif;
+  --f-display:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
   --f-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
-  --f-num:"Quicksand","Noto Sans TC",system-ui,sans-serif;
-  --f-seal:"Noto Serif TC","PMingLiU",serif;
+  --f-num:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans TC",sans-serif;
+  --f-read:"Noto Serif TC","PMingLiU",serif;
   color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#1D1B18; --grid:rgba(255,236,200,.035); --card:#26231F; --card-2:#2D2A25; --line:#3A352E;
-    --ink:#ECE5D8; --sub:#B3A996; --faint:#857C6C;
-    --accent:#8EB0C9; --accent-tx:#A9C4D8; --accent-soft:#2A3640; --on:#15202A;
-    --mint:#93BD88; --mint-tx:#A9CC9F; --mint-soft:#263321;
-    --sun:#E2BC63; --sun-tx:#EBCB82; --sun-soft:#3A3020;
-    --red:#E08068; --red-tx:#EC9C88; --red-soft:#3D2721;
-    --sky:#8DB5D3; --sky-tx:#A9C8E0; --sky-soft:#213040;
-    --lilac:#A99BD2; --lilac-tx:#BFB3E0; --lilac-soft:#2D2840;
-    --peach:#E0A07A; --leaf:#9CC086; --teal:#84BFB0;
-    --tape-1:#9C8A6E; --tape-2:#879877; --tape-3:#7F96A3; --tape-4:#A8955F; --tape-5:#8E86A3; --tape-6:#7E9A8F; --tape-ink:#1D1B18;
-    --doodle-ink:#E6DECF; --paper-hi:rgba(255,255,255,.08);
-    --shadow:0 1px 0 rgba(0,0,0,.25),0 12px 26px -18px rgba(0,0,0,.7);
-    --scrim:rgba(8,6,4,.6);
+    --bg:#1B1A18; --card:#232220; --card-2:#2A2926; --line:#383632;
+    --ink:#E8E5DF; --sub:#A9A49B; --faint:#77736B;
+    --accent:#E3DFD8; --accent-tx:#E3DFD8; --accent-soft:#33312D; --on:#1B1A18; --brand:#D98A86;
+    --mint:#98A888; --mint-tx:#AEBC9F; --mint-soft:#283024;
+    --sun:#D0B06A; --sun-tx:#DCC184; --sun-soft:#35301F;
+    --red:#D58A7B; --red-tx:#E3A193; --red-soft:#3A2622;
+    --sky:#93AABA; --sky-tx:#AABFCC; --sky-soft:#232C32;
+    --lilac:#A9A1B6; --lilac-tx:#BDB6C8; --lilac-soft:#2C2932;
+    --peach:#CDA283; --leaf:#A3B08F; --teal:#8DAEA5;
+    --tape-1:#8F8473; --tape-2:#7F8774; --tape-3:#7B868D; --tape-4:#988C6C; --tape-5:#87828E; --tape-6:#7B8A83; --tape-ink:#1B1A18;
+    --shadow:none;
+    --scrim:rgba(8,7,6,.55);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#1D1B18; --grid:rgba(255,236,200,.035); --card:#26231F; --card-2:#2D2A25; --line:#3A352E;
-  --ink:#ECE5D8; --sub:#B3A996; --faint:#857C6C;
-  --accent:#8EB0C9; --accent-tx:#A9C4D8; --accent-soft:#2A3640; --on:#15202A;
-  --mint:#93BD88; --mint-tx:#A9CC9F; --mint-soft:#263321;
-  --sun:#E2BC63; --sun-tx:#EBCB82; --sun-soft:#3A3020;
-  --red:#E08068; --red-tx:#EC9C88; --red-soft:#3D2721;
-  --sky:#8DB5D3; --sky-tx:#A9C8E0; --sky-soft:#213040;
-  --lilac:#A99BD2; --lilac-tx:#BFB3E0; --lilac-soft:#2D2840;
-  --peach:#E0A07A; --leaf:#9CC086; --teal:#84BFB0;
-  --tape-1:#9C8A6E; --tape-2:#879877; --tape-3:#7F96A3; --tape-4:#A8955F; --tape-5:#8E86A3; --tape-6:#7E9A8F; --tape-ink:#1D1B18;
-  --doodle-ink:#E6DECF; --paper-hi:rgba(255,255,255,.08);
-  --shadow:0 1px 0 rgba(0,0,0,.25),0 12px 26px -18px rgba(0,0,0,.7);
-  --scrim:rgba(8,6,4,.6);
+  --bg:#1B1A18; --card:#232220; --card-2:#2A2926; --line:#383632;
+    --ink:#E8E5DF; --sub:#A9A49B; --faint:#77736B;
+    --accent:#E3DFD8; --accent-tx:#E3DFD8; --accent-soft:#33312D; --on:#1B1A18; --brand:#D98A86;
+    --mint:#98A888; --mint-tx:#AEBC9F; --mint-soft:#283024;
+    --sun:#D0B06A; --sun-tx:#DCC184; --sun-soft:#35301F;
+    --red:#D58A7B; --red-tx:#E3A193; --red-soft:#3A2622;
+    --sky:#93AABA; --sky-tx:#AABFCC; --sky-soft:#232C32;
+    --lilac:#A9A1B6; --lilac-tx:#BDB6C8; --lilac-soft:#2C2932;
+    --peach:#CDA283; --leaf:#A3B08F; --teal:#8DAEA5;
+    --tape-1:#8F8473; --tape-2:#7F8774; --tape-3:#7B868D; --tape-4:#988C6C; --tape-5:#87828E; --tape-6:#7B8A83; --tape-ink:#1B1A18;
+    --shadow:none;
+    --scrim:rgba(8,7,6,.55);
   color-scheme:dark;
 }
 
@@ -79,7 +76,6 @@
 html{-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
 body{
   margin:0;background-color:var(--bg);color:var(--ink);
-  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:18px 18px;
   font-family:var(--f-body);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;
   padding-top:env(safe-area-inset-top,0px);
 }
@@ -97,10 +93,10 @@ a{color:var(--sky-tx)}
 .top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:6px 14px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
 .brand .mascot{width:48px;height:48px;flex:none}
-.eyebrow{font-family:var(--f-num);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--sub)}
-h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:25px;line-height:1.15;letter-spacing:.06em}
-.tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px;box-shadow:var(--shadow)}
-.tab{border:0;background:transparent;padding:7px 13px;border-radius:9px;cursor:pointer;font-family:var(--f-display);font-size:14.5px;white-space:nowrap;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
+.eyebrow{font-family:var(--f-num);font-size:10.5px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--brand)}
+h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:22px;line-height:1.2;letter-spacing:.14em}
+.tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:4px;box-shadow:var(--shadow)}
+.tab{border:0;background:transparent;padding:7px 14px;border-radius:6px;cursor:pointer;font-family:var(--f-display);font-size:14.5px;white-space:nowrap;color:var(--sub);display:inline-flex;align-items:center;gap:6px}
 .tab:hover{color:var(--ink)}
 .tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
 .tab .cnt{font-family:var(--f-num);font-size:11.5px;font-weight:600;background:var(--accent);color:var(--on);border-radius:999px;padding:0 6px;line-height:17px}
@@ -109,22 +105,19 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:25px;line-hei
 .round svg{width:20px;height:20px}
 .round[aria-current="page"]{border-color:var(--accent);color:var(--accent-tx)}
 .round .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-family:var(--f-num);font-weight:600;font-size:11.5px;line-height:16px;text-align:center;border:2px solid var(--bg)}
-.round.ring svg{animation:ring 2.4s ease-in-out infinite;transform-origin:50% 10%}
-@keyframes ring{0%,70%,100%{transform:rotate(0)}74%{transform:rotate(14deg)}80%{transform:rotate(-12deg)}86%{transform:rotate(8deg)}92%{transform:rotate(-4deg)}}
-.scope{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;box-shadow:var(--shadow)}
-.scope button{border:0;background:transparent;border-radius:9px;padding:5px 12px;cursor:pointer;font-family:var(--f-display);color:var(--sub);white-space:nowrap;font-size:13.5px}
+.scope{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px;box-shadow:var(--shadow)}
+.scope button{border:0;background:transparent;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:var(--f-display);color:var(--sub);white-space:nowrap;font-size:13.5px}
 .scope button[aria-pressed="true"]{background:var(--accent);color:var(--on)}
 .add-wrap{position:relative}
-.add-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 40px -18px rgba(0,0,0,.45);padding:6px;min-width:240px;display:flex;flex-direction:column}
-.add-menu button{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:8px 10px;border-radius:12px;cursor:pointer;text-align:left}
+.add-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 30px -18px rgba(0,0,0,.35);padding:6px;min-width:240px;display:flex;flex-direction:column}
+.add-menu button{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:8px 10px;border-radius:6px;cursor:pointer;text-align:left}
 .add-menu button:hover{background:var(--card-2)}
-.add-menu .mascot{width:36px;height:36px;flex:none}
-.add-menu b{display:block;font-family:var(--f-display);font-weight:400;font-size:14.5px}
+.add-menu b{display:block;font-family:var(--f-display);font-weight:500;font-size:14px}
 .add-menu small{color:var(--sub);font-size:12px}
 .bnav,.fab{display:none}
 
 /* ---------- buttons ---------- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:7px 15px;cursor:pointer;font-family:var(--f-display);font-size:14px;line-height:1.25;white-space:nowrap;color:var(--ink);text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:6px;padding:7px 15px;cursor:pointer;font-family:var(--f-display);font-size:14px;line-height:1.25;white-space:nowrap;color:var(--ink);text-decoration:none}
 .btn:hover{border-color:var(--sub)}
 .btn svg{width:15px;height:15px;flex:none}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on)}
@@ -138,17 +131,17 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:25px;line-hei
 .ico svg{width:16px;height:16px}
 
 /* ---------- panels & rows ---------- */
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
 .panel-h{display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap}
-.panel-h h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:17.5px;line-height:1.3;letter-spacing:.02em}
+.panel-h h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:15.5px;line-height:1.35;letter-spacing:.06em}
 .panel-h .n{font-family:var(--f-num);font-size:13px;color:var(--sub)}
 .panel-h .act{margin-left:auto}
 .panel-h .dot{width:9px;height:9px;border-radius:50%;background:var(--c,var(--faint));flex:none}
 .sub-h{font-family:var(--f-display);font-size:13.5px;color:var(--sub);margin:10px 0 2px;display:flex;align-items:center;gap:6px}
 .rows{display:flex;flex-direction:column}
-.row{display:flex;align-items:flex-start;gap:10px;padding:10px 2px;border-top:1px dashed var(--line)}
+.row{display:flex;align-items:flex-start;gap:10px;padding:10px 2px;border-top:1px solid var(--line)}
 .rows > .row:first-child{border-top:0}
-.tick{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--faint);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0;margin-top:0;transition:transform .15s,background .15s,border-color .15s}
+.tick{flex:none;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--faint);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0;margin-top:0;transition:transform .15s,background .15s,border-color .15s}
 .tick svg{width:15px;height:15px;opacity:0;color:var(--on)}
 .tick:hover{border-color:var(--mint);transform:scale(1.08)}
 .tick.on{background:var(--mint);border-color:var(--mint)}
@@ -160,7 +153,7 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:25px;line-hei
 .row-ic.k-certday{background:var(--sun-soft);color:var(--sun-tx)}
 .row-main{flex:1;min-width:0}
 .row-title{font-weight:500;overflow-wrap:anywhere}
-.row.is-done .row-title{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--mint);text-decoration-thickness:2px}
+.row.is-done .row-title{color:var(--faint);text-decoration:line-through;text-decoration-color:var(--faint);text-decoration-thickness:1px}
 .row-meta{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12.5px;color:var(--sub);margin-top:2px}
 .row-meta .m{display:inline-flex;align-items:center;gap:3px;overflow-wrap:anywhere}
 .row-meta .m svg{width:12px;height:12px;flex:none;opacity:.8}
@@ -171,11 +164,11 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:25px;line-hei
 .star{color:var(--sun);margin-right:4px}
 .rep-ic{display:inline-flex;vertical-align:-2px;margin-left:4px;color:var(--sub)}
 .rep-ic svg{width:13px;height:13px}
-.scope-p{font-family:var(--f-display);font-size:11px;padding:0 6px;border-radius:999px;background:var(--accent-soft);color:var(--accent-tx)}
+.scope-p{font-family:var(--f-display);font-size:11px;padding:0 6px;border-radius:3px;background:var(--accent-soft);color:var(--accent-tx)}
 .scope-p.s-shinnyo{background:var(--lilac-soft);color:var(--lilac-tx)}
 .field input:disabled{opacity:.4}
 input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:var(--red-soft)!important}
-.tag{flex:none;font-family:var(--f-display);font-size:12px;padding:2px 9px;border-radius:999px;white-space:nowrap;margin-top:2px}
+.tag{flex:none;font-family:var(--f-display);font-size:11.5px;padding:1px 8px;border-radius:3px;white-space:nowrap;margin-top:2px}
 .tag.overdue{background:var(--red-soft);color:var(--red-tx)}
 .tag.today{background:var(--accent-soft);color:var(--accent-tx)}
 .tag.soon{background:var(--sun-soft);color:var(--sun-tx)}
@@ -183,58 +176,42 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .tag.done{background:var(--mint-soft);color:var(--mint-tx)}
 .tag.watch{background:var(--sky-soft);color:var(--sky-tx)}
 .cat i{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block}
-.app-tag{display:inline-block;font-family:var(--f-display);font-size:11.5px;line-height:1.5;padding:0 7px;border-radius:4px;margin-right:6px;vertical-align:1px;color:var(--tape-ink);background-color:var(--tape);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px}
-.empty{display:flex;align-items:center;gap:12px;color:var(--sub);padding:6px 0}
-.empty .mascot{width:58px;height:58px;flex:none}
-.empty b{display:block;color:var(--ink);font-family:var(--f-display);font-weight:400;font-size:15px}
+.app-tag{display:inline-block;font-family:var(--f-display);font-size:11.5px;line-height:1.5;padding:0 7px;border-radius:4px;margin-right:6px;vertical-align:1px;color:var(--tape-ink);background-color:var(--tape)}
+.empty{color:var(--sub);padding:6px 0;font-size:13px}
+.empty b{display:block;color:var(--ink);font-weight:500;font-size:14px}
 .more{font-size:12px;color:var(--sub);padding:6px 2px 0}
 .link-btn{border:0;background:none;color:var(--accent-tx);cursor:pointer;font-family:var(--f-display);padding:0;font-size:13px}
-.banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1.5px dashed var(--sun);border-radius:16px;padding:8px 14px;margin-bottom:14px}
-.banner .mascot{width:40px;height:40px;flex:none}
+.banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--sun);border-radius:8px;padding:8px 14px;margin-bottom:14px}
 .banner p{margin:0;flex:1;min-width:200px}
 .banner .acts{display:flex;gap:8px;flex-wrap:wrap}
 
 /* ---------- today ---------- */
-.hero{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 18px;align-items:center;padding:20px 20px 14px}
-.hero::before{content:"";position:absolute;top:-10px;left:30px;width:112px;height:22px;transform:rotate(-4deg);background-color:var(--tape-3);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;opacity:.9;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-.hero .hero-clip{position:absolute;top:-16px;right:30px;width:30px;height:44px}
-.hero-dd{display:inline-block;width:18px;height:18px;vertical-align:-4px;margin-left:6px}
-.hero-dd .doodle{width:100%;height:100%}
-.quote-card{position:relative;margin-top:16px;padding:22px 22px 12px}
-.quote-card::before{content:"";position:absolute;top:-9px;right:64px;width:84px;height:20px;transform:rotate(3deg);background-color:var(--tape-2);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;opacity:.9}
-.quote-card .q-dd{position:absolute;right:16px;top:12px;width:30px;height:30px;transform:rotate(10deg)}
-.q-head{font-family:var(--f-display);font-weight:700;font-size:15.5px;color:var(--accent-tx);letter-spacing:.06em;padding-right:40px;text-wrap:balance}
-.q-text{margin-top:6px;font-family:var(--f-display);font-size:17px;line-height:32px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);background-image:linear-gradient(transparent 31px,var(--line) 31px);background-size:100% 32px;background-position:0 -1px}
+.hero{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 18px;align-items:center;padding:16px 18px}
+.quote-card{position:relative;margin-top:16px;padding:20px 22px 12px}
+.q-head{font-family:var(--f-display);font-weight:500;font-size:12.5px;color:var(--brand);letter-spacing:.14em;text-wrap:balance}
+.q-text{margin-top:8px;font-family:var(--f-read);font-weight:500;font-size:16px;line-height:2;letter-spacing:.03em;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
 .q-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;font-size:12.5px;color:var(--sub)}
 .q-foot .link-btn{display:inline-flex;align-items:center;gap:4px}
 .q-foot .link-btn svg{width:14px;height:14px}
 .modal.daily{z-index:53;width:min(500px,calc(100vw - 24px));padding:0}
-.daily-paper{position:relative;padding:34px 26px 4px}
-.daily-paper::before{content:"";position:absolute;top:-8px;left:50%;width:110px;height:22px;transform:translateX(-50%) rotate(-2deg);background-color:var(--tape-3);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;opacity:.92}
+.daily-paper{position:relative;padding:30px 26px 4px}
 .daily-paper .q-date{font-family:var(--f-num);font-size:13px;color:var(--sub);margin-bottom:6px}
-.daily-paper .q-head{font-size:18px}
-.daily-paper .q-text{font-size:18.5px;line-height:34px;background-size:100% 34px;background-image:linear-gradient(transparent 33px,var(--line) 33px);margin:10px 0 6px}
+.daily-paper .q-head{font-size:13px}
+.daily-paper .q-text{font-size:17px;margin:12px 0 6px}
 .daily-paper .slot-foot{padding:14px 0 18px}
-.daily-paper .d-dd1{position:absolute;right:22px;top:20px;width:34px;height:34px;transform:rotate(12deg)}
-.daily-paper .d-dd2{position:absolute;right:58px;top:36px;width:20px;height:20px;transform:rotate(-14deg)}
-.q-list{display:flex;flex-direction:column;margin-top:12px;border-top:1px dashed var(--line)}
-.q-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;color:var(--sub)}
+.q-list{display:flex;flex-direction:column;margin-top:12px;border-top:1px solid var(--line)}
+.q-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;color:var(--sub)}
 .q-item span{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.page-end{display:flex;justify-content:center;flex-wrap:wrap;gap:14px;margin-top:26px;opacity:.85}
-.page-end .doodle{width:28px;height:28px}
-.page-end .doodle:nth-child(odd){transform:rotate(-8deg)}
-.page-end .doodle:nth-child(even){transform:rotate(7deg) translateY(4px)}
-.hero > .mascot{width:72px;height:72px}
+.hero > .mascot{width:56px;height:56px}
 /* 精簡提醒列：問候語一行小字，不佔版面（使用者要求） */
-.hello{font-family:var(--f-display);font-weight:700;font-size:16px;line-height:1.35;color:var(--ink)}
+.hello{font-family:var(--f-display);font-weight:500;font-size:15px;line-height:1.4;color:var(--ink);letter-spacing:.03em}
 .today-date{font-family:var(--f-num);color:var(--sub);font-size:12.5px;margin-top:1px}
 .summary{margin-top:4px;color:var(--sub);max-width:60ch;font-size:12.5px;line-height:1.5}
 .summary b{font-family:var(--f-num);color:var(--ink);font-weight:600;font-size:13px}
-.next-ntf{width:250px;max-width:100%;background:var(--card-2);border:1px dashed var(--line);border-radius:12px;padding:10px 12px}
-.nn-h{display:flex;align-items:center;gap:6px;font-family:var(--f-display);font-weight:700;font-size:13.5px;color:var(--sub);margin-bottom:4px}
-.nn-h .doodle{width:20px;height:20px}
+.next-ntf{width:250px;max-width:100%;background:var(--card-2);border:0;border-radius:6px;padding:10px 12px}
+.nn-h{font-family:var(--f-display);font-weight:500;font-size:12.5px;letter-spacing:.06em;color:var(--sub);margin-bottom:4px}
 .nn-list{display:flex;flex-direction:column}
-.nn-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:5px 0;border-top:1px dashed var(--line);font-size:12.5px}
+.nn-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--line);font-size:12.5px}
 .nn-list .nn-row:first-child{border-top:0}
 .nn-t{color:var(--accent-tx);font-weight:600;white-space:nowrap}
 .nn-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
@@ -242,14 +219,28 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .nn-empty{font-size:12.5px;color:var(--sub);padding:4px 0}
 .grid2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-top:16px}
 .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
-.mini-app{display:flex;flex-direction:column;gap:6px;padding:10px 0;border:0;border-top:1px dashed var(--line);cursor:pointer;background:none;text-align:left;width:100%}
+.mini-app{display:flex;flex-direction:column;gap:6px;padding:10px 0;border:0;border-top:1px solid var(--line);cursor:pointer;background:none;text-align:left;width:100%}
 .mini-app:first-child{border-top:0}
 .mini-top{display:flex;align-items:center;gap:8px;min-width:0}
 .mini-top .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .mini-top .left{font-family:var(--f-num);font-size:12.5px;color:var(--sub);white-space:nowrap}
 .mini-next{font-size:12.5px;color:var(--sub)}
-.prog{height:8px;border-radius:4px;background:var(--card-2);overflow:hidden;border:1px solid var(--line)}
+.prog{height:6px;border-radius:4px;background:var(--card-2);overflow:hidden;border:1px solid var(--line)}
 .prog i{display:block;height:100%;border-radius:4px;background:var(--mint)}
+
+/* ---------- 心情結語 ---------- */
+.mood{margin-top:16px}
+.mood .panel-h{margin-bottom:4px}
+.mood-st{margin-left:auto;font-size:11.5px;color:var(--faint)}
+.mood-in{display:block;width:100%;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:4px 0 6px;font-family:var(--f-read);font-size:16px;line-height:1.8;color:var(--ink);resize:none;outline:0;overflow:hidden}
+.mood-in:focus{border-bottom-color:var(--ink)}
+.mood-in::placeholder{color:var(--faint);font-family:var(--f-body);font-size:14px}
+.mood.sub{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.mood-list{display:flex;flex-direction:column}
+.mood-row{display:grid;grid-template-columns:84px minmax(0,1fr);gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
+.mood-row:first-child{border-top:0}
+.mood-row .d{color:var(--sub);font-family:var(--f-num);font-size:12.5px}
+.mood-row .t{font-family:var(--f-read);line-height:1.7;overflow-wrap:anywhere}
 
 /* ---------- agenda ---------- */
 .ag-day{margin-bottom:14px}
@@ -264,12 +255,12 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .cal-wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
 .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
 .toolbar .grow{flex:1}
-.month-title{font-family:var(--f-display);font-size:22px;min-width:130px;text-align:center}
+.month-title{font-family:var(--f-display);font-weight:500;font-size:19px;letter-spacing:.06em;min-width:130px;text-align:center}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--sub)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
-.legend .sw{width:22px;height:9px;border-radius:3px;background-color:var(--tape-1);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px}
+.legend .sw{width:22px;height:9px;border-radius:3px;background-color:var(--tape-1)}
 .legend svg{width:13px;height:13px}
-.cal{--dh:30px;--lh:20px;--ch:58px;background:var(--card);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+.cal{--dh:30px;--lh:20px;--ch:58px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:var(--shadow)}
 .cal-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:var(--card-2)}
 .cal-head div{padding:7px 8px;font-family:var(--f-display);font-size:13px;color:var(--sub)}
 .cal-head div.sat,.dnum.sat{color:var(--sky-tx)}
@@ -284,8 +275,8 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .dbg:focus-visible{outline-offset:-3px}
 .dnum{grid-row:1;z-index:1;pointer-events:none;padding:5px 8px 0;font-family:var(--f-num);font-weight:500;font-size:13.5px;display:flex;align-items:center;gap:6px;min-width:0}
 .dnum.out{color:var(--faint)}
-.dnum .tdot{font-family:var(--f-display);font-size:10.5px;font-weight:400;background:var(--accent);color:var(--on);border-radius:999px;padding:0 6px;line-height:16px}
-.band{z-index:2;margin:2px 0;border:0;padding:0 7px;font-family:var(--f-display);font-size:11.5px;line-height:1;color:var(--tape-ink);background-color:var(--tape);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:0;text-align:left;border-radius:0}
+.dnum .tdot{font-family:var(--f-display);font-size:10.5px;font-weight:400;background:var(--brand);color:#fff;border-radius:999px;padding:0 6px;line-height:16px}
+.band{z-index:2;margin:2px 0;border:0;padding:0 7px;font-family:var(--f-display);font-size:11.5px;line-height:1;color:var(--tape-ink);background-color:var(--tape);display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;cursor:pointer;min-width:0;text-align:left;border-radius:0}
 .band.rs{margin-left:5px;border-top-left-radius:8px;border-bottom-left-radius:8px}
 .band.re{margin-right:5px;border-top-right-radius:8px;border-bottom-right-radius:8px}
 .band span{overflow:hidden;text-overflow:ellipsis}
@@ -305,29 +296,27 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .chip.l-overdue{box-shadow:inset 0 0 0 1.5px var(--red)}
 .chip.l-soon,.chip.l-today{box-shadow:inset 0 0 0 1.5px var(--sun)}
 .chip.more-chip{background:transparent;color:var(--sub);padding-left:2px}
-.daypanel .period{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;border-radius:10px;background:var(--card-2);margin-bottom:6px}
-.tape-sw{width:20px;height:10px;border-radius:3px;flex:none;background-color:var(--tape);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px}
+.daypanel .period{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;border-radius:6px;background:var(--card-2);margin-bottom:6px}
+.tape-sw{width:20px;height:10px;border-radius:3px;flex:none;background-color:var(--tape)}
 
 /* ---------- certification ---------- */
-.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;box-shadow:var(--shadow);max-width:100%;overflow-x:auto}
-.seg button{border:0;background:transparent;border-radius:9px;padding:6px 13px;cursor:pointer;font-family:var(--f-display);color:var(--sub);white-space:nowrap}
+.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px;box-shadow:var(--shadow);max-width:100%;overflow-x:auto}
+.seg button{border:0;background:transparent;border-radius:6px;padding:6px 13px;cursor:pointer;font-family:var(--f-display);color:var(--sub);white-space:nowrap}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .seg .c{font-family:var(--f-num);font-size:12px;margin-left:3px}
 .apps-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,500px),1fr));gap:22px 18px;padding-top:8px}
-.app-card{position:relative;padding-top:22px}
-.app-card::before{content:"";position:absolute;top:-9px;left:24px;width:96px;height:22px;transform:rotate(-3deg);border-radius:2px;opacity:.95;background-color:var(--tape);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px}
+.app-card{position:relative;border-top:3px solid var(--tape)}
 .app-head{display:flex;align-items:flex-start;gap:10px}
-.app-head .mascot{width:54px;height:54px;flex:none;margin-top:-6px}
 .app-head .ttl{flex:1;min-width:0}
-.app-name{font-family:var(--f-display);font-size:19px;line-height:1.3;overflow-wrap:anywhere}
+.app-name{font-family:var(--f-display);font-weight:500;font-size:16.5px;line-height:1.4;overflow-wrap:anywhere}
 .app-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center}
-.scheme{font-family:var(--f-num);font-size:12px;font-weight:600;border:1.5px solid var(--ink);border-radius:6px;padding:0 6px;line-height:18px}
+.scheme{font-family:var(--f-num);font-size:11.5px;font-weight:500;border:1px solid var(--sub);border-radius:6px;padding:0 6px;line-height:18px}
 .app-meta{display:flex;flex-wrap:wrap;gap:4px 14px;color:var(--sub);font-size:12.5px;margin-top:10px}
 .app-meta .m{display:inline-flex;align-items:center;gap:4px;overflow-wrap:anywhere}
 .app-meta svg{width:13px;height:13px;flex:none}
 .tl{margin:18px 0 4px}
 .tl-track{position:relative;height:16px;border-radius:8px;background:var(--card-2);border:1px solid var(--line)}
-.tl-fill{position:absolute;top:0;bottom:0;left:0;border-radius:8px;background-color:var(--tape);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px}
+.tl-fill{position:absolute;top:0;bottom:0;left:0;border-radius:8px;background-color:var(--tape)}
 .tl-dot{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;border:2.5px solid var(--card);background:var(--faint);z-index:1}
 .tl-dot.done{background:var(--mint)}
 .tl-dot.overdue{background:var(--red)}
@@ -342,19 +331,18 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .stickers{display:flex;gap:2px;flex-wrap:wrap}
 .stickers .stamp{width:26px;height:26px}
 .stickers .pend{width:26px;height:26px;display:grid;place-items:center}
-.stickers .pend i{width:12px;height:12px;border-radius:50%;border:2px dashed var(--faint)}
+.stickers .pend i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--faint)}
 .app-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .app-note{font-size:12.5px;color:var(--sub);margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);min-width:0}
-.tile .mascot{width:46px;height:46px;flex:none}
-.tile .v{font-family:var(--f-num);font-size:27px;font-weight:600;line-height:1.05}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);min-width:0}
+.tile .v{font-family:var(--f-num);font-size:26px;font-weight:400;line-height:1.05}
 .tile .l{font-size:12.5px;color:var(--sub)}
 .tile.t-red .v{color:var(--red-tx)}
 .tile.t-sun .v{color:var(--sun-tx)}
 .tile.t-sky .v{color:var(--sky-tx)}
 .tile.t-mint .v{color:var(--mint-tx)}
-.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 14px;min-width:0;flex:1;max-width:380px;box-shadow:var(--shadow)}
+.search{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 14px;min-width:0;flex:1;max-width:380px;box-shadow:var(--shadow)}
 .search input{border:0;background:transparent;outline:0;flex:1;min-width:0}
 .search svg{width:16px;height:16px;color:var(--sub);flex:none}
 .cert-group{margin-bottom:16px;padding:0;overflow:hidden}
@@ -369,9 +357,9 @@ td.proj{font-weight:700}
 
 /* ---------- report ---------- */
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 16px;box-shadow:var(--shadow);min-width:0}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;box-shadow:var(--shadow);min-width:0}
 .kpi .l{font-size:12.5px;color:var(--sub)}
-.kpi .v{font-family:var(--f-num);font-size:28px;font-weight:600;line-height:1.15}
+.kpi .v{font-family:var(--f-num);font-size:26px;font-weight:400;line-height:1.15}
 .kpi .v small{font-size:14px;color:var(--sub);font-weight:500;margin-left:3px}
 .kpi .s{font-size:12px;color:var(--sub)}
 .chart-box{overflow-x:auto}
@@ -402,13 +390,13 @@ td.proj{font-weight:700}
 .stat-line b{font-family:var(--f-num);color:var(--ink);font-weight:600}
 .excel-note{display:flex;align-items:center;gap:6px;margin:-4px 0 14px;font-size:12.5px;color:var(--sub)}
 .excel-note b{color:var(--ink);font-weight:500}
-.diff-list{list-style:none;margin:0 0 6px;padding:0;border-top:1px dashed var(--line)}
-.diff-list li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:6px 2px;border-bottom:1px dashed var(--line);font-size:13px}
+.diff-list{list-style:none;margin:0 0 6px;padding:0;border-top:1px solid var(--line)}
+.diff-list li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13px}
 .diff-list li .num{margin-left:auto;color:var(--accent-tx);white-space:nowrap}
 .file-btn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
 .set-grid .span2{grid-column:1/-1}
 .sync-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.sync-row input{flex:1;min-width:220px;background:var(--card-2);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;outline:0;font-size:16px}
+.sync-row input{flex:1;min-width:220px;background:var(--card-2);border:1px solid var(--line);border-radius:6px;padding:8px 14px;outline:0;font-size:16px}
 .sync-row input:focus{border-color:var(--accent)}
 .field textarea.gcode{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.5;white-space:pre;overflow:auto;min-height:120px}
 .g-steps li{margin-bottom:6px}
@@ -417,17 +405,16 @@ td.proj{font-weight:700}
 .round .sdot.busy{background:var(--sun)}
 .round .sdot.err{background:var(--red)}
 .pair-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;margin-bottom:10px}
-.qr-box{width:200px;min-height:200px;display:grid;place-items:center;background:#fff;border-radius:16px;padding:8px;color:#5F6782;font-size:12.5px;text-align:center}
+.qr-box{width:200px;min-height:200px;display:grid;place-items:center;background:#fff;border-radius:8px;padding:8px;color:#5F6782;font-size:12.5px;text-align:center}
 .qr-box img{width:184px;height:184px;image-rendering:pixelated}
 @media (max-width:560px){.pair-grid{grid-template-columns:minmax(0,1fr)}.qr-box{margin:0 auto}}
 
 /* ---------- layers ---------- */
 .overlay{position:fixed;inset:0;background:var(--scrim);z-index:45;backdrop-filter:blur(2px)}
-.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(700px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;background:var(--card);border-radius:24px;box-shadow:0 30px 80px -24px rgba(0,0,0,.5);z-index:55;padding:20px 22px;animation:rise .22s ease-out;overscroll-behavior:contain}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(700px,calc(100vw - 24px));max-height:calc(100dvh - 32px);overflow:auto;background:var(--card);border-radius:10px;box-shadow:0 30px 80px -24px rgba(0,0,0,.5);z-index:55;padding:20px 22px;animation:rise .22s ease-out;overscroll-behavior:contain}
 @keyframes rise{from{opacity:0;transform:translate(-50%,-46%)}to{opacity:1;transform:translate(-50%,-50%)}}
 .sheet-h{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.sheet-h .mascot{width:56px;height:56px;flex:none}
-.sheet-h h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:21px}
+.sheet-h h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:18px;letter-spacing:.06em}
 .sheet-h p{margin:2px 0 0;color:var(--sub);font-size:13px}
 .sheet-h .x{margin-left:auto;align-self:flex-start}
 .form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 14px}
@@ -436,7 +423,7 @@ td.proj{font-weight:700}
 .fsec::after{content:"";flex:1;height:1px;background:var(--line)}
 .field{min-width:0}
 .field > label{display:block;font-size:12.5px;color:var(--sub);margin-bottom:4px}
-.field input:not([type=checkbox]):not([type=radio]),.field select,.field textarea{width:100%;background:var(--card-2);border:1.5px solid var(--line);border-radius:12px;padding:8px 11px;outline:0;min-width:0;font-size:16px}
+.field input:not([type=checkbox]):not([type=radio]),.field select,.field textarea{width:100%;background:var(--card-2);border:1.5px solid var(--line);border-radius:6px;padding:8px 11px;outline:0;min-width:0;font-size:16px}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
 .field textarea{min-height:70px;resize:vertical}
 .field .hint{font-size:12px;color:var(--faint);margin-top:3px}
@@ -451,18 +438,18 @@ td.proj{font-weight:700}
 .radio-seg{display:flex;gap:6px}
 .radio-seg label{flex:1;cursor:pointer;margin:0}
 .radio-seg input{position:absolute;opacity:0;pointer-events:none}
-.radio-seg span{display:block;text-align:center;padding:8px 10px;border-radius:12px;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-display)}
+.radio-seg span{display:block;text-align:center;padding:8px 10px;border-radius:6px;border:1.5px solid var(--line);background:var(--card-2);font-family:var(--f-display)}
 .radio-seg input:checked + span{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-tx)}
 .radio-seg input:focus-visible + span{outline:2.5px solid var(--accent);outline-offset:2px}
 .swatches{display:flex;gap:8px;flex-wrap:wrap}
 .swatches label{cursor:pointer;margin:0}
 .swatches input{position:absolute;opacity:0;pointer-events:none}
-.swatches span{display:block;width:40px;height:24px;border-radius:5px;border:2px solid transparent;background-color:var(--tape);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:6px 6px}
-.swatches input:checked + span{border-color:var(--ink);transform:rotate(-4deg)}
+.swatches span{display:block;width:40px;height:24px;border-radius:5px;border:2px solid transparent;background-color:var(--tape)}
+.swatches input:checked + span{border-color:var(--ink)}
 .swatches input:focus-visible + span{outline:2.5px solid var(--accent);outline-offset:2px}
 .steps-ed{display:flex;flex-direction:column;gap:8px}
-.step-ed{display:grid;grid-template-columns:150px 110px minmax(0,1fr) auto auto;gap:6px;align-items:center;background:var(--card-2);border-radius:12px;padding:6px}
-.step-ed input:not([type=checkbox]){background:var(--card)!important;width:100%;border:1.5px solid var(--line);border-radius:10px;padding:7px 9px;min-width:0;font-size:15px}
+.step-ed{display:grid;grid-template-columns:150px 110px minmax(0,1fr) auto auto;gap:6px;align-items:center;background:var(--card-2);border-radius:6px;padding:6px}
+.step-ed input:not([type=checkbox]){background:var(--card)!important;width:100%;border:1.5px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0;font-size:15px}
 .step-ed .dn{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--sub);white-space:nowrap}
 .step-ed .dn input{width:17px;height:17px;accent-color:var(--mint)}
 .steps-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -475,36 +462,18 @@ td.proj{font-weight:700}
 
 /* ---------- toasts & celebration ---------- */
 .toasts{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:70;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none;max-width:calc(100vw - 32px)}
-.toast{display:flex;align-items:center;gap:12px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-left:4px solid var(--mint);border-radius:12px;padding:8px 16px 8px 12px;box-shadow:0 14px 30px -14px rgba(59,54,48,.55);animation:tin .3s ease-out;max-width:420px;font-size:13.5px}
-.toast .mascot{width:40px;height:40px;flex:none}
+.toast{display:flex;align-items:center;gap:12px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-left:3px solid var(--mint);border-radius:6px;padding:10px 16px 10px 14px;box-shadow:0 14px 30px -14px rgba(59,54,48,.55);animation:tin .3s ease-out;max-width:420px;font-size:13.5px}
+.toast.worried,.toast.shock{border-left-color:var(--red)}
+.toast.calm,.toast.sleepy{border-left-color:var(--faint)}
 .toast.out{opacity:0;transform:translateY(8px);transition:.35s}
 @keyframes tin{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
-.pop{position:fixed;z-index:80;width:96px;height:96px;margin:-48px 0 0 -48px;pointer-events:none}
-.pop .stamp{width:96px;height:96px;animation:stampin 1.15s cubic-bezier(.2,.9,.3,1.2) forwards}
-@keyframes stampin{0%{transform:scale(.2) rotate(-40deg);opacity:0}22%{transform:scale(1.18) rotate(4deg);opacity:1}38%{transform:scale(1) rotate(0)}78%{opacity:1;transform:scale(1)}100%{opacity:0;transform:translateY(-26px) scale(.9)}}
-.cf{position:absolute;left:50%;top:50%;width:9px;height:9px;border-radius:50%;animation:cf .9s ease-out forwards}
-@keyframes cf{0%{transform:translate(-50%,-50%) scale(.4);opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1);opacity:0}}
-.st-frame{fill:none;stroke:var(--red);stroke-width:3.4;opacity:.92}
-.st-inner{fill:var(--red-soft);opacity:.55}
-.st-tx{fill:var(--red);font-family:var(--f-seal);font-weight:700;font-size:16px;opacity:.92}
-.stamp.cert .st-frame{stroke:var(--accent)}
-.stamp.cert .st-inner{fill:var(--accent-soft)}
-.stamp.cert .st-tx{fill:var(--accent)}
-.doodle{display:block;overflow:visible}
-.doodle .k{stroke:var(--doodle-ink);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.ph-ic{width:26px;height:26px;flex:none;margin:-5px 0 -5px -3px}
-.ph-ic .doodle{width:100%;height:100%}
-.title-deco{display:inline-flex;gap:2px;vertical-align:middle;margin-left:6px}
-.title-deco .doodle{width:20px;height:20px}
-.title-deco .doodle + .doodle{width:15px;height:15px;margin-top:-10px}
+.st-frame{fill:none;stroke:var(--brand);stroke-width:2.2;opacity:.85}
+.st-tx{fill:var(--brand);font-family:var(--f-display);font-weight:500;font-size:15px;opacity:.9}
+.stamp.cert .st-frame{stroke:var(--sub)}
+.stamp.cert .st-tx{fill:var(--sub)}
 .mascot{display:block;overflow:visible}
-.mphoto{position:relative;flex:none;border-radius:22%;background:#F1ECE4;box-shadow:0 0 0 3px #FFFDF8,0 1px 0 3px rgba(59,54,48,.08),0 8px 16px -10px rgba(59,54,48,.5)}
-.mphoto::before{content:"";position:absolute;z-index:1;top:-9%;left:50%;width:46%;height:17%;transform:translateX(-50%) rotate(-5deg);background-color:var(--ring);background-image:radial-gradient(var(--paper-hi) 1px,transparent 1.5px);background-size:5px 5px;opacity:.9;border-radius:1px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.mphoto{position:relative;flex:none;border-radius:50%;background:var(--card-2);box-shadow:0 0 0 1px var(--line)}
 .mphoto img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
-.mphoto .m-badge{position:absolute;right:-16%;bottom:-14%;width:50%;height:55%;overflow:visible;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.25))}
-.mphoto .m-badge.top{bottom:auto;top:-22%;right:-12%}
-.bob{animation:bob 3.2s ease-in-out infinite}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .foot{margin-top:28px;font-size:12.5px;color:var(--sub);display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;text-align:center}
 .foot b{font-family:var(--f-num);color:var(--ink);font-weight:500}
 
@@ -523,21 +492,21 @@ td.proj{font-weight:700}
   .scope{order:3;width:100%;justify-content:stretch}
   .scope button{flex:1}
   .hero{grid-template-columns:auto minmax(0,1fr);gap:6px 12px;padding:16px 14px 12px}
-  .hero > .mascot{width:52px;height:52px;align-self:start;margin-top:2px}
+  .hero > .mascot{width:44px;height:44px;align-self:start;margin-top:2px}
   .hello{font-size:15px}
   .next-ntf{grid-column:1/-1;width:auto}
   .tiles,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   .bnav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 30px -20px rgba(0,0,0,.4)}
-  .bnav button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;color:var(--sub);font-family:var(--f-display);font-size:11.5px;position:relative;border-radius:12px}
+  .bnav button{border:0;background:transparent;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 0;cursor:pointer;color:var(--sub);font-family:var(--f-display);font-size:11.5px;position:relative;border-radius:6px}
   .bnav button svg{width:22px;height:22px}
   .bnav button[aria-current="page"]{color:var(--accent-tx)}
-  .bnav button[aria-current="page"] svg{stroke-width:2.4}
+  .bnav button[aria-current="page"] svg{stroke-width:2}
   .bnav .cnt{position:absolute;top:0;left:calc(50% + 6px);font-family:var(--f-num);font-size:10.5px;font-weight:600;background:var(--accent);color:var(--on);border-radius:999px;padding:0 5px;line-height:15px}
-  .fab{display:grid;place-items:center;position:fixed;right:18px;bottom:calc(var(--nav-h) + 18px + env(safe-area-inset-bottom,0px));z-index:41;width:58px;height:58px;border-radius:50%;border:0;background:var(--accent);color:var(--on);box-shadow:0 12px 26px -10px rgba(63,91,114,.55);cursor:pointer}
+  .fab{display:grid;place-items:center;position:fixed;right:18px;bottom:calc(var(--nav-h) + 18px + env(safe-area-inset-bottom,0px));z-index:41;width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:var(--on);box-shadow:0 8px 20px -12px rgba(0,0,0,.5);cursor:pointer}
   .fab svg{width:26px;height:26px}
   .add-menu{position:fixed;top:auto;right:16px;bottom:calc(var(--nav-h) + 86px + env(safe-area-inset-bottom,0px))}
   .toasts{bottom:calc(var(--nav-h) + 90px + env(safe-area-inset-bottom,0px))}
-  .modal{top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:92dvh;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:sheet .25s ease-out}
+  .modal{top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:92dvh;border-radius:10px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:sheet .25s ease-out}
   .modal.daily{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
   @keyframes sheet{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
   .form-grid{grid-template-columns:minmax(0,1fr)}
@@ -546,7 +515,7 @@ td.proj{font-weight:700}
   .step-ed .se-title{grid-column:1/-1;order:-1}
 }
 @media (max-width:640px){
-  .cal{--dh:26px;--lh:7px;--ch:20px;border-radius:16px}
+  .cal{--dh:26px;--lh:7px;--ch:20px;border-radius:8px}
   .cal-head div{text-align:center;padding:6px 0}
   .dnum{justify-content:center;padding:4px 0 0}
   .dnum .tdot{display:none}
@@ -572,7 +541,7 @@ td.proj{font-weight:700}
       <span id="brandMascot"></span>
       <div>
         <div class="eyebrow">Mobile Secretary</div>
-        <h1>行動祕書<span class="title-deco" id="titleDeco"></span></h1>
+        <h1>行動祕書</h1>
       </div>
     </div>
     <nav class="tabs" id="tabs" aria-label="切換頁面"></nav>
@@ -621,7 +590,6 @@ const full = s => `${s.replace(/-/g, '/')}（${wd(s)}）`;
 const isDate = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '');
 const nowHM = () => { const d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
 const uid = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-const pick = a => a[Math.floor(Math.random() * a.length)];
 const iso = () => new Date().toISOString();
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const minS = (a, b) => a < b ? a : b;
@@ -673,12 +641,11 @@ const STEP_TPL = [
   [0, '申請表／授權書簽回'], [.15, '關鍵零件清單（BOM / CDF）'], [.3, '送樣（主機＋Adapter＋電池）'],
   [.5, '使用手冊／標籤圖／警語'], [.75, '測試報告初稿確認'], [.95, '證書草稿確認']
 ];
-const CHEERS = ['太棒了！', '完成一件，拍拍手～', '進度 +1，繼續保持！', '漂亮收尾！', '又往前進一步！', '效率滿分！'];
 
 /* ================= icons ================= */
-const sv = d => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const sv = d => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const IC = {
-  check: sv('<path d="M5 12.5l4.5 4.5L19 7.5" stroke-width="3"/>'),
+  check: sv('<path d="M5 12.5l4.5 4.5L19 7.5" stroke-width="2.4"/>'),
   edit: sv('<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>'),
   bell: sv('<path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21.5h4"/>'),
   gear: sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
@@ -708,61 +675,15 @@ const IC = {
 };
 
 /* ================= mascot & stamp ================= */
-/* 吉祥物：使用者的白色雪納瑞（AI 仿真照片，mascot/*.jpg）。
-   mood 決定用哪張照片，color 是貼紙外框顏色，prop 是右下角的小徽章（zzz 在右上）。
+/* 吉祥物：使用者的白色雪納瑞（AI 仿真照片，mascot/*.jpg），只用在標誌與今日問候。
    目前只有 happy／worried／sleepy 三張；calm 先用 happy、shock 先用 worried，之後有新照片再補。 */
-const INK = '#3B3630';
-// 貼紙上那一小段和紙膠帶的顏色（沿用 key 名稱，顏色改成低彩度和風色，不用粉紅）
-const BAND = { pink: 'var(--tape-1)', mint: 'var(--tape-2)', sun: 'var(--tape-4)', coral: 'var(--tape-1)', lilac: 'var(--tape-5)', sky: 'var(--tape-3)' };
 const PHOTO = { happy: 'happy', calm: 'happy', worried: 'worried', shock: 'worried', sleepy: 'sleepy' };
-function mascot(mood = 'calm', color = 'pink', prop = '', cls = '') {
-  const band = BAND[color] || BAND.pink;
-  const P = {
-    check: `<g transform="translate(78 27)"><circle r="13" fill="#6F9467" stroke="#fff" stroke-width="3"/><path d="M-6 0l4 4.5 8-9" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g>`,
-    bell: `<g transform="translate(79 27) rotate(14)"><path d="M-10 6q2-3 2-9a8 8 0 0 1 16 0q0 6 2 9z" fill="#E2B54A" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><circle cy="9" r="3" fill="#A97F22"/><path d="M-14-8q-3 4-1 9M14-8q3 4 1 9" fill="none" stroke="#C99A35" stroke-width="2.2" stroke-linecap="round"/></g>`,
-    cert: `<g transform="translate(78 28)"><path d="M-7 6l-4 14 6-3 3 6 3-12M7 6l4 14-6-3-3 6-3-12" fill="#C9604A" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/><circle r="12" fill="#E2B84F" stroke="#fff" stroke-width="3"/><path d="M0-6l1.9 3.9 4.3.6-3.1 3 .7 4.3L0 3.8l-3.8 2 .7-4.3-3.1-3 4.3-.6z" fill="#A97F22"/></g>`,
-    hourglass: `<g transform="translate(80 27)"><rect x="-10" y="-14" width="20" height="4" rx="2" fill="#7A6CA6" stroke="#fff" stroke-width="1"/><rect x="-10" y="10" width="20" height="4" rx="2" fill="#7A6CA6" stroke="#fff" stroke-width="1"/><path d="M-7-10h14q0 7-7 10q7 3 7 10h-14q0-7 7-10q-7-3-7-10z" fill="#fff" stroke="#7A6CA6" stroke-width="2"/><path d="M-4 8.5h8q-1-4-4-5q-3 1-4 5z" fill="#E2B54A"/></g>`,
-    sun: `<g transform="translate(80 23)"><g stroke="#D9A23A" stroke-width="3" stroke-linecap="round">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<path d="M0-14v-4" transform="rotate(${a})"/>`).join('')}</g><circle r="10" fill="#E8B547" stroke="#fff" stroke-width="2.5"/></g>`,
-    moon: `<g transform="translate(79 24)"><path d="M3-12a12 12 0 1 0 9 19a10 10 0 0 1-9-19z" fill="#EBD28A" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/><path d="M-13-13l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#EBD28A"/></g>`,
-    coffee: `<g transform="translate(79 29)"><path d="M-10-6h17v9a8 8 0 0 1-8 8h-1a8 8 0 0 1-8-8z" fill="#C5D6B4" stroke="#fff" stroke-width="2.4"/><path d="M-5-11q-2-3 0-5M1-11q-2-3 0-5" fill="none" stroke="#9A9282" stroke-width="2" stroke-linecap="round"/></g>`,
-    star: `<g transform="translate(80 25)"><path d="M0-12l3.6 7.4 8.1 1.2-5.9 5.7 1.4 8.1L0 6.6l-7.2 3.8 1.4-8.1-5.9-5.7 8.1-1.2z" fill="#E2B84F" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></g>`,
-    zzz: `<g font-family="Quicksand,sans-serif" font-weight="700" fill="#9A9282"><text x="72" y="31" font-size="13">z</text><text x="81" y="21" font-size="10">z</text><text x="88" y="13" font-size="8">z</text></g>`,
-    doc: `<g transform="translate(79 28) rotate(10)"><path d="M-9-12h12l6 6v18h-18z" fill="#fff" stroke="#3F5B72" stroke-width="2.2" stroke-linejoin="round"/><path d="M-5-3h10M-5 2h10M-5 7h6" stroke="#3F5B72" stroke-width="2" stroke-linecap="round"/></g>`,
-    heart: `<g transform="translate(79 26)"><path d="M0 10C-12 2-12-8-5-9c3-.5 4.5 1.5 5 3 .5-1.5 2-3.5 5-3 7 1 7 11-5 19z" fill="#CF6B57" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></g>`,
-    phone: `<g transform="translate(79 27) rotate(12)"><rect x="-8" y="-13" width="16" height="26" rx="4" fill="#fff" stroke="#3F5B72" stroke-width="2.4"/><path d="M-2 9h4" stroke="#3F5B72" stroke-width="2" stroke-linecap="round"/></g>`
-  };
-  const badge = P[prop] ? `<svg class="m-badge${prop === 'zzz' ? ' top' : ''}" viewBox="60 5 40 44" aria-hidden="true">${P[prop]}</svg>` : '';
-  return `<span class="mascot mphoto ${cls}" style="--ring:${band}" aria-hidden="true"><img src="mascot/${PHOTO[mood] || 'happy'}.jpg" alt="" decoding="async">${badge}</span>`;
-}
-// 朱色方形印章（像日本的「済」章），兩個字直排
+const mascot = (mood = 'calm', cls = '') => `<span class="mascot mphoto ${cls}" aria-hidden="true"><img src="mascot/${PHOTO[mood] || 'happy'}.jpg" alt="" decoding="async"></span>`;
+// 「完成」標記：細線方框，兩個字直排
 function stamp(txt = '完成', cls = '') {
   const [a = '', b = ''] = Array.from(txt);
-  return `<svg class="stamp ${cls}" viewBox="0 0 64 64" aria-hidden="true"><g transform="rotate(-8 32 32)"><rect x="9" y="9" width="46" height="46" rx="9" class="st-frame"/><rect x="13.5" y="13.5" width="37" height="37" rx="6" class="st-inner"/><text x="32" y="30" text-anchor="middle" class="st-tx">${a}</text><text x="32" y="48" text-anchor="middle" class="st-tx">${b}</text></g></svg>`;
+  return `<svg class="stamp ${cls}" viewBox="0 0 64 64" aria-hidden="true"><rect x="12" y="12" width="40" height="40" rx="3" class="st-frame"/><text x="32" y="30" text-anchor="middle" class="st-tx">${a}</text><text x="32" y="47" text-anchor="middle" class="st-tx">${b}</text></svg>`;
 }
-/* 手繪小貼圖：墨線＋和紙色。白色物件（飯糰、紙飛機、雲、骨頭）固定用和紙白，深色模式下就像貼紙 */
-const W = '#FFFDF8';
-const DOODLES = {
-  pencil: `<g class="k" transform="rotate(-40 20 20)"><path d="M6 16h22v8H6z" style="fill:var(--tape-4)"/><path d="M28 16l8 4-8 4z" style="fill:${W}"/><path d="M33.6 18.8L36 20l-2.4 1.2z" style="fill:var(--doodle-ink)"/><path d="M3 16h3v8H3a1.5 1.5 0 0 1-1.5-1.5v-5A1.5 1.5 0 0 1 3 16z" style="fill:var(--tape-1)"/></g>`,
-  bell: `<g class="k"><path d="M11 27c1.5-2 2-5 2-10a7 7 0 0 1 14 0c0 5 .5 8 2 10z" style="fill:var(--tape-4)"/><path d="M8.5 27h23M20 8V6" style="fill:none"/><circle cx="20" cy="31" r="2.6" style="fill:${W}"/><path d="M31 11q2 2 1.5 5M9 11q-2 2-1.5 5" style="fill:none;opacity:.55"/></g>`,
-  plane: `<g class="k"><path d="M5 19L35 7L27 33L19 24Z" style="fill:${W}"/><path d="M19 24L35 7M19 24l-1 8 5-5" style="fill:none"/><path d="M4 31q4-1 7-4" style="fill:none;stroke-dasharray:2 3;opacity:.6"/></g>`,
-  seal: `<g transform="rotate(-8 20 20)"><rect x="7" y="7" width="26" height="26" rx="6" style="fill:var(--red-soft);stroke:var(--red);stroke-width:2.2"/><text x="20" y="26.2" text-anchor="middle" style="fill:var(--red);font-family:var(--f-seal);font-size:15.5px;font-weight:700">認</text></g>`,
-  hourglass: `<g class="k"><path d="M11 6h18M11 34h18" style="fill:none"/><path d="M13 6c0 8 7 9 7 14s-7 6-7 14h14c0-8-7-9-7-14s7-6 7-14z" style="fill:${W}"/><path d="M15.5 31.5c1-3 3-4.5 4.5-5 1.5.5 3.5 2 4.5 5z" style="fill:var(--tape-4)"/></g>`,
-  leaf: `<g class="k"><path d="M8 32C9 18 19 9 33 7C32 21 22 31 8 32Z" style="fill:var(--tape-2)"/><path d="M8 32C15 24 22 17 29 11" style="fill:none"/><path d="M14 26l-1-5M19 21l-1-6M14 26l5 1M19 21l6 1" style="fill:none;opacity:.55"/></g>`,
-  fuji: `<g class="k"><path d="M2 33L15 13Q20 9 25 13L38 33Z" style="fill:var(--tape-3)"/><path d="M15 13Q20 9 25 13L23 17L20.5 15L18 17.5L16.5 15.5Z" style="fill:${W}"/><circle cx="32" cy="9" r="3.6" style="fill:var(--red-soft);stroke:var(--red)"/></g>`,
-  clip: `<g class="k" transform="rotate(18 20 20)"><path d="M16 10v18a4 4 0 0 0 8 0V9a6 6 0 0 0-12 0v19" style="fill:none;stroke:var(--sub);stroke-width:2"/></g>`,
-  onigiri: `<g class="k"><path d="M20 6C25 6 34 22 34 28C34 33 6 33 6 28C6 22 15 6 20 6Z" style="fill:${W}"/><path d="M14.5 23h11v8.8Q20 32.6 14.5 31.9Z" style="fill:#2F3A2E;stroke:none"/><circle cx="16.3" cy="17.2" r="1.1" style="fill:#3B3630;stroke:none"/><circle cx="23.7" cy="17.2" r="1.1" style="fill:#3B3630;stroke:none"/><path d="M18.6 19.6q1.4 1.2 2.8 0" style="fill:none;stroke:#3B3630;stroke-width:1.1"/><ellipse cx="13.5" cy="20" rx="1.8" ry="1.1" style="fill:#E7C9A9;stroke:none"/><ellipse cx="26.5" cy="20" rx="1.8" ry="1.1" style="fill:#E7C9A9;stroke:none"/></g>`,
-  tea: `<g class="k"><path d="M9 14h22l-2.5 15a4 4 0 0 1-4 3.5h-9a4 4 0 0 1-4-3.5z" style="fill:var(--tape-2)"/><path d="M11.5 20h17" style="fill:none;opacity:.45"/><path d="M16 10q-2-2 0-4M21 10q-2-2 0-4M26 10q-2-2 0-4" style="fill:none;opacity:.65"/></g>`,
-  paw: `<g class="k" style="fill:var(--tape-1)"><ellipse cx="20" cy="25" rx="8" ry="6.5"/><ellipse cx="10.5" cy="16.5" rx="3.2" ry="4" transform="rotate(-20 10.5 16.5)"/><ellipse cx="16.5" cy="10.5" rx="3.2" ry="4"/><ellipse cx="23.5" cy="10.5" rx="3.2" ry="4"/><ellipse cx="29.5" cy="16.5" rx="3.2" ry="4" transform="rotate(20 29.5 16.5)"/></g>`,
-  bone: `<g class="k" transform="translate(0 4) rotate(-22 20 16)"><path d="M11 16a4 4 0 1 1 4-5h10a4 4 0 1 1 4 5 4 4 0 1 1-4 5H15a4 4 0 1 1-4-5z" style="fill:${W}"/></g>`,
-  sparkle: `<path class="k" d="M20 4C21 15 25 19 36 20C25 21 21 25 20 36C19 25 15 21 4 20C15 19 19 15 20 4Z" style="fill:var(--tape-4)"/>`,
-  cloud: `<path class="k" d="M11 29a6 6 0 0 1 0-12 9 9 0 0 1 17-2.5 6.5 6.5 0 0 1 2 14.5z" style="fill:${W}"/>`,
-  sun: `<g class="k"><circle cx="20" cy="20" r="7.5" style="fill:var(--tape-4)"/><path d="M20 5v4M20 31v4M5 20h4M31 20h4M9.4 9.4l2.8 2.8M27.8 27.8l2.8 2.8M9.4 30.6l2.8-2.8M27.8 12.2l2.8-2.8" style="fill:none"/></g>`,
-  moon: `<g class="k"><path d="M24 6a14 14 0 1 0 10 22A11 11 0 0 1 24 6z" style="fill:var(--tape-4)"/><path d="M9 8l1 2.4 2.4 1-2.4 1-1 2.4-1-2.4-2.4-1 2.4-1z" style="fill:var(--tape-4)"/></g>`,
-  flower: `<g class="k">${[0, 72, 144, 216, 288].map(a => `<circle cx="20" cy="12.5" r="6" transform="rotate(${a} 20 20)" style="fill:${W}"/>`).join('')}<circle cx="20" cy="20" r="3.4" style="fill:var(--tape-4)"/></g>`,
-  memo: `<g class="k" transform="rotate(-6 20 20)"><path d="M9 6h22v28H9z" style="fill:${W}"/><path d="M13 14h14M13 19h14M13 24h9" style="fill:none;opacity:.45"/><path d="M15 3.5h10v5H15z" style="fill:var(--tape-3);stroke:none;opacity:.9"/></g>`
-};
-const doodle = (name, cls = '') => DOODLES[name] ? `<svg class="doodle ${cls}" viewBox="0 0 40 40" aria-hidden="true">${DOODLES[name]}</svg>` : '';
-const ph = name => `<span class="ph-ic">${doodle(name)}</span>`;
 /* 每日一句：段落由使用者自己貼進 App（存在 S.quotes，隨雲端同步，不寫進程式碼）。
    每天 0:00 換一段；用日期當種子洗牌，所有裝置同一天看到同一段，一輪內不重複。 */
 const QUOTE_HEAD = '與真如繼主同在，這時候，深呼吸';
@@ -782,13 +703,12 @@ function quoteOf(date) {
   if (n > 1 && order[0] === seededShuffle(qs, c + 6)[n - 1]) [order[0], order[1]] = [order[1], order[0]];
   return order[((d % n) + n) % n];
 }
-const timeDoodle = () => { const h = new Date().getHours(); return h < 11 ? 'sun' : h < 14 ? 'onigiri' : h < 18 ? 'tea' : 'moon'; };
 
 /* ================= state & local storage ================= */
 const DATA_KEY = 'msec.data.v1';
 const PREF_KEY = 'msec.prefs.v1';
-const S = { items: [], apps: [], certs: [], quotes: [], deleted: {}, savedAt: null };
-const COLS = ['items', 'apps', 'certs', 'quotes'];
+const S = { items: [], apps: [], certs: [], quotes: [], journal: [], deleted: {}, savedAt: null };
+const COLS = ['items', 'apps', 'certs', 'quotes', 'journal'];
 const prefs = (() => { try { return JSON.parse(ls.get(PREF_KEY)) || {}; } catch (e) { return {}; } })();
 const savePrefs = () => ls.set(PREF_KEY, JSON.stringify(prefs));
 const UI = {
@@ -805,6 +725,7 @@ function loadData() {
     S.quotes = Array.isArray(d.quotes) ? d.quotes : [];
     S.apps = Array.isArray(d.apps) ? d.apps : [];
     S.certs = Array.isArray(d.certs) ? d.certs : [];
+    S.journal = Array.isArray(d.journal) ? d.journal : [];
     S.deleted = d.deleted && typeof d.deleted === 'object' ? d.deleted : {};
     S.savedAt = d.savedAt || null;
     if (migrateItems()) saveData();
@@ -819,8 +740,8 @@ function migrateItems() {
 }
 function saveData() {
   S.savedAt = iso();
-  const ok = ls.set(DATA_KEY, JSON.stringify({ app: 'mobile-secretary', v: 2, savedAt: S.savedAt, items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, deleted: S.deleted }));
-  if (!ok) toast('儲存失敗：這個瀏覽器不允許儲存資料（可能是無痕模式或空間已滿）', 'worried', 'coral');
+  const ok = ls.set(DATA_KEY, JSON.stringify({ app: 'mobile-secretary', v: 2, savedAt: S.savedAt, items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, journal: S.journal, deleted: S.deleted }));
+  if (!ok) toast('儲存失敗：這個瀏覽器不允許儲存資料（可能是無痕模式或空間已滿）', 'worried');
   return ok;
 }
 // 每筆資料都帶 updatedAt；刪除留下「墓碑」時間，雲端同步時才知道哪邊比較新
@@ -838,7 +759,7 @@ const Store = {
 function commit() { saveData(); render(); scheduleSync(); scheduleGsync(); }
 async function write(fn) {
   try { await fn(); return true; }
-  catch (e) { toast('儲存沒有成功，請再試一次', 'worried', 'coral'); return false; }
+  catch (e) { toast('儲存沒有成功，請再試一次', 'worried'); return false; }
 }
 function demoData() {
   const d = n => addDays(TODAY, n);
@@ -1028,8 +949,8 @@ function evRow(e, o = {}) {
   const editBtn = !o.noEdit ? `<button class="ico" data-act="edit" data-key="${esc(e.key)}" aria-label="編輯">${IC.edit}</button>` : '';
   return `<div class="row ${e.done ? 'is-done' : ''} ${L ? 'lv-' + L : ''}">${lead}<div class="row-main"><div class="row-title">${title}</div><div class="row-meta">${meta.join('')}</div>${note}</div>${right}${editBtn}</div>`;
 }
-function emptyBox(title, sub, mood = 'happy', color = 'sky', prop = 'star') {
-  return `<div class="empty">${mascot(mood, color, prop)}<div><b>${title}</b>${sub || ''}</div></div>`;
+function emptyBox(title, sub) {
+  return `<div class="empty"><b>${title}</b>${sub || ''}</div>`;
 }
 function rowsOrEmpty(list, emptyHtml, o = {}) {
   if (!list.length) return emptyHtml;
@@ -1049,15 +970,15 @@ function vToday() {
   const showWork = workVisible();
   const certAl = showWork ? S.certs.filter(c => ['expired', 'warn', 'watch'].includes(certLvl(c))).sort((a, b) => a.due < b.due ? -1 : 1) : [];
   const active = showWork ? S.apps.filter(isLive).sort((a, b) => (endOf(a) || '') < (endOf(b) || '') ? -1 : 1) : [];
-  let mood, color, prop, line;
-  if (overdue.length) { mood = 'worried'; color = 'coral'; prop = 'bell'; line = '有逾期的事項，先把它們處理掉吧！'; }
-  else if (pending.length) { mood = 'calm'; color = 'pink'; prop = soon.length ? 'bell' : 'star'; line = '今天也一起加油！'; }
-  else if (todays.length) { mood = 'happy'; color = 'mint'; prop = 'check'; line = '今天的待辦全部完成，超棒！'; }
-  else { mood = 'happy'; color = 'sky'; prop = 'heart'; line = '今天行程很輕鬆～'; }
+  let mood, line;
+  if (overdue.length) { mood = 'worried'; line = '有逾期的事項，請先處理。'; }
+  else if (pending.length) { mood = 'calm'; line = '今天也按部就班。'; }
+  else if (todays.length) { mood = 'happy'; line = '今天的待辦都完成了。'; }
+  else { mood = 'happy'; line = '今天沒有排定的事。'; }
   const h = new Date().getHours();
   const greet = h < 5 ? '夜深了' : h < 11 ? '早安' : h < 14 ? '午安' : h < 18 ? '午後好' : '晚安';
   const samples = S.items.filter(x => x.sample).length + S.apps.filter(x => x.sample).length + S.certs.filter(x => x.sample).length;
-  const sampleBar = samples ? `<div class="banner" style="margin-top:16px">${mascot('calm', 'sun', 'doc')}<p>目前有 <b class="num">${samples}</b> 筆標示「【範例】」的示範資料（含工作與個人）。看完功能後可以一鍵清除；證書效期資料可以到「設定」匯入。</p><div class="acts"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}匯入資料</button><button class="btn sm danger" data-act="clear-samples">清除範例</button></div></div>` : '';
+  const sampleBar = samples ? `<div class="banner" style="margin-top:16px"><p>目前有 <b class="num">${samples}</b> 筆標示「【範例】」的示範資料（含工作與個人）。看完功能後可以一鍵清除；證書效期資料可以到「設定」匯入。</p><div class="acts"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}匯入資料</button><button class="btn sm danger" data-act="clear-samples">清除範例</button></div></div>` : '';
   const soonByDay = [1, 2].map(n => {
     const d = addDays(TODAY, n); const l = soon.filter(e => e.date === d);
     return l.length ? `<div class="sub-h">${n === 1 ? '明天' : '後天'}・${full(d)}</div><div class="rows">${l.map(e => evRow(e, { noDate: true })).join('')}</div>` : '';
@@ -1067,53 +988,76 @@ function vToday() {
     const nx = steps.filter(s => !s.done && isDate(s.date)).sort((x, y) => x.date < y.date ? -1 : 1)[0];
     const left = isDate(endOf(a)) ? diff(TODAY, endOf(a)) : null;
     return `<button class="mini-app" data-act="go-cert" data-tab="apps"><div class="mini-top"><span class="tape-sw" style="--tape:var(--tape-${a.color || 1})"></span><span class="nm">${esc(appName(a))}</span><span class="left">${left == null ? '' : left >= 0 ? `取證剩 ${left} 天` : `取證日已過 ${-left} 天`}</span></div><div class="prog" aria-label="節點完成 ${dn}/${steps.length}"><i style="width:${steps.length ? dn / steps.length * 100 : 0}%"></i></div><div class="mini-next">節點 ${dn}/${steps.length} 完成${nx ? `・下一步 ${md(nx.date)} ${esc(nx.title)}` : ''}</div></button>`;
-  }).join('') : emptyBox('目前沒有進行中的認證申請', '<div>按「＋」→ 認證申請，排出申請到取證的期間。</div>', 'calm', 'lilac', 'cert');
-  const certRows = certAl.length ? `<div class="rows">${certAl.slice(0, 6).map(c => evRow(certEv(c))).join('')}</div>${certAl.length > 6 ? `<div class="more"><button class="link-btn" data-act="go-cert" data-tab="certs">查看全部 ${certAl.length} 筆 →</button></div>` : ''}` : emptyBox(S.certs.length ? '180 天內沒有證書到期' : '還沒有證書資料', S.certs.length ? '<div>效期都很安全，放心～</div>' : '<div>到「設定」匯入證書效期資料，或在「認證」頁新增。</div>', 'happy', 'lilac', S.certs.length ? 'check' : 'hourglass');
+  }).join('') : emptyBox('目前沒有進行中的認證申請', '<div>按「＋」→ 認證申請，排出申請到取證的期間。</div>');
+  const certRows = certAl.length ? `<div class="rows">${certAl.slice(0, 6).map(c => evRow(certEv(c))).join('')}</div>${certAl.length > 6 ? `<div class="more"><button class="link-btn" data-act="go-cert" data-tab="certs">查看全部 ${certAl.length} 筆 →</button></div>` : ''}` : emptyBox(S.certs.length ? '180 天內沒有證書到期' : '還沒有證書資料', S.certs.length ? '<div>效期都很安全，放心～</div>' : '<div>到「設定」匯入證書效期資料，或在「認證」頁新增。</div>');
   return `
   <section class="panel hero">
-    ${doodle('clip', 'hero-clip')}
-    ${mascot(mood, color, prop, 'bob')}
+    ${mascot(mood)}
     <div>
-      <div class="hello">${greet}！${line}</div>
-      <div class="today-date">${full(TODAY)}<span class="hero-dd">${doodle(timeDoodle())}</span></div>
+      <div class="hello">${greet}，${line}</div>
+      <div class="today-date">${full(TODAY)}</div>
       <div class="summary">${scopeWord() ? `【${scopeWord()}】` : ''}今天有 <b>${pending.length}</b> 件待辦${doneT.length ? `、已完成 <b>${doneT.length}</b> 件` : ''}；兩天內即將到期 <b>${soon.length}</b> 件${overdue.length ? `；逾期 <b>${overdue.length}</b> 件要先處理` : ''}。</div>
     </div>
-    <div class="next-ntf"><div class="nn-h">${doodle('bell')}接下來的推播</div>${nextNoticesHtml(3)}</div>
+    <div class="next-ntf"><div class="nn-h">接下來的推播</div>${nextNoticesHtml(3)}</div>
   </section>
   ${quoteCard()}
   ${sampleBar}
   <div class="grid2">
     <div class="stack">
       <section class="panel">
-        <div class="panel-h">${ph('pencil')}<h2>今日待辦</h2><span class="n">${pending.length} 件待辦・${doneT.length} 件完成</span><button class="btn sm act" data-act="new-item" data-date="${TODAY}">＋ 新增</button></div>
-        ${rowsOrEmpty(pending.concat(doneT), emptyBox('今天沒有排定的事項', '<div>按「＋」加入工作或個人的行程、待辦。</div>', 'happy', 'sky', 'star'), { noDate: true, note: true })}
+        <div class="panel-h"><h2>今日待辦</h2><span class="n">${pending.length} 件待辦・${doneT.length} 件完成</span><button class="btn sm act" data-act="new-item" data-date="${TODAY}">＋ 新增</button></div>
+        ${rowsOrEmpty(pending.concat(doneT), emptyBox('今天沒有排定的事項', '<div>按「＋」加入工作或個人的行程、待辦。</div>'), { noDate: true, note: true })}
       </section>
-      ${overdue.length ? `<section class="panel"><div class="panel-h">${ph('bell')}<h2>逾期未完成</h2><span class="n">${overdue.length} 件</span></div>${rowsOrEmpty(overdue, '', { note: true })}</section>` : ''}
+      ${overdue.length ? `<section class="panel"><div class="panel-h"><h2>逾期未完成</h2><span class="n">${overdue.length} 件</span></div>${rowsOrEmpty(overdue, '', { note: true })}</section>` : ''}
     </div>
     <div class="stack">
       <section class="panel">
-        <div class="panel-h">${ph('plane')}<h2>即將到來（兩天內提醒）</h2><span class="n">${soon.length} 件</span></div>
-        ${soon.length ? soonByDay : emptyBox('明天、後天沒有到期的事', '<div>到期前兩天會自動出現在這裡。</div>', 'calm', 'sun', 'bell')}
+        <div class="panel-h"><h2>即將到來（兩天內提醒）</h2><span class="n">${soon.length} 件</span></div>
+        ${soon.length ? soonByDay : emptyBox('明天、後天沒有到期的事', '<div>到期前兩天會自動出現在這裡。</div>')}
       </section>
       ${showWork ? `<section class="panel">
-        <div class="panel-h">${ph('seal')}<h2>認證申請進行中</h2><span class="n">${active.length} 件</span></div>
+        <div class="panel-h"><h2>認證申請進行中</h2><span class="n">${active.length} 件</span></div>
         ${miniApps}
       </section>
       <section class="panel">
-        <div class="panel-h">${ph('hourglass')}<h2>證書到期提示</h2><span class="n">180 天內 ${certAl.length} 筆</span></div>
+        <div class="panel-h"><h2>證書到期提示</h2><span class="n">180 天內 ${certAl.length} 筆</span></div>
         ${certRows}
       </section>` : ''}
     </div>
   </div>
-  <div class="page-end" aria-hidden="true">${['leaf', 'paw', 'onigiri', 'fuji', 'tea', 'bone', 'flower', 'sparkle'].map(n => doodle(n)).join('')}</div>`;
+  ${moodBox(TODAY)}`;
 }
 
+/* 每日心情結語：一天一則、100 字內（id j<日期>，跨裝置同一天同一則）。存在自己的資料與私密同步，不進行事曆、不進 Google、不進報表文字。
+   打字時只存資料不重畫畫面（避免中文輸入被打斷），草稿放在 UI.moodDraft，同步重畫時不會遺失。 */
+const MOOD_MAX = 100;
+const moodOf = d => S.journal.find(x => x.id === 'j' + d);
+function moodBox(d, inPanel) {
+  const cur = moodOf(d);
+  const text = UI.moodDraft && UI.moodDraft.date === d ? UI.moodDraft.text : (cur ? cur.text : '');
+  const label = d === TODAY ? '今日心情結語' : '這天的心情結語';
+  const head = `<div class="panel-h"><h2>${label}</h2><span class="n"><span id="moodCnt">${text.length}</span>/${MOOD_MAX}</span><span class="mood-st" id="moodSt">${cur ? '已儲存' : ''}</span></div>`;
+  const box = `<textarea id="moodText" class="mood-in" data-date="${d}" maxlength="${MOOD_MAX}" rows="2" placeholder="${d === TODAY ? '用一兩句話，替今天收個尾。' : '補寫這一天的心情。'}" aria-label="${label}">${esc(text)}</textarea>`;
+  return inPanel ? `<div class="mood sub">${head}${box}</div>` : `<section class="panel mood">${head}${box}</section>`;
+}
+function saveMood(d, raw) {
+  const text = String(raw || '').slice(0, MOOD_MAX).trim();
+  const id = 'j' + d, cur = moodOf(d);
+  if (UI.moodDraft && UI.moodDraft.date === d) UI.moodDraft = null;
+  if (cur ? cur.text === text : !text) return;
+  if (!text) { S.journal = S.journal.filter(x => x.id !== id); tomb('journal', id); }
+  else if (cur) Object.assign(cur, { text, updatedAt: iso() });
+  else S.journal.push({ id, date: d, text, updatedAt: iso() });
+  saveData(); scheduleSync();
+  const st = $('#moodSt'); if (st) st.textContent = text ? '已儲存' : '';
+}
+const growMood = el => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; };
 function quoteCard() {
   const q = quoteOf(TODAY);
-  if (!q) return `<section class="panel quote-card q-empty">${doodle('flower', 'q-dd')}<div class="q-head">${QUOTE_HEAD}</div>
+  if (!q) return `<section class="panel quote-card q-empty"><div class="q-head">${QUOTE_HEAD}</div>
     <p class="muted" style="margin:6px 0 10px">第一次使用：選你的《這時候，深呼吸》Word 檔載入<b>一次</b>。之後 App 每天 0:00 會自動隨機貼一篇在這裡，不用再手動。</p>
     <button class="btn sm primary" data-act="quote-file">${IC.ul}載入 Word 檔</button></section>`;
-  return `<section class="panel quote-card">${doodle('flower', 'q-dd')}<div class="q-head">${QUOTE_HEAD}</div>
+  return `<section class="panel quote-card"><div class="q-head">${QUOTE_HEAD}</div>
     <div class="q-text">${esc(q.text.trim())}</div>
     <div class="q-foot"><span>${full(TODAY)}・今日一句</span><button class="link-btn" data-act="quote-copy">${IC.copy}複製</button></div></section>`;
 }
@@ -1139,7 +1083,7 @@ function vAgenda() {
   </div>
   ${overdue.length ? `<div class="ag-day"><div class="ag-head"><b style="color:var(--red-tx)">逾期未完成</b><span>${overdue.length} 件</span></div><section class="panel">${rowsOrEmpty(overdue, '', { note: true })}</section></div>` : ''}
   ${days.length ? days.map(d => `<div class="ag-day"><div class="ag-head"><b>${full(d)}</b><span>${label(d)}・${byDay[d].length} 件</span></div><section class="panel">${rowsOrEmpty(byDay[d], '', { noDate: true, note: true })}</section></div>`).join('')
-    : `<section class="panel">${emptyBox(q ? '找不到符合的行程' : `未來 ${UI.agDays} 天沒有${scopeWord()}行程`, q ? '<div>換個關鍵字試試看。</div>' : '<div>按「＋」新增，或切換上方的「全部／工作／個人／Shinnyo」。</div>', 'sleepy', 'sky', 'zzz')}</section>`}`;
+    : `<section class="panel">${emptyBox(q ? '找不到符合的行程' : `未來 ${UI.agDays} 天沒有${scopeWord()}行程`, q ? '<div>換個關鍵字試試看。</div>' : '<div>按「＋」新增，或切換上方的「全部／工作／個人／Shinnyo」。</div>')}</section>`}`;
 }
 
 function vCalendar() {
@@ -1213,7 +1157,8 @@ function dayPanel(d) {
   return `<section class="panel daypanel">
     <div class="panel-h"><h2>${full(d)}</h2>${d === TODAY ? '<span class="tag today">今天</span>' : ''}<button class="btn sm act" data-act="new-item" data-date="${d}">＋ 新增</button></div>
     ${per}
-    ${rowsOrEmpty(list, emptyBox('這天沒有安排', '<div>點月曆上任一天就能查看或新增。</div>', 'sleepy', 'sky', 'zzz'), { noDate: true, note: true })}
+    ${rowsOrEmpty(list, emptyBox('這天沒有安排', '<div>點月曆上任一天就能查看或新增。</div>'), { noDate: true, note: true })}
+    ${d <= TODAY ? moodBox(d, true) : ''}
   </section>`;
 }
 
@@ -1230,7 +1175,7 @@ function vApps() {
   list = list.slice().sort((a, b) => rank(a) - rank(b) || ((endOf(a) || '') < (endOf(b) || '') ? -1 : 1));
   const seg = [['active', '進行中'], ['obtained', '已取證'], ['all', '全部']].map(([k, t]) => `<button data-act="app-filter" data-f="${k}" aria-pressed="${f === k}">${t}<span class="c">${cnt[k]}</span></button>`).join('');
   return `<div class="toolbar"><div class="seg" role="group" aria-label="篩選">${seg}</div><div class="grow"></div><button class="btn primary" data-act="new-app">＋ 新增認證申請</button></div>
-  ${list.length ? `<div class="apps-list">${list.map(appCard).join('')}</div>` : `<section class="panel">${emptyBox(f === 'obtained' ? '還沒有已取證的申請' : '還沒有認證申請', '<div>新增一筆認證申請，填申請日與預計取證日，月曆上就會出現彩色紙膠帶標出整段期間；再加入每個節點要提交的內容，到期前兩天開始提醒。</div>', 'calm', 'lilac', 'cert')}</section>`}`;
+  ${list.length ? `<div class="apps-list">${list.map(appCard).join('')}</div>` : `<section class="panel">${emptyBox(f === 'obtained' ? '還沒有已取證的申請' : '還沒有認證申請', '<div>新增一筆認證申請，填申請日與預計取證日，月曆上就會出現彩色紙膠帶標出整段期間；再加入每個節點要提交的內容，到期前兩天開始提醒。</div>')}</section>`}`;
 }
 function appCard(a) {
   const st = a.status || 'active';
@@ -1241,14 +1186,6 @@ function appCard(a) {
   const dn = steps.filter(s => s.done).length;
   const left = ok ? diff(TODAY, end) : null;
   const evs = EV.filter(e => e.k === 'step' && e.appId === a.id);
-  const anyOver = evs.some(e => lvl(e) === 'overdue');
-  const anySoon = evs.some(e => ['soon', 'today'].includes(lvl(e)));
-  let mo;
-  if (st === 'obtained') mo = mascot('happy', 'mint', 'cert');
-  else if (st !== 'active') mo = mascot('sleepy', 'sky', 'zzz');
-  else if (anyOver) mo = mascot('worried', 'coral', 'bell');
-  else if (anySoon) mo = mascot('shock', 'sun', 'bell');
-  else mo = mascot('calm', 'pink', 'doc');
   const dots = ok ? steps.filter(s => isDate(s.date)).map(s => {
     const e = evs.find(x => x.stepId === s.id); const L = e ? lvl(e) : null;
     return `<span class="tl-dot ${s.done ? 'done' : (L || '')}" style="left:${clamp(diff(a.applyDate, s.date) / total * 100, 0, 100)}%" title="${esc(md(s.date) + ' ' + (s.title || ''))}"></span>`;
@@ -1266,7 +1203,7 @@ function appCard(a) {
   const stickers = steps.map(s => s.done ? stamp('完成') : `<span class="pend"><i></i></span>`).join('');
   const leftTxt = st === 'obtained' ? `已於 ${md(end)} 取證` : left == null ? '' : left > 0 ? `距離取證 <b>${left}</b> 天` : left === 0 ? '今天預計取證' : `預計取證日已過 <b>${-left}</b> 天`;
   return `<article class="panel app-card" style="--tape:var(--tape-${a.color || 1})">
-    <div class="app-head">${mo}<div class="ttl"><div class="app-name">${esc(appName(a))}</div><div class="app-badges">${a.scheme ? `<span class="scheme">${esc(a.scheme)}</span>` : ''}<span class="tag ${STATUS[st] ? STATUS[st].cls : 'later'}">${STATUS[st] ? STATUS[st].t : esc(st)}</span>${a.sample ? '<span class="tag later">範例</span>' : ''}</div></div><button class="ico" data-act="edit" data-key="app:${esc(a.id)}" aria-label="編輯認證申請">${IC.edit}</button></div>
+    <div class="app-head"><div class="ttl"><div class="app-name">${esc(appName(a))}</div><div class="app-badges">${a.scheme ? `<span class="scheme">${esc(a.scheme)}</span>` : ''}<span class="tag ${STATUS[st] ? STATUS[st].cls : 'later'}">${STATUS[st] ? STATUS[st].t : esc(st)}</span>${a.sample ? '<span class="tag later">範例</span>' : ''}</div></div><button class="ico" data-act="edit" data-key="app:${esc(a.id)}" aria-label="編輯認證申請">${IC.edit}</button></div>
     ${meta.length ? `<div class="app-meta">${meta.join('')}</div>` : ''}
     ${ok ? `<div class="tl"><div class="tl-track"><div class="tl-fill" style="width:${st === 'obtained' ? 100 : el / total * 100}%"></div>${dots}${nowMark}</div>
       <div class="tl-labels"><span>申請 <b>${a.applyDate.replace(/-/g, '/')}</b></span><span>${leftTxt}</span><span>${st === 'obtained' ? '取證' : '預計取證'} <b>${end.replace(/-/g, '/')}</b></span></div></div>` : ''}
@@ -1298,14 +1235,14 @@ function vCerts() {
     </tbody></table></div></section>`;
   }).join('');
   return `<div class="tiles">
-    <div class="tile t-red">${mascot('shock', 'coral', 'bell')}<div><div class="v">${n('expired')}</div><div class="l">已過期</div></div></div>
-    <div class="tile t-sun">${mascot('worried', 'sun', 'hourglass')}<div><div class="v">${n('warn')}</div><div class="l">90 天內到期</div></div></div>
-    <div class="tile t-sky">${mascot('calm', 'sky', 'hourglass')}<div><div class="v">${n('watch')}</div><div class="l">180 天內到期</div></div></div>
-    <div class="tile t-mint">${mascot('happy', 'mint', 'check')}<div><div class="v">${n('ok')}</div><div class="l">正常</div></div></div>
+    <div class="tile t-red"><div><div class="v">${n('expired')}</div><div class="l">已過期</div></div></div>
+    <div class="tile t-sun"><div><div class="v">${n('warn')}</div><div class="l">90 天內到期</div></div></div>
+    <div class="tile t-sky"><div><div class="v">${n('watch')}</div><div class="l">180 天內到期</div></div></div>
+    <div class="tile t-mint"><div><div class="v">${n('ok')}</div><div class="l">正常</div></div></div>
   </div>
   <div class="toolbar"><label class="search">${IC.search}<input id="certSearch" type="search" placeholder="搜尋機型、認證項目、證書編號" value="${esc(UI.certQ)}" aria-label="搜尋證書"></label><div class="grow"></div><button class="btn" data-act="excel-import">${IC.ul}從效期表更新</button><button class="btn primary" data-act="new-cert">＋ 新增證書</button></div>
-  <p class="excel-note">${ph('memo')}${prefs.lastExcel ? `上次從效期表更新：<b>${esc(prefs.lastExcel.name)}</b>（${new Date(prefs.lastExcel.at).toLocaleDateString('zh-TW')}）` : '每月審查完，按「從效期表更新」選最新的《TWINHEAD 安規認證到期管理》Excel，到期日就會同步到這裡和手機。'}</p>
-  ${groups || `<section class="panel">${emptyBox(q ? '找不到符合的證書' : '還沒有證書資料', q ? '<div>換個關鍵字試試看。</div>' : '<div>到「設定 → 匯入資料」載入證書效期檔，或按「＋ 新增證書」。180 天內開始追蹤、90 天內列入每日提醒。</div>', 'calm', 'lilac', 'hourglass')}${!q ? `<div class="set-acts" style="margin-top:10px"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}前往匯入</button></div>` : ''}</section>`}`;
+  <p class="excel-note">${prefs.lastExcel ? `上次從效期表更新：<b>${esc(prefs.lastExcel.name)}</b>（${new Date(prefs.lastExcel.at).toLocaleDateString('zh-TW')}）` : '每月審查完，按「從效期表更新」選最新的《TWINHEAD 安規認證到期管理》Excel，到期日就會同步到這裡和手機。'}</p>
+  ${groups || `<section class="panel">${emptyBox(q ? '找不到符合的證書' : '還沒有證書資料', q ? '<div>換個關鍵字試試看。</div>' : '<div>到「設定 → 匯入資料」載入證書效期檔，或按「＋ 新增證書」。180 天內開始追蹤、90 天內列入每日提醒。</div>')}${!q ? `<div class="set-acts" style="margin-top:10px"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}前往匯入</button></div>` : ''}</section>`}`;
 }
 
 function range() {
@@ -1367,8 +1304,8 @@ function vReport() {
     const c = D.cats[k];
     return `<div class="catbar"><span>${esc(k)}</span><span class="trk" style="width:${c.t / maxT * 100}%"><i style="width:${c.d / c.t * 100}%;background:${c.c}"></i></span><span class="c">${c.d}/${c.t} 完成</span></div>`;
   }).join('');
-  const appRows = D.activeApps.length ? `<div class="tbl-wrap"><table><thead><tr><th>認證申請</th><th>節點</th><th>期間</th><th>剩餘</th></tr></thead><tbody>${D.activeApps.map(a => { const st = a.steps || []; const e = endOf(a); const l = isDate(e) ? diff(TODAY, e) : null; return `<tr><td>${appTag(a)}${a.scheme ? `<span class="scheme">${esc(a.scheme)}</span>` : ''}</td><td class="num">${st.filter(s => s.done).length}/${st.length}</td><td class="num">${isDate(a.applyDate) ? md(a.applyDate) : '—'} → ${isDate(e) ? md(e) : '—'}</td><td>${l == null ? '—' : `<span class="tag ${l < 0 ? 'overdue' : l <= 14 ? 'soon' : 'later'}">${l < 0 ? `已過 ${-l} 天` : `${l} 天`}</span>`}</td></tr>`; }).join('')}</tbody></table></div>` : emptyBox('沒有進行中的認證申請', '', 'calm', 'lilac', 'cert');
-  const certRows = D.certSoon.length ? `<div class="rows">${D.certSoon.map(c => evRow(certEv(c), { noEdit: true })).join('')}</div>` : emptyBox('期末起 90 天內沒有證書到期', '', 'happy', 'lilac', 'check');
+  const appRows = D.activeApps.length ? `<div class="tbl-wrap"><table><thead><tr><th>認證申請</th><th>節點</th><th>期間</th><th>剩餘</th></tr></thead><tbody>${D.activeApps.map(a => { const st = a.steps || []; const e = endOf(a); const l = isDate(e) ? diff(TODAY, e) : null; return `<tr><td>${appTag(a)}${a.scheme ? `<span class="scheme">${esc(a.scheme)}</span>` : ''}</td><td class="num">${st.filter(s => s.done).length}/${st.length}</td><td class="num">${isDate(a.applyDate) ? md(a.applyDate) : '—'} → ${isDate(e) ? md(e) : '—'}</td><td>${l == null ? '—' : `<span class="tag ${l < 0 ? 'overdue' : l <= 14 ? 'soon' : 'later'}">${l < 0 ? `已過 ${-l} 天` : `${l} 天`}</span>`}</td></tr>`; }).join('')}</tbody></table></div>` : emptyBox('沒有進行中的認證申請', '');
+  const certRows = D.certSoon.length ? `<div class="rows">${D.certSoon.map(c => evRow(certEv(c), { noEdit: true })).join('')}</div>` : emptyBox('期末起 90 天內沒有證書到期', '');
   return `<div class="toolbar">
     <div class="seg" role="group" aria-label="報表類型">${segs}</div>
     <button class="ico" data-act="rep-prev" aria-label="上一期">${IC.left}</button>
@@ -1391,13 +1328,20 @@ function vReport() {
     <div class="chart-legend"><span><i style="background:var(--mint)"></i>已完成</span><span><i style="background:var(--sun)"></i>未完成</span><span><i style="background:var(--red)"></i>已過期未完成</span></div>
   </section>
   <div class="rep-grid">
-    <section class="panel"><div class="panel-h"><h2>依類別</h2></div>${catRows ? `<div class="catbars">${catRows}</div>` : emptyBox('本期沒有事項', '', 'sleepy', 'sky', 'zzz')}</section>
+    <section class="panel"><div class="panel-h"><h2>依類別</h2></div>${catRows ? `<div class="catbars">${catRows}</div>` : emptyBox('本期沒有事項', '')}</section>
     ${D.showWork ? `<section class="panel"><div class="panel-h"><h2>認證申請進度</h2></div>${appRows}</section>` : ''}
-    <section class="panel"><div class="panel-h">${ph('leaf')}<h2>本期完成</h2><span class="n">${D.done.length} 件</span></div>${rowsOrEmpty(D.done, emptyBox('本期還沒有完成的事項', '', 'calm', 'mint', 'check'), { noEdit: true })}</section>
-    <section class="panel"><div class="panel-h">${ph('plane')}<h2>未完成／延宕</h2><span class="n">${D.open.length} 件</span></div>${rowsOrEmpty(D.open, emptyBox('全部完成，沒有延宕！', '', 'happy', 'mint', 'cert'))}</section>
-    <section class="panel"><div class="panel-h">${ph('fuji')}<h2>${R.nextName}預告</h2><span class="n">${D.nextWork.length} 件</span></div>${rowsOrEmpty(D.nextWork, emptyBox(`${R.nextName}還沒有排定事項`, '', 'sleepy', 'sky', 'zzz'), { noEdit: true })}</section>
-    ${D.showWork ? `<section class="panel"><div class="panel-h">${ph('hourglass')}<h2>證書到期提醒</h2><span class="n">期末起 90 天內 ${D.certSoon.length} 筆</span></div>${certRows}</section>` : ''}
+    <section class="panel"><div class="panel-h"><h2>本期完成</h2><span class="n">${D.done.length} 件</span></div>${rowsOrEmpty(D.done, emptyBox('本期還沒有完成的事項', ''), { noEdit: true })}</section>
+    <section class="panel"><div class="panel-h"><h2>未完成／延宕</h2><span class="n">${D.open.length} 件</span></div>${rowsOrEmpty(D.open, emptyBox('全部完成，沒有延宕！', ''))}</section>
+    <section class="panel"><div class="panel-h"><h2>${R.nextName}預告</h2><span class="n">${D.nextWork.length} 件</span></div>${rowsOrEmpty(D.nextWork, emptyBox(`${R.nextName}還沒有排定事項`, ''), { noEdit: true })}</section>
+    ${D.showWork ? `<section class="panel"><div class="panel-h"><h2>證書到期提醒</h2><span class="n">期末起 90 天內 ${D.certSoon.length} 筆</span></div>${certRows}</section>` : ''}
+    ${UI.scope !== 'work' ? moodReview(R) : ''}
   </div>`;
+}
+function moodReview(R) {
+  const list = S.journal.filter(x => x.date >= R.s && x.date <= R.e && x.text).sort((a, b) => a.date < b.date ? -1 : 1);
+  return `<section class="panel"><div class="panel-h"><h2>心情回顧</h2><span class="n">${list.length} 則</span></div>
+    ${list.length ? `<div class="mood-list">${list.map(x => `<div class="mood-row"><span class="d">${md(x.date)}（${wd(x.date)}）</span><span class="t">${esc(x.text)}</span></div>`).join('')}</div>` : emptyBox('這段期間還沒有心情結語', '<div>在「今日」頁最下方寫下一兩句即可。</div>')}
+    <p class="muted" style="margin:8px 0 0;font-size:12px">只顯示在這裡，不會出現在「複製報表文字」與 CSV。</p></section>`;
 }
 function plain(e) {
   const pre = (e.k === 'step' || e.k === 'certday') ? `[${appName(e.app)}] ` : '';
@@ -1449,7 +1393,7 @@ function vSettings() {
   const st = syncStatusText();
   const syncPanel = syncCfg ? `
     <section class="panel span2">
-      <div class="panel-h">${ph('fuji')}<h2>雲端同步（電腦・手機連動）</h2><span id="syncStatus" class="tag ${st.cls}">${st.txt}</span></div>
+      <div class="panel-h"><h2>雲端同步（電腦・手機連動）</h2><span id="syncStatus" class="tag ${st.cls}">${st.txt}</span></div>
       <div class="stat-line"><span>GitHub 帳號 <b>${esc(syncCfg.login || '')}</b></span><span>最後同步 <b>${syncCfg.lastSync ? new Date(syncCfg.lastSync).toLocaleString('zh-TW', { hour12: false }) : '—'}</b></span></div>
       <p>在任何一台裝置新增或修改，都會自動同步到其他已連動的裝置（打開 App、切回 App、以及每分鐘自動檢查一次）。</p>
       <div class="set-acts">
@@ -1460,7 +1404,7 @@ function vSettings() {
       </div>
     </section>` : `
     <section class="panel span2">
-      <div class="panel-h">${ph('fuji')}<h2>雲端同步（電腦・手機連動）</h2><span id="syncStatus" class="tag ${st.cls}">${st.txt}</span></div>
+      <div class="panel-h"><h2>雲端同步（電腦・手機連動）</h2><span id="syncStatus" class="tag ${st.cls}">${st.txt}</span></div>
       <p>開啟後，電腦和手機會使用同一份資料，資料存在你自己 GitHub 帳號下的私密 Gist。</p>
       <ol class="set-list" style="margin-bottom:12px">
         <li><b>第一台裝置（建議用電腦）：</b>按「建立 GitHub 金鑰」→ 確認只勾了 <b>gist</b> → 拉到最下面按綠色的 <b>Generate token</b> → 複製 <b>ghp_</b> 開頭的金鑰 → 貼到下面按「連線」。</li>
@@ -1476,7 +1420,7 @@ function vSettings() {
   const qShown = UI.quoteAll ? qs : qs.slice(0, 6);
   const quotePanel = `
     <section class="panel span2">
-      <div class="panel-h">${ph('flower')}<h2>每日一句（這時候，深呼吸）</h2><span class="n">${S.quotes.length} 段</span></div>
+      <div class="panel-h"><h2>每日一句（這時候，深呼吸）</h2><span class="n">${S.quotes.length} 段</span></div>
       <p><b>全自動：</b>App 每天 0:00 從這裡隨機抽一篇，以「${QUOTE_HEAD}」開頭貼到今日頁，當天第一次打開 App 時跳出、並發通知，不用每天手動。</p>
       <p>第一次只要按「載入 Word 檔」選《這時候，深呼吸》的 .docx 一次；內容存在你自己的資料與私密同步裡，所有裝置都會有，不會出現在公開網站上。</p>
       <div class="field"><label for="quoteBulk">貼上段落（每段以「-」開頭，或每段之間<b>空一行</b>；可以一次貼很多段）</label><textarea id="quoteBulk" rows="5" placeholder="把書中喜歡的段落貼在這裡…">${esc(UI.quoteBulk || '')}</textarea></div>
@@ -1489,7 +1433,7 @@ function vSettings() {
     ${gPanel()}
     ${quotePanel}
     <section class="panel">
-      <div class="panel-h">${ph('pencil')}<h2>安裝到手機主畫面</h2>${standalone ? '<span class="tag done">已安裝</span>' : ''}</div>
+      <div class="panel-h"><h2>安裝到手機主畫面</h2>${standalone ? '<span class="tag done">已安裝</span>' : ''}</div>
       ${installEvt ? `<p>這台裝置可以直接安裝成 App。</p><div class="set-acts" style="margin-bottom:10px"><button class="btn primary" data-act="install">${IC.phoneDev}安裝行動祕書</button></div>` : ''}
       <ul class="set-list">
         <li><b>iPhone／iPad：</b>用 Safari 開啟這個網址 → 點下方「分享」→「加入主畫面」。</li>
@@ -1498,7 +1442,7 @@ function vSettings() {
       </ul>
     </section>
     <section class="panel">
-      <div class="panel-h">${ph('plane')}<h2>提醒與通知</h2></div>
+      <div class="panel-h"><h2>提醒與通知</h2></div>
       <p>每件事項、認證節點、預計取證日都在<b>前一天</b>推播一次：有時間的事在前一天同一時間，整日或沒填時間的事在前一天 09:00。</p>
       <p>App 開著或在背景時由 App 跳通知（請開啟系統通知）；<b>App 關著時</b>由 iPhone 行事曆推播，請用上方「雲端同步 → 訂閱到 iPhone 行事曆」。</p>
       <div class="set-acts" style="margin-bottom:12px">
@@ -1512,8 +1456,8 @@ function vSettings() {
       <p class="muted" style="margin-top:8px;font-size:12.5px">iPhone 的主畫面 App 匯出 .ics 常常沒反應，請改用 <b>Safari</b> 開這個網址再匯出；開啟雲端同步後，建議改用「訂閱到 iPhone 行事曆」，會自動更新。</p>
     </section>
     <section class="panel">
-      <div class="panel-h">${ph('leaf')}<h2>資料備份與匯入</h2></div>
-      <div class="stat-line"><span>事項 <b>${S.items.length}</b></span><span>認證申請 <b>${S.apps.length}</b></span><span>證書 <b>${S.certs.length}</b></span><span>最後儲存 <b>${S.savedAt ? new Date(S.savedAt).toLocaleString('zh-TW', { hour12: false }) : '—'}</b></span></div>
+      <div class="panel-h"><h2>資料備份與匯入</h2></div>
+      <div class="stat-line"><span>事項 <b>${S.items.length}</b></span><span>認證申請 <b>${S.apps.length}</b></span><span>證書 <b>${S.certs.length}</b></span><span>心情結語 <b>${S.journal.length}</b></span><span>最後儲存 <b>${S.savedAt ? new Date(S.savedAt).toLocaleString('zh-TW', { hour12: false }) : '—'}</b></span></div>
       <p>${syncCfg ? '雲端同步已開啟；備份檔仍建議每週存一份到雲端硬碟，以防萬一。' : '目前資料只存在這台裝置。要在電腦和手機共用，請開啟上方的「雲端同步」；或用「匯出備份」再到另一台「匯入」。'}</p>
       <div class="set-acts">
         <button class="btn" data-act="backup">${IC.dl}匯出備份檔</button>
@@ -1521,7 +1465,7 @@ function vSettings() {
       </div>
     </section>
     <section class="panel">
-      <div class="panel-h">${ph('bell')}<h2>清除資料</h2></div>
+      <div class="panel-h"><h2>清除資料</h2></div>
       <p>清除前建議先匯出備份。</p>
       <div class="set-acts">
         ${samples ? `<button class="btn danger" data-act="clear-samples">清除 ${samples} 筆範例資料</button>` : ''}
@@ -1543,6 +1487,7 @@ function render() {
   let sel = null; try { if (fid && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
   view.innerHTML = (VIEWS[UI.view] || vToday)();
   if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+  const mt = $('#moodText'); if (mt) growMood(mt);
   const A = alerts();
   const pendingToday = EV.filter(e => e.date === TODAY && e.k !== 'cert' && e.live && !e.done).length;
   const cnt = { today: pendingToday, cert: S.certs.filter(c => ['expired', 'warn'].includes(certLvl(c))).length };
@@ -1552,17 +1497,15 @@ function render() {
   $('#scopeSeg').hidden = UI.view === 'cert' || UI.view === 'settings';
   const bell = $('#bellBtn');
   bell.innerHTML = IC.bell + (A.count ? `<span class="badge">${A.count > 99 ? '99+' : A.count}</span>` : '');
-  bell.classList.toggle('ring', A.ev.some(e => ['overdue', 'today'].includes(lvl(e))));
   bell.setAttribute('aria-label', `提醒通知，${A.count} 則`);
   const gear = $('#gearBtn'); gear.innerHTML = IC.gear; if (UI.view === 'settings') gear.setAttribute('aria-current', 'page'); else gear.removeAttribute('aria-current');
   paintSync();
   $('#fab').innerHTML = IC.plus;
-  $('#titleDeco').innerHTML = doodle('sparkle') + doodle('paw');
-  $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy', 'pink', A.count ? 'bell' : 'phone');
+  $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy');
   $('#addMenu').innerHTML = `
-    ${SCOPES.map(s => `<button data-act="new-item" data-scope="${s.k}">${mascot('happy', s.color, s.prop)}<span><b>${s.t} 事項</b><small>${s.hint}</small></span></button>`).join('')}
-    <button data-act="new-app">${mascot('calm', 'sun', 'cert')}<span><b>認證申請</b><small>申請日 → 取證日＋提交節點</small></span></button>
-    <button data-act="new-cert">${mascot('calm', 'lilac', 'hourglass')}<span><b>證書效期</b><small>到期日提示</small></span></button>`;
+    ${SCOPES.map(s => `<button data-act="new-item" data-scope="${s.k}"><span><b>${s.t} 事項</b><small>${s.hint}</small></span></button>`).join('')}
+    <button data-act="new-app"><span><b>認證申請</b><small>申請日 → 取證日＋提交節點</small></span></button>
+    <button data-act="new-cert"><span><b>證書效期</b><small>到期日提示</small></span></button>`;
   $('#foot').innerHTML = `<span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
 }
@@ -1594,11 +1537,11 @@ function fillDrawer() {
   const t1 = A.ev.filter(e => e.date === addDays(TODAY, 1) && lvl(e) === 'soon');
   const t2 = A.ev.filter(e => e.date === addDays(TODAY, 2) && lvl(e) === 'soon');
   $('#drawer').innerHTML = `
-    <div class="sheet-h">${mascot(A.count ? 'shock' : 'happy', A.count ? 'sun' : 'mint', A.count ? 'bell' : 'check')}<div><h2>提醒通知</h2><p>${A.count ? `共 ${A.count} 則需要注意` : '目前沒有需要提醒的事'}</p></div><button class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="sheet-h"><div><h2>提醒通知</h2><p>${A.count ? `共 ${A.count} 則需要注意` : '目前沒有需要提醒的事'}</p></div><button class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     ${grp('逾期', od, 'var(--red)', false)}${grp('今天', td, 'var(--accent)', true)}${grp('明天・' + md(addDays(TODAY, 1)), t1, 'var(--sun)', true)}${grp('後天・' + md(addDays(TODAY, 2)), t2, 'var(--sun)', true)}
-    ${A.certs.length ? `<section class="panel"><div class="panel-h">${ph('hourglass')}<h2>證書到期（90 天內與已過期）</h2><span class="n">${A.certs.length}</span></div><div class="rows">${A.certs.map(c => evRow(certEv(c))).join('')}</div></section>` : ''}
-    ${!A.count ? `<section class="panel">${emptyBox('一切都在掌握中', '<div>到期前兩天的事、逾期的事、90 天內到期的證書都會出現在這裡。</div>', 'happy', 'mint', 'check')}</section>` : ''}
-    <section class="panel"><div class="panel-h">${ph('bell')}<h2>接下來的推播</h2></div>${nextNoticesHtml(6)}
+    ${A.certs.length ? `<section class="panel"><div class="panel-h"><h2>證書到期（90 天內與已過期）</h2><span class="n">${A.certs.length}</span></div><div class="rows">${A.certs.map(c => evRow(certEv(c))).join('')}</div></section>` : ''}
+    ${!A.count ? `<section class="panel">${emptyBox('一切都在掌握中', '<div>到期前兩天的事、逾期的事、90 天內到期的證書都會出現在這裡。</div>')}</section>` : ''}
+    <section class="panel"><div class="panel-h"><h2>接下來的推播</h2></div>${nextNoticesHtml(6)}
       <p class="muted" style="margin:8px 0 0;font-size:12.5px">每件事在前一天推播一次（整日事項：前一天 09:00）。</p></section>`;
 }
 
@@ -1645,8 +1588,8 @@ function checkNotices() {
   ls.set(NTF_KEY, JSON.stringify(sent));
   if (!due.length) return;
   const lines = due.map(x => noticeText(x.e, x.n));
-  if (due.length === 1) { sysNotify('行動祕書提醒', lines[0]); toast(lines[0], 'calm', 'sun', 'bell'); }
-  else { sysNotify(`行動祕書：${due.length} 則提醒`, lines.slice(0, 4).join('\n')); toast(`${due.length} 則提醒：${lines[0]}…`, 'calm', 'sun', 'bell'); }
+  if (due.length === 1) { sysNotify('行動祕書提醒', lines[0]); toast(lines[0], 'calm'); }
+  else { sysNotify(`行動祕書：${due.length} 則提醒`, lines.slice(0, 4).join('\n')); toast(`${due.length} 則提醒：${lines[0]}…`, 'calm'); }
   chime();
 }
 /* 今日一句：0:00 之後第一次開 App（或 App 開著跨過 0:00）跳出一次 */
@@ -1654,7 +1597,7 @@ const shownDaily = new Set();
 function openDaily() {
   const q = quoteOf(TODAY); if (!q) return false;
   const pop = $('#dailyPop');
-  pop.innerHTML = `<div class="daily-paper">${doodle('flower', 'd-dd1')}${doodle('leaf', 'd-dd2')}
+  pop.innerHTML = `<div class="daily-paper">
     <div class="q-date">${full(TODAY)}・今日一句</div>
     <div class="q-head">${QUOTE_HEAD}</div>
     <div class="q-text">${esc(q.text.trim())}</div>
@@ -1696,40 +1639,26 @@ function sysNotify(title, body) {
   } catch (e) {}
 }
 async function enableNotify() {
-  if (!('Notification' in window)) { toast('這個瀏覽器不支援系統通知', 'worried', 'sun'); return; }
+  if (!('Notification' in window)) { toast('這個瀏覽器不支援系統通知', 'worried'); return; }
   try {
     const p = await Notification.requestPermission();
     render();
-    if (p === 'granted') { toast('系統通知已開啟', 'happy', 'mint', 'bell'); sysNotify('行動祕書', '通知已開啟，時段提醒會出現在這裡'); }
-    else toast('通知沒有開啟，可以之後到瀏覽器設定允許', 'calm', 'sky');
-  } catch (e) { toast('無法開啟通知', 'worried', 'sun'); }
+    if (p === 'granted') { toast('系統通知已開啟', 'happy'); sysNotify('行動祕書', '通知已開啟，時段提醒會出現在這裡'); }
+    else toast('通知沒有開啟，可以之後到瀏覽器設定允許', 'calm');
+  } catch (e) { toast('無法開啟通知', 'worried'); }
 }
 
 /* ================= toast & celebrate ================= */
-function toast(msg, mood = 'happy', color = 'mint', prop = '') {
-  const el = document.createElement('div'); el.className = 'toast';
-  el.innerHTML = mascot(mood, color, prop) + `<span>${esc(msg)}</span>`;
+function toast(msg, mood = 'happy') {
+  const el = document.createElement('div'); el.className = 'toast ' + mood;
+  el.innerHTML = `<span>${esc(msg)}</span>`;
   $('#toasts').appendChild(el);
   setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 400); }, 3800);
   return el;
 }
-function celebrate(btn, title, word = '完成') {
-  if (!reduceMotion()) {
-    const r = btn ? btn.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight / 2, width: 0, height: 0 };
-    const p = document.createElement('div'); p.className = 'pop';
-    p.style.left = (r.left + r.width / 2) + 'px'; p.style.top = (r.top + r.height / 2) + 'px';
-    p.innerHTML = stamp(word, word === '取證' ? 'cert' : '');
-    const cols = ['var(--accent)', 'var(--mint)', 'var(--sun)', 'var(--sky)', 'var(--lilac)'];
-    for (let i = 0; i < 12; i++) {
-      const c = document.createElement('i'); c.className = 'cf';
-      const ang = Math.random() * Math.PI * 2, rad = 46 + Math.random() * 46;
-      c.style.setProperty('--dx', Math.cos(ang) * rad + 'px'); c.style.setProperty('--dy', Math.sin(ang) * rad + 'px');
-      c.style.background = cols[i % cols.length]; p.appendChild(c);
-    }
-    document.body.appendChild(p); setTimeout(() => p.remove(), 1300);
-  }
-  if (navigator.vibrate) try { navigator.vibrate(30); } catch (e) {}
-  if (title) toast(`${pick(CHEERS)}「${title}」完成`, 'happy', 'mint', 'check');
+function celebrate(btn, title) {
+  if (navigator.vibrate) try { navigator.vibrate(20); } catch (e) {}
+  if (title) toast(`已完成「${title}」`);
 }
 
 /* ================= forms ================= */
@@ -1770,11 +1699,10 @@ function openItemForm(it, date, scope) {
   const sc = it ? (it.scope || 'work') : (scope || (UI.scope !== 'all' ? UI.scope : 'work'));
   const v = it || { date: date || TODAY, cat: CATS[sc][0].k, scope: sc, repeat: 'none' };
   const rep = isRep(v);
-  const so = scopeOf(sc);
   const m = $('#modal');
   m.setAttribute('aria-label', it ? '編輯事項' : '新增事項');
   m.innerHTML = `<form id="fItem" autocomplete="off" novalidate>
-    <div class="sheet-h">${mascot(it ? 'calm' : 'happy', so.color, so.prop)}<div><h2>${it ? '編輯事項' : '新增事項'}</h2><p>${it && it.gsrc ? '來自 Google 日曆：標題、日期、時間、地點會同步回 Google' : '前一天提醒，也可以設定重複'}</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="sheet-h"><div><h2>${it ? '編輯事項' : '新增事項'}</h2><p>${it && it.gsrc ? '來自 Google 日曆：標題、日期、時間、地點會同步回 Google' : '前一天提醒，也可以設定重複'}</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <div class="form-grid">
       <div class="field full"><label>屬性</label><div class="radio-seg" role="radiogroup" aria-label="屬性">${SCOPES.map(s => `<label><input type="radio" name="fi-scope" value="${s.k}" ${sc === s.k ? 'checked' : ''}><span>${s.t}</span></label>`).join('')}</div></div>
       ${fld('fi-title', '內容 <span class="req">*</span>', inp('fi-title', v.title, 'maxlength="200" placeholder="例如：與實驗室確認測試排程、繳電話費"'), 'full')}
@@ -1807,18 +1735,18 @@ function openItemForm(it, date, scope) {
   form.addEventListener('submit', ev => {
     ev.preventDefault();
     const title = val('fi-title'), date = val('fi-date');
-    if (!title) { toast('請填寫內容', 'worried', 'sun'); $('#fi-title').focus(); return; }
-    if (!isDate(date)) { toast('請選擇日期', 'worried', 'sun'); $('#fi-date').focus(); return; }
+    if (!title) { toast('請填寫內容', 'worried'); $('#fi-title').focus(); return; }
+    if (!isDate(date)) { toast('請選擇日期', 'worried'); $('#fi-date').focus(); return; }
     const scEl = form.querySelector('input[name="fi-scope"]:checked');
     const repeat = val('fi-repeat') || 'none';
     const until = val('fi-until');
-    if (repeat !== 'none' && isDate(until) && until < date) { toast('「重複到」不能早於開始日期', 'worried', 'sun'); return; }
+    if (repeat !== 'none' && isDate(until) && until < date) { toast('「重複到」不能早於開始日期', 'worried'); return; }
     const allDay = chk('fi-allday');
     const time = allDay ? '' : normTime(val('fi-time')), endTime = allDay ? '' : normTime(val('fi-end'));
-    if (time === null) { toast('開始時間看不懂，請輸入像 930 或 14:30 的格式', 'worried', 'sun'); $('#fi-time').focus(); return; }
-    if (endTime === null) { toast('結束時間看不懂，請輸入像 1100 或 17:30 的格式', 'worried', 'sun'); $('#fi-end').focus(); return; }
-    if (endTime && !time) { toast('填了結束時間，也請填開始時間', 'worried', 'sun'); $('#fi-time').focus(); return; }
-    if (endTime && endTime <= time) { toast('結束時間要晚於開始時間', 'worried', 'sun'); $('#fi-end').focus(); return; }
+    if (time === null) { toast('開始時間看不懂，請輸入像 930 或 14:30 的格式', 'worried'); $('#fi-time').focus(); return; }
+    if (endTime === null) { toast('結束時間看不懂，請輸入像 1100 或 17:30 的格式', 'worried'); $('#fi-end').focus(); return; }
+    if (endTime && !time) { toast('填了結束時間，也請填開始時間', 'worried'); $('#fi-time').focus(); return; }
+    if (endTime && endTime <= time) { toast('結束時間要晚於開始時間', 'worried'); $('#fi-end').focus(); return; }
     const done = it && !rep ? chk('fi-done') : false;
     const body = Object.assign({}, it || {}, {
       scope: scEl ? scEl.value : 'work', title, date, allDay, time, endTime, cat: val('fi-cat'), star: chk('fi-star'), repeat, until: repeat !== 'none' ? until : '',
@@ -1830,7 +1758,7 @@ function openItemForm(it, date, scope) {
     const id = it ? it.id : uid('i');
     Store.set('items', id, body);
     closeLayer(m);
-    toast(it ? '已更新事項' : `已新增「${title}」`, 'happy', scopeOf(body.scope).color, 'star');
+    toast(it ? '已更新事項' : `已新增「${title}」`);
   });
 }
 
@@ -1848,7 +1776,7 @@ function openAppForm(a, preset) {
   const m = $('#modal');
   m.setAttribute('aria-label', a ? '編輯認證申請' : '新增認證申請');
   m.innerHTML = `<form id="fApp" autocomplete="off" novalidate>
-    <div class="sheet-h">${mascot('calm', 'sun', 'cert')}<div><h2>${a ? '編輯認證申請' : '新增認證申請'}</h2><p>申請日到取證日會用紙膠帶標在月曆上，每個節點到期前兩天提醒</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="sheet-h"><div><h2>${a ? '編輯認證申請' : '新增認證申請'}</h2><p>申請日到取證日會用紙膠帶標在月曆上，每個節點到期前兩天提醒</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <div class="form-grid">
       <div class="fsec">基本資料</div>
       ${fld('fa-name', '認證名稱 <span class="req">*</span>', inp('fa-name', v.name, 'maxlength="120" placeholder="例如：R12 CB 認證"'), 'full')}
@@ -1878,11 +1806,11 @@ function openAppForm(a, preset) {
   $('#fApp').addEventListener('submit', ev => {
     ev.preventDefault();
     const name = val('fa-name'), applyDate = val('fa-apply'), certDate = val('fa-cert');
-    if (!name) { toast('請填寫認證名稱', 'worried', 'sun'); $('#fa-name').focus(); return; }
-    if (!isDate(applyDate) || !isDate(certDate)) { toast('請填寫申請日與預計取證日', 'worried', 'sun'); return; }
-    if (certDate < applyDate) { toast('預計取證日不能早於申請日', 'worried', 'sun'); $('#fa-cert').focus(); return; }
+    if (!name) { toast('請填寫認證名稱', 'worried'); $('#fa-name').focus(); return; }
+    if (!isDate(applyDate) || !isDate(certDate)) { toast('請填寫申請日與預計取證日', 'worried'); return; }
+    if (certDate < applyDate) { toast('預計取證日不能早於申請日', 'worried'); $('#fa-cert').focus(); return; }
     const badTime = $$('#fa-steps .se-time').find(el => el.value.trim() && normTime(el.value) === null);
-    if (badTime) { toast('有節點的時間看不懂，請輸入像 930 或 14:30 的格式', 'worried', 'sun'); badTime.focus(); return; }
+    if (badTime) { toast('有節點的時間看不懂，請輸入像 930 或 14:30 的格式', 'worried'); badTime.focus(); return; }
     const old = a ? (a.steps || []) : [];
     const steps = $$('#fa-steps .step-ed').map(r => {
       const id = r.dataset.sid; const prev = old.find(s => s.id === id) || {};
@@ -1908,8 +1836,8 @@ function openAppForm(a, preset) {
     }
     commit();
     closeLayer(m);
-    if (status === 'obtained' && !(a && a.status === 'obtained')) { toast(`恭喜取證！「${name}」`, 'happy', 'mint', 'cert'); celebrate(null, '', '取證'); }
-    else toast(a ? '已更新認證申請' : `已新增「${name}」`, 'happy', 'sun', 'cert');
+    if (status === 'obtained' && !(a && a.status === 'obtained')) { toast(`恭喜取證！「${name}」`, 'happy'); }
+    else toast(a ? '已更新認證申請' : `已新增「${name}」`, 'happy');
   });
 }
 
@@ -1920,7 +1848,7 @@ function openCertForm(c) {
   const names = Array.from(new Set(S.certs.map(x => x.cert).filter(Boolean))).sort();
   const projs = Array.from(new Set(S.certs.map(x => x.project).filter(Boolean))).sort();
   m.innerHTML = `<form id="fCert" autocomplete="off" novalidate>
-    <div class="sheet-h">${mascot('calm', 'lilac', 'hourglass')}<div><h2>${c ? '編輯證書' : '新增證書'}</h2><p>180 天內開始追蹤，90 天內與過期列入每日提醒</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="sheet-h"><div><h2>${c ? '編輯證書' : '新增證書'}</h2><p>180 天內開始追蹤，90 天內與過期列入每日提醒</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <div class="form-grid">
       ${fld('fc-project', '機型／專案 <span class="req">*</span>', inp('fc-project', v.project, 'list="projList" maxlength="80"') + `<datalist id="projList">${projs.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`)}
       ${fld('fc-cert', '認證項目 <span class="req">*</span>', inp('fc-cert', v.cert, 'list="certList" maxlength="120" placeholder="例如：CB (發證日+5年)"') + `<datalist id="certList">${names.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`)}
@@ -1933,10 +1861,10 @@ function openCertForm(c) {
   $('#fCert').addEventListener('submit', ev => {
     ev.preventDefault();
     const project = val('fc-project'), cert = val('fc-cert'), due = val('fc-due');
-    if (!project || !cert || !isDate(due)) { toast('請填寫機型、認證項目與到期日', 'worried', 'sun'); return; }
+    if (!project || !cert || !isDate(due)) { toast('請填寫機型、認證項目與到期日', 'worried'); return; }
     const body = Object.assign({}, c || {}, { project, cert, due, no: val('fc-no'), state: val('fc-state'), note: val('fc-note'), updatedAt: iso() });
     Store.set('certs', c ? c.id : uid('c'), body);
-    closeLayer(m); toast(c ? '已更新證書' : `已新增 ${project} ${cert}`, 'happy', 'lilac', 'hourglass');
+    closeLayer(m); toast(c ? '已更新證書' : `已新增 ${project} ${cert}`, 'happy');
   });
 }
 
@@ -1958,9 +1886,9 @@ async function shareOrDownload(filename, text, type) {
   downloadFile(filename, text, type);
 }
 function backup() {
-  const txt = JSON.stringify({ app: 'mobile-secretary', v: 1, exportedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes }, null, 2);
+  const txt = JSON.stringify({ app: 'mobile-secretary', v: 1, exportedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, journal: S.journal }, null, 2);
   shareOrDownload(`行動祕書備份_${TODAY}.json`, txt, 'application/json');
-  toast('備份檔已產生，請存到雲端硬碟或傳給自己', 'happy', 'mint', 'check');
+  toast('備份檔已產生，請存到雲端硬碟或傳給自己', 'happy');
 }
 const validId = s => typeof s === 'string' && /^[\w.-]{1,80}$/.test(s);
 function cleanDocs(arr) { return Array.isArray(arr) ? arr.filter(x => x && typeof x === 'object' && validId(x.id)) : []; }
@@ -2014,12 +1942,12 @@ function certDiff(rows) {
 }
 async function handleExcelFile(file) {
   if (!file) return;
-  const reading = toast('讀取效期表中…', 'calm', 'sky', 'doc');
+  const reading = toast('讀取效期表中…', 'calm');
   let res;
   try { res = await readReviewWorkbook(file); reading.remove(); }
   catch (e) {
     reading.remove();
-    toast(e.message === 'nosheet' ? '這個 Excel 裡找不到「到期提醒總覽」工作表' : e.message === 'noheader' ? '找不到「機型／到期日」標題列，請確認是安規認證到期管理的檔案' : '讀不懂這個檔案，請選 .xlsx 檔（也請確認網路連線）', 'worried', 'coral');
+    toast(e.message === 'nosheet' ? '這個 Excel 裡找不到「到期提醒總覽」工作表' : e.message === 'noheader' ? '找不到「機型／到期日」標題列，請確認是安規認證到期管理的檔案' : '讀不懂這個檔案，請選 .xlsx 檔（也請確認網路連線）', 'worried');
     return;
   }
   const d = certDiff(res.rows); d.fileName = file.name; d.sheet = res.sheet; d.total = res.rows.length;
@@ -2027,7 +1955,7 @@ async function handleExcelFile(file) {
   const li = (arr, f, max = 8) => arr.length ? `<ul class="diff-list">${arr.slice(0, max).map(f).join('')}${arr.length > max ? `<li class="muted">…還有 ${arr.length - max} 筆</li>` : ''}</ul>` : '';
   const dd = s => isDate(s) ? s.replace(/-/g, '/') : '—';
   const m = $('#modal'); m.setAttribute('aria-label', '從效期表更新');
-  m.innerHTML = `<div class="sheet-h">${mascot('calm', 'sky', 'hourglass')}<div><h2>從效期表更新</h2><p>${esc(file.name)}・「${esc(res.sheet)}」${res.rows.length} 筆</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+  m.innerHTML = `<div class="sheet-h"><div><h2>從效期表更新</h2><p>${esc(file.name)}・「${esc(res.sheet)}」${res.rows.length} 筆</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <div class="stat-line"><span>新增 <b>${d.added.length}</b></span><span>到期日變更 <b>${d.changed.length}</b></span><span>不變 <b>${d.same}</b></span><span>表中沒有 <b>${d.missing.length}</b></span>${d.skipped.length ? `<span>沒有到期日（略過）<b>${d.skipped.length}</b></span>` : ''}</div>
     ${d.added.length ? `<div class="sub-h">新增的證書</div>${li(d.added, r => `<li><b>${esc(r.project)}</b>｜${esc(r.cert)}<span class="num">${dd(r.due)}</span></li>`)}` : ''}
     ${d.changed.length ? `<div class="sub-h">到期日變更</div>${li(d.changed, x => `<li><b>${esc(x.r.project)}</b>｜${esc(x.r.cert)}<span class="num">${dd(x.c.due)} → ${dd(x.r.due)}</span></li>`)}` : ''}
@@ -2055,27 +1983,27 @@ function applyCertDiff() {
   prefs.lastExcel = { name: d.fileName, at: now }; savePrefs();
   UI.certDiff = null;
   commit(); closeLayer($('#modal'));
-  toast(`效期表已套用：新增 ${d.added.length}、到期日變更 ${d.changed.length}${retired ? `、停用 ${retired}` : ''} 筆${syncCfg ? '，會同步到手機' : ''}`, 'happy', 'mint', 'check');
+  toast(`效期表已套用：新增 ${d.added.length}、到期日變更 ${d.changed.length}${retired ? `、停用 ${retired}` : ''} 筆${syncCfg ? '，會同步到手機' : ''}`, 'happy');
 }
 function handleImportFile(file) {
   if (!file) return;
-  if (file.size > 8 * 1024 * 1024) { toast('檔案太大了，請確認是行動祕書的備份檔', 'worried', 'sun'); return; }
+  if (file.size > 8 * 1024 * 1024) { toast('檔案太大了，請確認是行動祕書的備份檔', 'worried'); return; }
   const fr = new FileReader();
   fr.onload = () => {
     let d;
-    try { d = JSON.parse(String(fr.result).replace(/^\uFEFF/, '')); } catch (e) { toast('讀不懂這個檔案，請選擇 .json 備份檔', 'worried', 'coral'); return; }
-    const data = { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes) };
+    try { d = JSON.parse(String(fr.result).replace(/^\uFEFF/, '')); } catch (e) { toast('讀不懂這個檔案，請選擇 .json 備份檔', 'worried'); return; }
+    const data = { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes), journal: cleanDocs(d.journal) };
     const total = COLS.reduce((n, col) => n + data[col].length, 0);
-    if (!total) { toast('這個檔案裡沒有可以匯入的資料', 'worried', 'sun'); return; }
+    if (!total) { toast('這個檔案裡沒有可以匯入的資料', 'worried'); return; }
     pendingImport = data;
     const m = $('#modal'); m.setAttribute('aria-label', '匯入資料');
-    m.innerHTML = `<div class="sheet-h">${mascot('happy', 'mint', 'doc')}<div><h2>匯入資料</h2><p>${esc(file.name)}</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
-      <div class="stat-line"><span>事項 <b>${data.items.length}</b></span><span>認證申請 <b>${data.apps.length}</b></span><span>證書 <b>${data.certs.length}</b></span><span>每日一句 <b>${data.quotes.length}</b></span></div>
+    m.innerHTML = `<div class="sheet-h"><div><h2>匯入資料</h2><p>${esc(file.name)}</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+      <div class="stat-line"><span>事項 <b>${data.items.length}</b></span><span>認證申請 <b>${data.apps.length}</b></span><span>證書 <b>${data.certs.length}</b></span><span>每日一句 <b>${data.quotes.length}</b></span><span>心情結語 <b>${data.journal.length}</b></span></div>
       <p class="muted">「合併」會保留目前資料，相同項目以檔案內容更新；「取代」會先清空這台裝置的資料再匯入。</p>
       <div class="form-foot"><button class="btn ghost" data-act="close">取消</button><button class="btn danger" data-act="import-replace">取代全部</button><button class="btn primary" data-act="import-merge">合併匯入</button></div>`;
     openLayer(m);
   };
-  fr.onerror = () => toast('讀取檔案失敗', 'worried', 'coral');
+  fr.onerror = () => toast('讀取檔案失敗', 'worried');
   fr.readAsText(file);
 }
 function applyImport(mode) {
@@ -2088,7 +2016,7 @@ function applyImport(mode) {
   }
   else COLS.forEach(col => d[col].forEach(doc => { const i = S[col].findIndex(x => x.id === doc.id); if (i < 0) S[col].push(doc); else S[col][i] = doc; }));
   pendingImport = null; migrateItems(); commit(); closeLayer($('#modal'));
-  toast(`匯入完成：事項 ${d.items.length}、認證申請 ${d.apps.length}、證書 ${d.certs.length}、每日一句 ${d.quotes.length} 筆`, 'happy', 'mint', 'check');
+  toast(`匯入完成：事項 ${d.items.length}、認證申請 ${d.apps.length}、證書 ${d.certs.length}、每日一句 ${d.quotes.length}、心情結語 ${d.journal.length} 筆`, 'happy');
 }
 /* --- iCalendar --- */
 const icsText = s => String(s || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
@@ -2161,9 +2089,9 @@ function exportEventsICS() {
     if (seen.has(c.id)) continue; seen.add(c.id);
     evs.push(vevent({ uid: 'cert-' + c.id, date: c.due, summary: `【證書到期】${c.project}｜${c.cert}`, desc: c.no ? `證書編號：${c.no}` : '', url: appUrl(), alarms: ['-P89DT15H', '-P29DT15H', '-P1DT15H'] }));
   }
-  if (!evs.length) { toast('目前沒有需要匯出的行程', 'calm', 'sky'); return; }
+  if (!evs.length) { toast('目前沒有需要匯出的行程', 'calm'); return; }
   shareOrDownload(`行動祕書_行程_${TODAY}.ics`, icsWrap(evs, '行動祕書'), 'text/calendar');
-  toast(`已產生 ${evs.length} 筆行事曆項目，開啟後選「加入全部」`, 'happy', 'sky', 'bell');
+  toast(`已產生 ${evs.length} 筆行事曆項目，開啟後選「加入全部」`, 'happy');
 }
 
 /* ================= cloud sync (GitHub secret gist) =================
@@ -2192,10 +2120,10 @@ async function readRemote(g) {
   if (!f) return null;
   let txt = f.content;
   if (f.truncated && f.raw_url) txt = await fetch(f.raw_url, { cache: 'no-store' }).then(r => r.text());
-  try { const d = JSON.parse(txt); return { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes), deleted: d.deleted && typeof d.deleted === 'object' ? d.deleted : {} }; }
+  try { const d = JSON.parse(txt); return { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes), journal: cleanDocs(d.journal), deleted: d.deleted && typeof d.deleted === 'object' ? d.deleted : {} }; }
   catch (e) { return null; }
 }
-const snapshot = () => ({ items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, deleted: S.deleted });
+const snapshot = () => ({ items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, journal: S.journal, deleted: S.deleted });
 function applyData(m) { COLS.forEach(col => { S[col] = m[col] || []; }); S.deleted = m.deleted; }
 function mergeData(L, R) {
   if (!R) return L;
@@ -2219,8 +2147,8 @@ function stable(v) {
 }
 const byId = (a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
 const canon = d => stable(Object.assign({ deleted: d.deleted || {} }, ...COLS.map(col => ({ [col]: (d[col] || []).slice().sort(byId) }))));
-const payload = () => JSON.stringify({ app: 'mobile-secretary', v: 2, syncedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, deleted: S.deleted });
-const onlySamples = () => ['items', 'apps', 'certs'].every(col => S[col].every(x => x.sample)) && !S.quotes.length;
+const payload = () => JSON.stringify({ app: 'mobile-secretary', v: 2, syncedAt: iso(), items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, journal: S.journal, deleted: S.deleted });
+const onlySamples = () => ['items', 'apps', 'certs'].every(col => S[col].every(x => x.sample)) && !S.quotes.length && !S.journal.length;
 
 function scheduleSync(delay = 1500) {
   if (!syncCfg) return;
@@ -2250,11 +2178,11 @@ async function syncNow(manual) {
     syncCfg.lastSync = iso(); saveSyncCfg();
     sync.err = null; sync.errToast = null; sync.okOnce = true;
     if (gReady() && (changed || gs.waiting || Date.now() - gs.last > 110000)) scheduleGsync(changed ? 1500 : 600);
-    if (manual) toast('同步完成，所有裝置都是最新資料', 'happy', 'mint', 'check');
+    if (manual) toast('同步完成，所有裝置都是最新資料', 'happy');
   } catch (e) {
     sync.err = e.status === 401 || e.status === 403 ? 'auth' : e.status === 404 ? 'missing' : 'net';
     const msg = { auth: '雲端同步失敗：GitHub 金鑰無效或已過期，請到「設定 → 雲端同步」重新連線', missing: '雲端同步失敗：找不到同步資料（Gist 可能被刪除），請重新連線', net: '暫時連不上 GitHub，稍後會自動再同步' }[sync.err];
-    if (manual || sync.errToast !== sync.err) { toast(msg, 'worried', 'coral'); sync.errToast = sync.err; }
+    if (manual || sync.errToast !== sync.err) { toast(msg, 'worried'); sync.errToast = sync.err; }
   } finally {
     sync.busy = false; paintSync();
     if (sync.again) { sync.again = false; scheduleSync(400); }
@@ -2297,8 +2225,8 @@ const feedUrl = () => `https://gist.githubusercontent.com/${syncCfg.login}/${syn
 async function connectSync(raw, btn) {
   const s = String(raw || '').trim();
   let token = s, gistId = null, gsIn = null;
-  if (s.startsWith('MSEC1.')) { const p = readPairCode(s); if (!p) { toast('配對碼不完整，請重新複製一次', 'worried', 'sun'); return; } token = p.token; gistId = p.gistId; gsIn = p.gs; }
-  if (!/^(ghp_|github_pat_)[A-Za-z0-9_]{20,}$/.test(token)) { toast('這看起來不是 GitHub 金鑰：金鑰是 ghp_ 開頭的一長串，配對碼是 MSEC1. 開頭', 'worried', 'sun'); return; }
+  if (s.startsWith('MSEC1.')) { const p = readPairCode(s); if (!p) { toast('配對碼不完整，請重新複製一次', 'worried'); return; } token = p.token; gistId = p.gistId; gsIn = p.gs; }
+  if (!/^(ghp_|github_pat_)[A-Za-z0-9_]{20,}$/.test(token)) { toast('這看起來不是 GitHub 金鑰：金鑰是 ghp_ 開頭的一長串，配對碼是 MSEC1. 開頭', 'worried'); return; }
   if (btn) { btn.disabled = true; btn.textContent = '連線中…'; }
   try {
     const user = await gh('GET', '/user', null, token);
@@ -2310,7 +2238,7 @@ async function connectSync(raw, btn) {
     let first = false;
     if (gistId) {
       const remote = await readRemote(await gh('GET', '/gists/' + gistId, null, token));
-      if (remote && onlySamples()) applyData(mergeData({ items: [], apps: [], certs: [], quotes: [], deleted: {} }, remote)); // 新裝置：直接用雲端資料
+      if (remote && onlySamples()) applyData(mergeData({ items: [], apps: [], certs: [], quotes: [], journal: [], deleted: {} }, remote)); // 新裝置：直接用雲端資料
     } else {
       const created = await gh('POST', '/gists', { description: GIST_DESC, public: false, files: { [DATA_FILE]: { content: payload() }, [ICS_FILE]: { content: buildFeed() } } }, token);
       gistId = created.id; first = true;
@@ -2321,16 +2249,16 @@ async function connectSync(raw, btn) {
     UI.syncInput = '';
     saveData(); render();
     await syncNow(false);
-    toast(first ? `已在 ${user.login} 的 GitHub 建立同步空間，這台裝置開始同步` : `已連線到 ${user.login} 的同步資料，這台裝置開始同步${withG ? '（Google 日曆也一起連動）' : ''}`, 'happy', 'mint', 'check');
+    toast(first ? `已在 ${user.login} 的 GitHub 建立同步空間，這台裝置開始同步` : `已連線到 ${user.login} 的同步資料，這台裝置開始同步${withG ? '（Google 日曆也一起連動）' : ''}`, 'happy');
     closeLayer($('#modal'));
   } catch (e) {
-    toast(e.status === 401 ? '金鑰無效：請確認整串複製完整、沒有過期' : e.status === 403 ? '金鑰權限不足：建立時要勾選「gist」' : '連線失敗，請確認網路後再試一次', 'worried', 'coral');
+    toast(e.status === 401 ? '金鑰無效：請確認整串複製完整、沒有過期' : e.status === 403 ? '金鑰權限不足：建立時要勾選「gist」' : '連線失敗，請確認網路後再試一次', 'worried');
   } finally { if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = '連線'; } }
 }
 function disconnectSync(btn) {
   arm(btn, '確定中斷？再按一次', () => {
     syncCfg = null; saveSyncCfg(); sync.err = null; render();
-    toast('這台裝置已停止同步（資料仍保留在這台裝置與雲端）', 'calm', 'sky');
+    toast('這台裝置已停止同步（資料仍保留在這台裝置與雲端）', 'calm');
   });
 }
 function loadScript(src) {
@@ -2338,7 +2266,7 @@ function loadScript(src) {
 }
 async function openPairOut() {
   const m = $('#modal'); m.setAttribute('aria-label', '配對其他裝置');
-  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sky', 'phone')}<div><h2>配對其他裝置</h2><p>讓手機或另一台電腦使用同一份資料</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+  m.innerHTML = `<div class="sheet-h"><div><h2>配對其他裝置</h2><p>讓手機或另一台電腦使用同一份資料</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <div class="pair-grid"><div class="qr-box" id="qrBox">產生 QR Code 中…</div>
     <ol class="set-list">
       <li><b>用 iPhone 相機掃描</b>左邊的 QR Code，會用 Safari 打開行動祕書。</li>
@@ -2357,19 +2285,19 @@ async function openPairOut() {
   } catch (e) { const b = $('#qrBox'); if (b) b.textContent = '無法產生 QR Code，請改用「複製配對碼」。'; }
 }
 function openPairIn(code) {
-  const p = readPairCode(code); if (!p) { toast('配對連結不完整，請在電腦上重新產生', 'worried', 'sun'); return; }
+  const p = readPairCode(code); if (!p) { toast('配對連結不完整，請在電腦上重新產生', 'worried'); return; }
   const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
   UI.incomingPair = code;
   const m = $('#modal'); m.setAttribute('aria-label', '連動這台裝置');
-  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'mint', 'phone')}<div><h2>連動這台裝置</h2><p>與你的電腦同步同一份行程資料</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
-    ${standalone ? '' : `<div class="banner" style="margin-bottom:12px">${mascot('calm', 'sun', 'bell')}<p><b>如果你平常用的是「主畫面上的行動祕書 App」：</b>請按「複製配對碼」，再打開主畫面的 App → 設定 → 雲端同步 → 貼上。iPhone 的主畫面 App 和 Safari 的資料是分開的。</p></div>`}
+  m.innerHTML = `<div class="sheet-h"><div><h2>連動這台裝置</h2><p>與你的電腦同步同一份行程資料</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    ${standalone ? '' : `<div class="banner" style="margin-bottom:12px"><p><b>如果你平常用的是「主畫面上的行動祕書 App」：</b>請按「複製配對碼」，再打開主畫面的 App → 設定 → 雲端同步 → 貼上。iPhone 的主畫面 App 和 Safari 的資料是分開的。</p></div>`}
     <div class="form-foot">${standalone ? '' : `<button class="btn" data-act="copy-in-pair">${IC.copy}複製配對碼</button>`}<button class="btn primary" data-act="pair-here">${standalone ? '開始同步' : '在這個瀏覽器同步'}</button></div>`;
   openLayer(m);
 }
 function openSubscribe() {
   const url = feedUrl(); const webcal = url.replace(/^https:/, 'webcal:');
   const m = $('#modal'); m.setAttribute('aria-label', '訂閱到 iPhone 行事曆');
-  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sun', 'bell')}<div><h2>訂閱到 iPhone 行事曆</h2><p>行程會自動出現在 iPhone 內建的行事曆，App 改了它也跟著更新</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+  m.innerHTML = `<div class="sheet-h"><div><h2>訂閱到 iPhone 行事曆</h2><p>行程會自動出現在 iPhone 內建的行事曆，App 改了它也跟著更新</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <ol class="set-list">
       <li><b>在 iPhone 上</b>按下方「在 iPhone 訂閱」，跳出視窗時選 <b>「訂閱」</b>。</li>
       <li>設定畫面若有 <b>「移除提示」</b>，請<b>關閉</b>，前一天才會推播提醒。</li>
@@ -2382,12 +2310,12 @@ function openSubscribe() {
   openLayer(m);
 }
 async function copyText(text, okMsg) {
-  try { await navigator.clipboard.writeText(text); toast(okMsg, 'happy', 'mint', 'check'); }
+  try { await navigator.clipboard.writeText(text); toast(okMsg, 'happy'); }
   catch (e) {
     const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
     let ok = false; try { ok = document.execCommand('copy'); } catch (er) {}
-    ta.remove(); toast(ok ? okMsg : '無法自動複製，請長按選取後複製', ok ? 'happy' : 'worried', ok ? 'mint' : 'sun');
+    ta.remove(); toast(ok ? okMsg : '無法自動複製，請長按選取後複製', ok ? 'happy' : 'worried');
   }
 }
 /* 行事曆訂閱內容：過去 60 天～未來 400 天；只放標題、時間、地點、類別 */
@@ -2918,7 +2846,7 @@ function gResolvePending(keep) {
     S.items = S.items.filter(x => !ids.has(x.id)); ids.forEach(id => tomb('items', id));
   }
   commit();
-  toast(keep ? `已保留 ${ids.size} 筆，會重新寫回 Google 日曆` : `已刪除 ${ids.size} 筆`, 'calm', 'sky');
+  toast(keep ? `已保留 ${ids.size} 筆，會重新寫回 Google 日曆` : `已刪除 ${ids.size} 筆`, 'calm');
 }
 
 /* ---- 同步主流程 ---- */
@@ -2931,7 +2859,7 @@ async function gsyncNow(manual) {
   if (!navigator.onLine) { gs.err = 'net'; paintG(); return; }
   // 有開 GitHub 同步時，先和其他裝置同步過一次再寫 Google，避免用這台的舊資料去改 Google
   if (syncCfg && !sync.okOnce && !['auth', 'missing'].includes(sync.err)) {
-    if (manual) toast('先和其他裝置同步資料，完成後會接著同步 Google 日曆', 'calm', 'sky');
+    if (manual) toast('先和其他裝置同步資料，完成後會接著同步 Google 日曆', 'calm');
     gs.waiting = true; gs.last = Date.now(); scheduleSync(100); return;
   }
   if (gs.busy) { gs.again = true; return; }
@@ -2957,10 +2885,10 @@ async function gsyncNow(manual) {
     const n = gApply(P);
     gcal.lastSync = iso(); saveGcal();
     gs.err = P.errs.length ? 'part' : null; gs.errMsg = P.errs[0] || ''; gs.errToast = null;
-    if (P.ro) toast(`有 ${P.ro} 筆是別人邀請的會議，只有主辦人能改時間或標題，已還原成 Google 上的內容`, 'worried', 'sun');
-    if (gs.pendingDel && !hadPending) toast(`Google 日曆一次刪除了 ${gs.pendingDel.length} 筆行程，請到「設定 → Google 日曆連動」確認要不要也從行動祕書刪除`, 'worried', 'sun', 'bell');
+    if (P.ro) toast(`有 ${P.ro} 筆是別人邀請的會議，只有主辦人能改時間或標題，已還原成 Google 上的內容`, 'worried');
+    if (gs.pendingDel && !hadPending) toast(`Google 日曆一次刪除了 ${gs.pendingDel.length} 筆行程，請到「設定 → Google 日曆連動」確認要不要也從行動祕書刪除`, 'worried');
     if (gs.pendingDel && (manual || UI.view === 'settings') && !layers.length) render();
-    if (manual && !gs.pendingDel) toast(P.errs.length ? `Google 日曆同步完成，但有 ${P.errs.length} 筆沒成功，稍後會再試` : `Google 日曆同步完成${pushed || n ? `（寫入 ${pushed} 筆、帶回 ${n} 筆變更）` : '，兩邊都是最新的'}`, P.errs.length ? 'worried' : 'happy', P.errs.length ? 'sun' : 'mint', P.errs.length ? '' : 'check');
+    if (manual && !gs.pendingDel) toast(P.errs.length ? `Google 日曆同步完成，但有 ${P.errs.length} 筆沒成功，稍後會再試` : `Google 日曆同步完成${pushed || n ? `（寫入 ${pushed} 筆、帶回 ${n} 筆變更）` : '，兩邊都是最新的'}`, P.errs.length ? 'worried' : 'happy');
   } catch (e) {
     gs.err = e.code || 'net'; gs.errMsg = e.message || '';
     const msg = {
@@ -2971,7 +2899,7 @@ async function gsyncNow(manual) {
       gas: 'Google 日曆同步發生錯誤，稍後會自動再試',
       net: '暫時連不上 Google，稍後會自動再同步'
     }[gs.err] || '暫時連不上 Google，稍後會自動再同步';
-    if (manual || gs.errToast !== gs.err) { toast(msg, 'worried', 'coral'); gs.errToast = gs.err; }
+    if (manual || gs.errToast !== gs.err) { toast(msg, 'worried'); gs.errToast = gs.err; }
   } finally {
     gs.busy = false; paintG();
     if (gs.again) { gs.again = false; scheduleGsync(800); }
@@ -3007,7 +2935,7 @@ function gReadCode(s) {
 }
 function gPanel() {
   const st = gStatusText();
-  const head = `<div class="panel-h">${ph('sun')}<h2>Google 日曆連動（雙向）</h2><span id="gStatus" class="tag ${st.cls}">${st.txt}</span></div>`;
+  const head = `<div class="panel-h"><h2>Google 日曆連動（雙向）</h2><span id="gStatus" class="tag ${st.cls}">${st.txt}</span></div>`;
   if (!gReady()) return `
     <section class="panel span2">${head}
       <p>把行動祕書和你的 Google 日曆接起來：App 的事項、認證節點、證書到期會寫進 Google 日曆裡一個叫<b>「行動祕書」</b>的日曆；Google 主日曆上的行程（例如別人寄來的會議邀請）也會出現在行動祕書。兩邊修改都會互相同步。</p>
@@ -3016,7 +2944,7 @@ function gPanel() {
       <p class="muted" style="margin:12px 0 6px;font-size:12.5px">已經在另一台裝置設定好了？貼上那台的「連動碼」（MSECG1. 開頭）：</p>
       <div class="sync-row"><input id="gInput" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="貼上連動碼（MSECG1.…）" value="${esc(UI.gInput || '')}" aria-label="Google 日曆連動碼"><button class="btn" data-act="g-connect-code">連線</button></div>
     </section>`;
-  const pend = gs.pendingDel && gs.pendingDel.length ? `<div class="banner" style="margin-top:4px">${mascot('worried', 'sun', 'bell')}<p>Google 日曆這次刪除了 <b>${gs.pendingDel.length}</b> 筆行程，數量比較多，先暫停沒有跟著刪。要也從行動祕書刪除嗎？</p><div class="acts"><button class="btn danger" data-act="g-del-ok">一起刪除</button><button class="btn" data-act="g-del-keep">保留在行動祕書</button></div></div>` : '';
+  const pend = gs.pendingDel && gs.pendingDel.length ? `<div class="banner" style="margin-top:4px"><p>Google 日曆這次刪除了 <b>${gs.pendingDel.length}</b> 筆行程，數量比較多，先暫停沒有跟著刪。要也從行動祕書刪除嗎？</p><div class="acts"><button class="btn danger" data-act="g-del-ok">一起刪除</button><button class="btn" data-act="g-del-keep">保留在行動祕書</button></div></div>` : '';
   return `
     <section class="panel span2">${head}
       <div class="stat-line"><span>Google 帳號 <b>${esc(gcal.me || '—')}</b></span><span>最後同步 <b id="gLast">${gLastText()}</b></span><span>從 Google 帶進來 <b id="gCount">${S.items.filter(x => x.gsrc).length}</b> 筆</span></div>
@@ -3039,7 +2967,7 @@ function gPanel() {
 function openGSetup() {
   if (!gcal || !gcal.key) { gcal = Object.assign({}, gcal || {}, { key: newKey() }); saveGcal(); }
   const m = $('#modal'); m.setAttribute('aria-label', '連動 Google 日曆');
-  m.innerHTML = `<div class="sheet-h">${mascot('happy', 'sky', 'bell')}<div><h2>連動 Google 日曆</h2><p>照著做一次就好，之後全自動同步</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+  m.innerHTML = `<div class="sheet-h"><div><h2>連動 Google 日曆</h2><p>照著做一次就好，之後全自動同步</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
     <ol class="set-list g-steps">
       <li>先在瀏覽器登入<b>要連動的 Google 帳號</b>，再按 <a href="https://script.new" target="_blank" rel="noopener noreferrer"><b>開啟 Apps Script</b></a>（Google 的免費工具），會開一個新專案。點左上角「未命名的專案」，改名為<b>「行動祕書連動」</b>。</li>
       <li>把編輯器裡原本的 <code>function myFunction() {…}</code> 全部刪掉，按下面的<b>「複製程式碼」</b>貼進去，再按<b>儲存</b>（磁碟圖示）。</li>
@@ -3058,11 +2986,11 @@ async function gConnect(raw, btn) {
   let url, key;
   const code = gReadCode(s);
   if (code) { url = code.url; key = code.key; }
-  else if (/^MSEC/.test(s)) { toast('連動碼不完整，請在原本的裝置重新複製一次', 'worried', 'sun'); return; }
+  else if (/^MSEC/.test(s)) { toast('連動碼不完整，請在原本的裝置重新複製一次', 'worried'); return; }
   else { url = s; key = gcal && gcal.key; }
-  if (/\/dev$/.test(url)) { toast('這是測試網址（/dev）：請到「部署 → 管理部署作業」複製結尾是 /exec 的網址', 'worried', 'sun'); return; }
-  if (!gUrlOk(url)) { toast('網址不對：請貼「網頁應用程式」的網址，開頭是 https://script.google.com/macros/s/，結尾是 /exec', 'worried', 'sun'); return; }
-  if (!key) { toast('請先按「開始設定」複製程式碼', 'worried', 'sun'); return; }
+  if (/\/dev$/.test(url)) { toast('這是測試網址（/dev）：請到「部署 → 管理部署作業」複製結尾是 /exec 的網址', 'worried'); return; }
+  if (!gUrlOk(url)) { toast('網址不對：請貼「網頁應用程式」的網址，開頭是 https://script.google.com/macros/s/，結尾是 /exec', 'worried'); return; }
+  if (!key) { toast('請先按「開始設定」複製程式碼', 'worried'); return; }
   if (btn) { btn.disabled = true; btn.textContent = '連線中…'; }
   try {
     const r = await gPost(url, key, [{ op: 'hello' }]);
@@ -3071,7 +2999,7 @@ async function gConnect(raw, btn) {
     gcal = { url, key, me: h.data.me, scope: (gcal && gcal.scope) || 'personal', since: iso() }; saveGcal();
     UI.gUrl = ''; UI.gInput = ''; gs.err = null; gs.errToast = null;
     closeLayer($('#modal')); render();
-    toast(`已連動 ${h.data.me} 的 Google 日曆，開始第一次同步…`, 'happy', 'mint', 'check');
+    toast(`已連動 ${h.data.me} 的 Google 日曆，開始第一次同步…`, 'happy');
     gsyncNow(true);
   } catch (e) {
     const c = e.code;
@@ -3079,13 +3007,13 @@ async function gConnect(raw, btn) {
       c === 'svc' ? '還差一步：請在 Apps Script 左側「服務」按 ＋ 加入 Google Calendar API，再重新部署' :
       c === 'auth' ? '還沒授權：請在部署時按「授予存取權」並允許存取日曆' :
       c === 'net' ? '目前沒有網路，請連線後再試' :
-      '連不到：請確認貼的是「網頁應用程式」網址（…/exec），而且「誰可以存取」選「所有人」', 'worried', 'coral');
+      '連不到：請確認貼的是「網頁應用程式」網址（…/exec），而且「誰可以存取」選「所有人」', 'worried');
   } finally { if (btn && btn.isConnected) { btn.disabled = false; btn.textContent = '連線'; } }
 }
 function gDisconnect(btn) {
   arm(btn, '確定中斷？再按一次', () => {
     gcal = { key: gcal.key, scope: gcal.scope }; saveGcal(); gs.err = null; gs.pendingDel = null; render();
-    toast('這台裝置已停止 Google 日曆連動（Google 上已有的行程不會被刪除）', 'calm', 'sky');
+    toast('這台裝置已停止 Google 日曆連動（Google 上已有的行程不會被刪除）', 'calm');
   });
 }
 
@@ -3113,14 +3041,14 @@ function toggle(btn) {
       const lastToday = done && d === TODAY && todayPendingCount() === 1;
       if (done) { dd[d] = iso(); celebrate(btn, it.title); } else delete dd[d];
       Store.patch('items', it.id, { doneDates: dd });
-      if (lastToday) setTimeout(() => toast('今日待辦全部完成！給自己一個大大的讚', 'happy', 'mint', 'cert'), 900);
+      if (lastToday) setTimeout(() => toast('今日待辦全部完成', 'happy'), 900);
       return;
     }
     const done = !it.done;
     const lastToday = done && it.date === TODAY && todayPendingCount() === 1;
     if (done) celebrate(btn, it.title);
     Store.patch('items', it.id, { done, doneAt: done ? iso() : null });
-    if (lastToday) setTimeout(() => toast('今日待辦全部完成！給自己一個大大的讚', 'happy', 'mint', 'cert'), 900);
+    if (lastToday) setTimeout(() => toast('今日待辦全部完成', 'happy'), 900);
   } else if (f.k === 'step' && f.app) {
     const a = f.app; const st = (a.steps || []).find(s => s.id === f.stepId); if (!st) return;
     const done = !st.done;
@@ -3128,8 +3056,8 @@ function toggle(btn) {
     const steps = (a.steps || []).map(s => s.id === f.stepId ? Object.assign({}, s, { done, doneAt: done ? iso() : null }) : Object.assign({}, s));
     if (done) celebrate(btn, `${appName(a)}｜${st.title}`);
     Store.patch('apps', a.id, { steps, updatedAt: iso() });
-    if (done && steps.every(s => s.done)) setTimeout(() => toast(`「${appName(a)}」所有提交節點都完成了，就等取證！`, 'happy', 'pink', 'cert'), 900);
-    else if (lastToday) setTimeout(() => toast('今日待辦全部完成！給自己一個大大的讚', 'happy', 'mint', 'cert'), 900);
+    if (done && steps.every(s => s.done)) setTimeout(() => toast(`「${appName(a)}」所有提交節點都完成了，就等取證！`, 'happy'), 900);
+    else if (lastToday) setTimeout(() => toast('今日待辦全部完成', 'happy'), 900);
   }
 }
 function arm(btn, armedText, fn) {
@@ -3144,30 +3072,30 @@ function doDelete(btn) {
   arm(btn, '再按一次確認刪除', () => {
     const [k, id] = btn.dataset.key.split(':');
     const col = k === 'item' ? 'items' : k === 'app' ? 'apps' : 'certs';
-    Store.del(col, id); closeLayer($('#modal')); toast(gReady() ? '已刪除（Google 日曆也會一起刪除）' : '已刪除', 'calm', 'sky');
+    Store.del(col, id); closeLayer($('#modal')); toast(gReady() ? '已刪除（Google 日曆也會一起刪除）' : '已刪除', 'calm');
   });
 }
 function clearSamples(btn) {
   arm(btn, '確定清除？再按一次', () => {
     ['items', 'apps', 'certs'].forEach(col => { S[col].forEach(x => { if (x.sample) tomb(col, x.id); }); S[col] = S[col].filter(x => !x.sample); });
-    commit(); toast('範例資料已清除，開始寫下你自己的行程吧！', 'happy', 'sky', 'star');
+    commit(); toast('範例資料已清除，開始寫下你自己的行程吧！', 'happy');
   });
 }
 function clearAll(btn) {
   arm(btn, '全部刪除？再按一次', () => {
     COLS.forEach(col => S[col].forEach(x => tomb(col, x.id)));
     COLS.forEach(col => { S[col] = []; }); commit();
-    toast(syncCfg ? '已清除全部資料（已連動的裝置也會一起清除）' : '已清除全部資料', 'calm', 'sky');
+    toast(syncCfg ? '已清除全部資料（已連動的裝置也會一起清除）' : '已清除全部資料', 'calm');
   });
 }
 async function copyReport() {
   const txt = reportText();
   try {
     await navigator.clipboard.writeText(txt);
-    toast('報表文字已複製，可以直接貼到郵件或 Teams', 'happy', 'sky', 'doc');
+    toast('報表文字已複製，可以直接貼到郵件或 Teams', 'happy');
   } catch (e) {
     const m = $('#modal'); m.setAttribute('aria-label', '報表文字');
-    m.innerHTML = `<div class="sheet-h">${mascot('calm', 'sky', 'doc')}<div><h2>報表文字</h2><p>已幫你全選，請按複製</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div><div class="field"><textarea id="repText" readonly style="min-height:320px;font-size:13px">${esc(txt)}</textarea></div>`;
+    m.innerHTML = `<div class="sheet-h"><div><h2>報表文字</h2><p>已幫你全選，請按複製</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div><div class="field"><textarea id="repText" readonly style="min-height:320px;font-size:13px">${esc(txt)}</textarea></div>`;
     openLayer(m); const ta = $('#repText'); ta.focus(); ta.select();
   }
 }
@@ -3183,7 +3111,7 @@ function insertTemplate() {
     const d = span != null ? addDays(a, Math.round(span * f)) : addDays(TODAY, [0, 3, 7, 14, 21, 28][i]);
     box.insertAdjacentHTML('beforeend', stepRow({ id: uid('s'), date: d, title: t }));
   });
-  toast('已加入 6 個常用節點，可以再調整日期與內容', 'happy', 'sun', 'doc');
+  toast('已加入 6 個常用節點，可以再調整日期與內容', 'happy');
 }
 function closeAddMenu() { $('#addMenu').hidden = true; $('#addBtn').setAttribute('aria-expanded', 'false'); }
 
@@ -3269,11 +3197,11 @@ function addQuoteTexts(parts, showToday) {
   const key = `msec.daily:${TODAY}`; shownDaily.add(key); ls.set(key, '1');
   commit();
   if (showToday && fresh.length) openDaily();
-  toast(fresh.length ? `已載入 ${fresh.length} 篇${parts.length > fresh.length ? `（${parts.length - fresh.length} 篇重複，略過）` : ''}，之後每天 0:00 自動換一篇` : '這些段落都已經載入過了', 'happy', 'mint', 'check');
+  toast(fresh.length ? `已載入 ${fresh.length} 篇${parts.length > fresh.length ? `（${parts.length - fresh.length} 篇重複，略過）` : ''}，之後每天 0:00 自動換一篇` : '這些段落都已經載入過了', 'happy');
 }
 function addQuotes() {
   const parts = splitPassages(($('#quoteBulk') || {}).value || '');
-  if (!parts.length) { toast('請先貼上段落', 'worried', 'sun'); return; }
+  if (!parts.length) { toast('請先貼上段落', 'worried'); return; }
   UI.quoteBulk = '';
   addQuoteTexts(parts, false);
 }
@@ -3302,8 +3230,8 @@ async function handleQuoteFile(file) {
       const list = Array.isArray(d) ? d : (d.quotes || []);
       parts = list.map(q => normTxtKeepLines(typeof q === 'string' ? q : q && q.text)).filter(Boolean);
     }
-  } catch (e) { toast('讀不懂這個檔案，請選《這時候，深呼吸》的 Word 檔（.docx）', 'worried', 'coral'); return; }
-  if (!parts.length) { toast('檔案裡找不到段落', 'worried', 'sun'); return; }
+  } catch (e) { toast('讀不懂這個檔案，請選《這時候，深呼吸》的 Word 檔（.docx）', 'worried'); return; }
+  if (!parts.length) { toast('檔案裡找不到段落', 'worried'); return; }
   addQuoteTexts(parts, true);
 }
 const normTxtKeepLines = s => String(s || '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
@@ -3324,6 +3252,14 @@ document.addEventListener('input', ev => {
   if (ev.target.id === 'syncInput') UI.syncInput = ev.target.value;
   if (ev.target.id === 'quoteBulk') UI.quoteBulk = ev.target.value;
   if (ev.target.id === 'gUrl') UI.gUrl = ev.target.value;
+  if (ev.target.id === 'moodText') {
+    const t = ev.target, d = t.dataset.date;
+    UI.moodDraft = { date: d, text: t.value };
+    const c = $('#moodCnt'); if (c) c.textContent = t.value.length;
+    const st = $('#moodSt'); if (st) st.textContent = '';
+    growMood(t);
+    clearTimeout(UI.moodTimer); UI.moodTimer = setTimeout(() => saveMood(d, t.value), 1200);
+  }
   if (ev.target.id === 'gInput') UI.gInput = ev.target.value;
   if (ev.target.type === 'date') updateWdHint(ev.target);
 });
@@ -3338,7 +3274,8 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'importFile') handleImportFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'excelFile') handleExcelFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'quoteFile') handleQuoteFile(ev.target.files && ev.target.files[0]);
-  if (ev.target.id === 'gScope' && gcal) { gcal.scope = ev.target.value; saveGcal(); toast(`之後從 Google 帶進來的行程會放在「${scopeOf(gcal.scope).t}」`, 'happy', 'sky'); }
+  if (ev.target.id === 'moodText') { clearTimeout(UI.moodTimer); saveMood(ev.target.dataset.date, ev.target.value); }
+  if (ev.target.id === 'gScope' && gcal) { gcal.scope = ev.target.value; saveGcal(); toast(`之後從 Google 帶進來的行程會放在「${scopeOf(gcal.scope).t}」`, 'happy'); }
 });
 document.addEventListener('focusout', ev => {
   const el = ev.target;

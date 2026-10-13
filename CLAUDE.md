@@ -8,7 +8,7 @@
 ## 檔案結構
 ```
 index.html        整個 App：CSS、畫面、程式都在這一個檔案（vanilla JS，無框架、無 build）
-manifest.json     PWA 設定（名稱、圖示、theme color #F5F1E8 生成色）
+manifest.json     PWA 設定（名稱、圖示、theme color #F4F2EE 素色紙）
 sw.js             Service Worker：同源 network-first、Google Fonts cache-first；改版時把 CACHE 名稱 +1
 icon-180.png / icon-192.png / icon-512.png   App 圖示：AI 仿真雪納瑞「開心」照片裁成正方形（System.Drawing）
 mascot/*.jpg      吉祥物貼紙照片（256px）：happy／worried／sleepy；原圖在 _private/mascot-src/
@@ -37,6 +37,10 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   不要改成要她每天手動操作；也不要為了省掉載入步驟把內容寫進公開程式碼。
   `quoteOf(date)` 以日期為種子洗牌，每天 0:00 換、各裝置同一段、一輪不重複；當天第一次開 App 跳 `#dailyPop`，關掉後才接時段提醒。
   顯示格式（使用者指定）：第一行「與真如繼主同在，這時候，深呼吸」，下面是段落。
+- `journal`：每日心情結語（2026/10/13 新增）。{id: `j`+日期, date, text}，一天一則、100 字內（`MOOD_MAX`）。
+  今日頁最下方輸入（停筆 1.2 秒或離開欄位就存；只存資料不重畫，草稿放 `UI.moodDraft`，避免中文輸入被打斷）；
+  月曆點選今天以前的日子可以補寫；報表頁「心情回顧」列出期間內的結語（屬性選「工作」時不顯示）。
+  私人內容：不進 iPhone 訂閱、不進 Google 日曆、不進「複製報表文字」與 CSV。
 - 所有資料集合列在 `COLS`；新增集合時要一起加進 COLS、readRemote、snapshot、payload、backup、import。
 - 範例資料帶 `sample: true`，首次開啟自動放入，可一鍵清除。
 - 每筆資料都有 `updatedAt`；刪除記在 `deleted["<col>:<id>"] = 時間`（墓碑，保留 120 天）。
@@ -76,19 +80,23 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   時機：存檔後 3 秒、Gist 同步帶來變更後、畫面開著每 2 分鐘、切回 App。
 - 測試：沒有可用的 Google 帳號時，用本機假的 Apps Script（直接執行 GAS_CODE ＋ 假 Calendar 服務）測；`gUrlOk` 在 localhost 允許 `http://localhost:<port>/exec`。
 
-## 視覺風格（使用者指定）
-日系手帳風、有質感、很多可愛小貼圖；**不要粉紅色系、不要粉色外框**。
-- 配色：生成色方格紙底（--bg／--grid）、墨色文字、主色「藍」#3F5B72，輔色抹茶／山吹／朱／藤／空色；紙膠帶為低彩度點點和紙。
-- 字體：標題 LXGW WenKai TC（手寫感）、內文 Noto Sans TC、數字 Quicksand、印章 Noto Serif TC。
-- 小貼圖：`doodle(name)`／區塊標題 `ph(name)`（pencil、bell、plane、seal、hourglass、leaf、fuji、clip、onigiri、tea、paw、bone、sparkle、cloud、sun、moon、flower、memo）。
-- 「完成」是朱色方形印章 `stamp()`；月曆週六藍、週日朱（日本慣例）。
+## 視覺風格（使用者指定：簡約、像無印良品，不要太可愛；不要粉紅色）
+2026/10/13 起由「日系手帳＋可愛小貼圖」改為 MUJI 風：
+- 配色：素色生成紙底 --bg #F4F2EE（沒有方格）、卡片 --card、細線 --line、墨色文字 --ink；主要按鈕與選取狀態用炭灰 --accent；
+  深紅 --brand #8B1E2B 只少量點綴（英文小標、每日一句標題、月曆「今天」、完成標記）。狀態色低彩度：完成 --mint（橄欖灰綠）、即將 --sun、逾期 --red。
+  --tape-1～6 是認證申請的代表色（平塗，不再有紙膠帶點點）。
+- 平面：沒有陰影（--shadow:none）、細實線（不用虛線）、小圓角（卡片與按鈕 6px、標籤 3px）。
+- 字體：標題與內文 Noto Sans TC、數字用系統無襯線（--f-num）、閱讀文字（每日一句、心情結語）用 Noto Serif TC（--f-read）。
+- **不要再加回**手繪小貼圖、紙膠帶、彩紙慶祝、跳動／搖鈴動畫、手寫字體。圖示用 `IC` 的細線圖示（stroke 1.6）。
+- 「完成」是細線方框直排兩字（`stamp()`，深紅；「取證」灰色）；月曆週六藍、週日紅。
+- `toast(msg, mood)`：沒有圖，只有左邊一條色線（happy 綠、worried／shock 紅、calm／sleepy 灰）。`emptyBox(title, sub)` 只有文字。
 
 ## 吉祥物
-使用者自家的白色雪納瑞。使用者用 Gemini 依她的照片產生的 AI 仿真照片（她不喜歡手繪卡通版）。
-`mascot(mood, color, prop)` 回傳圓角照片貼紙：mood `happy|calm|worried|shock|sleepy` 對應 `PHOTO` 表
-（目前 calm→happy、shock→worried，等使用者補「平靜」「驚訝」照片後新增 mascot/calm.jpg、shock.jpg 並改 PHOTO）；
-color 是貼紙外框顏色（pink/mint/sun/coral/lilac/sky）；prop 是右下角 SVG 徽章（check/bell/cert/hourglass/sun/moon/coffee/star/doc/heart/phone，zzz 在右上）。
-她原本的手機照片不放進版控。
+使用者自家的白色雪納瑞（Gemini 依她的照片產生的 AI 仿真照片；她不喜歡手繪卡通版）。
+MUJI 風之後**只用在左上標誌與今日頁問候**：圓形照片、細邊框，不加徽章或膠帶。
+`mascot(mood, cls)`：mood `happy|calm|worried|shock|sleepy` 對應 `PHOTO` 表
+（目前 calm→happy、shock→worried，等使用者補「平靜」「驚訝」照片後新增 mascot/calm.jpg、shock.jpg 並改 PHOTO）。
+App 圖示 icon-*.png 仍是「開心」照片。她原本的手機照片不放進版控。
 
 ## 提醒規則（使用者指定，不要改）
 - **推播：只在前一天提醒一次**（2026/10/08 使用者要求，取消「開始前 2 小時」）：
