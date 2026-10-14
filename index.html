@@ -108,12 +108,6 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:22px;line-hei
 .scope{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:3px;box-shadow:var(--shadow)}
 .scope button{border:0;background:transparent;border-radius:6px;padding:5px 12px;cursor:pointer;font-family:var(--f-display);color:var(--sub);white-space:nowrap;font-size:13.5px}
 .scope button[aria-pressed="true"]{background:var(--accent);color:var(--on)}
-.add-wrap{position:relative}
-.add-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:30;background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:0 12px 30px -18px rgba(0,0,0,.35);padding:6px;min-width:240px;display:flex;flex-direction:column}
-.add-menu button{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:8px 10px;border-radius:6px;cursor:pointer;text-align:left}
-.add-menu button:hover{background:var(--card-2)}
-.add-menu b{display:block;font-family:var(--f-display);font-weight:500;font-size:14px}
-.add-menu small{color:var(--sub);font-size:12px}
 .bnav,.fab{display:none}
 
 /* ---------- buttons ---------- */
@@ -161,7 +155,9 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:22px;line-hei
 .row-meta a.m{color:var(--sky-tx)}
 .row-note{font-size:12.5px;color:var(--sub);margin-top:4px;padding:4px 8px;border-radius:8px;background:var(--card-2);white-space:pre-wrap;overflow-wrap:anywhere}
 .row .stamp{width:40px;height:40px;flex:none;margin:-6px 0 -8px}
-.star{color:var(--sun);margin-right:4px}
+.pri{display:inline-block;font-size:11px;line-height:16px;padding:0 5px;border:1px solid;border-radius:3px;margin-right:6px;vertical-align:1px;font-weight:500}
+.pri.u{color:var(--red-tx);border-color:var(--red)}
+.pri.i{color:var(--sun-tx);border-color:var(--sun)}
 .rep-ic{display:inline-flex;vertical-align:-2px;margin-left:4px;color:var(--sub)}
 .rep-ic svg{width:13px;height:13px}
 .scope-p{font-family:var(--f-display);font-size:11px;padding:0 6px;border-radius:3px;background:var(--accent-soft);color:var(--accent-tx)}
@@ -296,6 +292,20 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .chip.l-overdue{box-shadow:inset 0 0 0 1.5px var(--red)}
 .chip.l-soon,.chip.l-today{box-shadow:inset 0 0 0 1.5px var(--sun)}
 .chip.more-chip{background:transparent;color:var(--sub);padding-left:2px}
+.chip .pm{color:var(--red-tx);font-weight:700}
+.chip .pm.i{color:var(--sun-tx)}
+.cal-hint{margin:8px 2px 0;font-size:12px;color:var(--sub)}
+/* 月曆當天的快速新增列 */
+.qa{display:flex;flex-direction:column;gap:6px;padding:2px 0 12px;margin-bottom:6px;border-bottom:1px solid var(--line)}
+.qa-row{display:flex;gap:8px}
+.qa-in{flex:1;min-width:0;background:var(--card-2);border:1px solid var(--line);border-radius:6px;padding:7px 11px;font-size:16px;outline:0}
+.qa-in:focus{border-color:var(--accent)}
+.qa-opts{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.qa-sc{border:1px solid var(--line);background:transparent;border-radius:3px;padding:1px 9px;font-size:12.5px;cursor:pointer;color:var(--sub)}
+.qa-sc[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on)}
+.qa-more{margin-left:auto;font-size:12.5px}
+.qa-prev{font-size:12px;color:var(--sub);line-height:1.5;overflow-wrap:anywhere}
+.qa-prev b{color:var(--ink);font-weight:500}
 .daypanel .period{display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 10px;border-radius:6px;background:var(--card-2);margin-bottom:6px}
 .tape-sw{width:20px;height:10px;border-radius:3px;flex:none;background-color:var(--tape)}
 
@@ -453,6 +463,41 @@ td.proj{font-weight:700}
 .step-ed .dn{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;color:var(--sub);white-space:nowrap}
 .step-ed .dn input{width:17px;height:17px;accent-color:var(--mint)}
 .steps-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+/* 新增／編輯事項：參考 iPhone 行事曆的分組欄位 */
+.sheet-bar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin:-4px 0 14px}
+.sheet-bar h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:16.5px;letter-spacing:.06em;text-align:center}
+.sheet-bar .link-btn{justify-self:start;font-size:15px;color:var(--sub)}
+.sheet-bar .btn{justify-self:end}
+.form-note{margin:-6px 0 12px;font-size:12.5px;color:var(--sub);text-align:center}
+.type-seg{display:flex;width:100%;margin-bottom:14px}
+.type-seg button{flex:1}
+.ios .fg{background:var(--card-2);border-radius:8px;margin-bottom:12px;overflow:hidden}
+.ios .fg > * + *{border-top:1px solid var(--line)}
+.ios .fi-in{display:block;width:100%;border:0;background:transparent;padding:11px 14px;font-size:16px;outline:0;color:var(--ink)}
+.ios textarea.fi-in{min-height:84px;resize:vertical}
+.ios .qf .qa-prev{padding:0 14px 10px;border:0}
+.ios .fr{display:grid;grid-template-columns:64px minmax(0,1fr);align-items:center;gap:10px;padding:6px 14px;min-height:44px}
+.ios .fr.off{display:none}
+.ios .fl{font-size:14px;color:var(--ink)}
+.ios .fv{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;flex-wrap:wrap}
+.ios .fv input:not([type=checkbox]):not([type=radio]),.ios .fv select{border:0;background:transparent;text-align:right;text-align-last:right;font-size:16px;padding:4px 0;outline:0;min-width:0;max-width:100%;color:var(--ink)}
+.ios .fv input:not([type=checkbox]):not([type=radio]){flex:1}
+.ios .fv input.time-in{flex:0 1 120px}
+.ios .fv input[type=date]{flex:0 1 auto}
+.ios .fv .wd-hint{order:-1;margin:0;padding:0;font-size:12.5px;color:var(--sub)}
+.ios .fv input:focus,.ios .fv select:focus{color:var(--accent-tx)}
+.ios .fr-chips{display:block;padding:4px 14px 10px;min-height:0}
+.ios .fr-del{display:block;width:100%;border:0;background:transparent;color:var(--red-tx);padding:12px 14px;font-size:15px;cursor:pointer;text-align:center}
+.ios .fr-del.armed{background:var(--red);color:#fff}
+.radio-seg.sm{width:100%;gap:4px}
+.radio-seg.sm span{padding:5px 6px;font-size:13px;border-width:1px;background:var(--card)}
+.switch{appearance:none;-webkit-appearance:none;width:44px;height:26px;border-radius:13px;background:var(--line);position:relative;cursor:pointer;transition:background .15s;flex:none;margin:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.switch:checked{background:var(--mint)}
+.switch:checked::after{transform:translateX(18px)}
+.d-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.d-chip{border:1px solid var(--line);background:var(--card);border-radius:3px;padding:2px 10px;font-size:12.5px;cursor:pointer;color:var(--sub)}
+.d-chip:hover{border-color:var(--sub);color:var(--ink)}
 .form-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
 .form-foot .left{margin-right:auto}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(430px,100vw);background:var(--bg);z-index:50;overflow:auto;padding:calc(16px + env(safe-area-inset-top,0px)) 18px calc(24px + env(safe-area-inset-bottom,0px));box-shadow:-24px 0 60px -30px rgba(0,0,0,.55);animation:slide .25s ease-out;overscroll-behavior:contain}
@@ -504,7 +549,6 @@ td.proj{font-weight:700}
   .bnav .cnt{position:absolute;top:0;left:calc(50% + 6px);font-family:var(--f-num);font-size:10.5px;font-weight:600;background:var(--accent);color:var(--on);border-radius:999px;padding:0 5px;line-height:15px}
   .fab{display:grid;place-items:center;position:fixed;right:18px;bottom:calc(var(--nav-h) + 18px + env(safe-area-inset-bottom,0px));z-index:41;width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:var(--on);box-shadow:0 8px 20px -12px rgba(0,0,0,.5);cursor:pointer}
   .fab svg{width:26px;height:26px}
-  .add-menu{position:fixed;top:auto;right:16px;bottom:calc(var(--nav-h) + 86px + env(safe-area-inset-bottom,0px))}
   .toasts{bottom:calc(var(--nav-h) + 90px + env(safe-area-inset-bottom,0px))}
   .modal{top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:92dvh;border-radius:10px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:sheet .25s ease-out}
   .modal.daily{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
@@ -529,6 +573,8 @@ td.proj{font-weight:700}
   .chip.k-cert{background:var(--lilac)}
   .chip .ct,.chip .ic,.chip i{display:none}
   .chip.more-chip{display:none}
+  .chip.pri-u{outline:1.5px solid var(--red);outline-offset:1px}
+  .chip.pri-i{outline:1.5px solid var(--sun);outline-offset:1px}
   .month-title{font-size:19px;min-width:0}
 }
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
@@ -549,10 +595,7 @@ td.proj{font-weight:700}
     <div class="top-actions">
       <button class="round" id="bellBtn" data-act="drawer" aria-label="提醒通知"></button>
       <button class="round" id="gearBtn" data-act="tab" data-view="settings" aria-label="設定"></button>
-      <div class="add-wrap" id="addWrap">
-        <button class="btn primary" id="addBtn" data-act="add-menu" aria-haspopup="true" aria-expanded="false">＋ 新增</button>
-        <div class="add-menu" id="addMenu" hidden></div>
-      </div>
+      <button class="btn primary" id="addBtn" data-act="add">＋ 新增</button>
     </div>
   </header>
   <div id="banner"></div>
@@ -560,7 +603,7 @@ td.proj{font-weight:700}
   <footer class="foot" id="foot"></footer>
 </div>
 <nav class="bnav" id="bnav" aria-label="切換頁面"></nav>
-<button class="fab" id="fab" data-act="add-menu" aria-label="新增"></button>
+<button class="fab" id="fab" data-act="add" aria-label="新增"></button>
 <div id="overlay" class="overlay" hidden></div>
 <aside id="drawer" class="drawer layer" role="dialog" aria-modal="true" aria-label="提醒通知" hidden></aside>
 <div id="dailyPop" class="modal daily layer" role="dialog" aria-modal="true" aria-label="今日一句" hidden></div>
@@ -634,6 +677,13 @@ const catColor = (k, scope) => {
 };
 const timeLabel = e => e.allDay ? '整日' : e.time ? (e.endTime ? `${e.time}～${e.endTime}` : e.time) : '';
 const REPEAT = { none: '不重複', daily: '每天', weekdays: '每個工作日（一～五）', weekly: '每週', monthly: '每月', yearly: '每年' };
+/* 優先程度（參考 iPhone 提醒事項的「!」）：急件 > 重要 > 一般。舊資料的 star: true 視為「重要」 */
+const PRI = { urgent: { t: '急件', c: 'u', rank: 0 }, important: { t: '重要', c: 'i', rank: 1 } };
+const PRI_OPTS = [['', '一般'], ['important', '重要'], ['urgent', '急件']];
+const priOf = it => (it && (it.pri || (it.star ? 'important' : ''))) || '';
+const priRank = e => e.k === 'item' && PRI[priOf(e.ref)] ? PRI[priOf(e.ref)].rank : 2;
+const priTag = p => PRI[p] ? `<span class="pri ${PRI[p].c}">${PRI[p].t}</span>` : '';
+const priWord = p => PRI[p] ? `【${PRI[p].t}】` : '';
 const STATUS = { active: { t: '進行中', cls: 'today' }, obtained: { t: '已取證', cls: 'done' }, paused: { t: '暫停', cls: 'later' }, cancelled: { t: '已取消', cls: 'later' } };
 const CSTATE = { normal: '追蹤中', renewing: '續證中', retired: '不續證／停用' };
 const SCHEMES = ['CB', 'UL / cUL', 'CE (LVD)', 'CE (RED)', 'CE (EMC)', 'FCC', 'BSMI', 'NCC', 'CCC', 'PSE', 'KC', 'NOM', 'EAC', 'UKCA', 'TELEC / MIC', 'IECEx', 'ATEX', 'C1D2', 'MIL-STD-810', 'IP Rating', 'Energy Star', 'EPEAT', 'TS'];
@@ -919,7 +969,7 @@ function evRow(e, o = {}) {
   }
   let title = '';
   if ((e.k === 'step' || e.k === 'certday') && !o.noApp) title += appTag(e.app);
-  if (e.k === 'item' && e.ref.star) title += `<span class="star" title="重要">★</span>`;
+  if (e.k === 'item') title += priTag(priOf(e.ref));
   title += esc(e.k === 'cert' ? e.title + ' 證書到期' : e.title);
   if (e.rep) title += `<span class="rep-ic" title="${esc(REPEAT[e.ref.repeat] || '')}">${IC.repeat}</span>`;
   const meta = [];
@@ -963,10 +1013,12 @@ const scopeWord = () => UI.scope === 'all' ? '' : scopeOf(UI.scope).t;
 function vToday() {
   const ev = EV.filter(scopeOk);
   const todays = ev.filter(e => e.date === TODAY && e.k !== 'cert' && e.live);
-  const pending = todays.filter(e => !e.done);
+  const byPri = (a, b) => priRank(a) - priRank(b) || cmpEv(a, b);
+  const pending = todays.filter(e => !e.done).sort(byPri);
   const doneT = todays.filter(e => e.done);
-  const overdue = ev.filter(e => lvl(e) === 'overdue');
+  const overdue = ev.filter(e => lvl(e) === 'overdue').sort(byPri);
   const soon = ev.filter(e => lvl(e) === 'soon');
+  const urgent = ev.filter(e => e.k === 'item' && !e.done && priOf(e.ref) === 'urgent' && lvl(e)).length;
   const showWork = workVisible();
   const certAl = showWork ? S.certs.filter(c => ['expired', 'warn', 'watch'].includes(certLvl(c))).sort((a, b) => a.due < b.due ? -1 : 1) : [];
   const active = showWork ? S.apps.filter(isLive).sort((a, b) => (endOf(a) || '') < (endOf(b) || '') ? -1 : 1) : [];
@@ -996,7 +1048,7 @@ function vToday() {
     <div>
       <div class="hello">${greet}，${line}</div>
       <div class="today-date">${full(TODAY)}</div>
-      <div class="summary">${scopeWord() ? `【${scopeWord()}】` : ''}今天有 <b>${pending.length}</b> 件待辦${doneT.length ? `、已完成 <b>${doneT.length}</b> 件` : ''}；兩天內即將到期 <b>${soon.length}</b> 件${overdue.length ? `；逾期 <b>${overdue.length}</b> 件要先處理` : ''}。</div>
+      <div class="summary">${scopeWord() ? `【${scopeWord()}】` : ''}今天有 <b>${pending.length}</b> 件待辦${doneT.length ? `、已完成 <b>${doneT.length}</b> 件` : ''}；兩天內即將到期 <b>${soon.length}</b> 件${overdue.length ? `；逾期 <b>${overdue.length}</b> 件要先處理` : ''}${urgent ? `；急件 <b>${urgent}</b> 件` : ''}。</div>
     </div>
     <div class="next-ntf"><div class="nn-h">接下來的推播</div>${nextNoticesHtml(3)}</div>
   </section>
@@ -1065,9 +1117,9 @@ function vAgenda() {
   const q = UI.agQ.trim().toLowerCase();
   const hay = e => {
     const r = e.ref || {}; const a = e.app || {};
-    return [e.title, r.target, r.company, r.location, r.phone, r.note, r.cat, a.name, a.company, e.cert && e.cert.project, e.cert && e.cert.cert].filter(Boolean).join(' ').toLowerCase();
+    return [e.title, PRI[priOf(e.ref)] && PRI[priOf(e.ref)].t, r.target, r.company, r.location, r.phone, r.note, r.cat, a.name, a.company, e.cert && e.cert.project, e.cert && e.cert.cert].filter(Boolean).join(' ').toLowerCase();
   };
-  const base = EV.filter(scopeOk).filter(e => !q || hay(e).includes(q));
+  const base = EV.filter(scopeOk).filter(e => !q || hay(e).includes(q)).filter(e => !UI.agPri || (e.k === 'item' && priOf(e.ref)));
   const overdue = base.filter(e => lvl(e) === 'overdue');
   const end = addDays(TODAY, UI.agDays);
   const upcoming = base.filter(e => e.date >= TODAY && e.date <= end && (UI.agDone || !e.done) && (e.k !== 'cert' || ['warn', 'expired', 'watch'].includes(certLvl(e.cert))));
@@ -1080,6 +1132,7 @@ function vAgenda() {
     <label class="search">${IC.search}<input id="agSearch" type="search" placeholder="搜尋內容、對象、公司、地點、電話" value="${esc(UI.agQ)}" aria-label="搜尋行程"></label>
     <div class="seg" role="group" aria-label="期間">${segs}</div>
     <label class="chk-inline"><input type="checkbox" id="agDone" ${UI.agDone ? 'checked' : ''}> 顯示已完成</label>
+    <label class="chk-inline"><input type="checkbox" id="agPri" ${UI.agPri ? 'checked' : ''}> 只看急件／重要</label>
   </div>
   ${overdue.length ? `<div class="ag-day"><div class="ag-head"><b style="color:var(--red-tx)">逾期未完成</b><span>${overdue.length} 件</span></div><section class="panel">${rowsOrEmpty(overdue, '', { note: true })}</section></div>` : ''}
   ${days.length ? days.map(d => `<div class="ag-day"><div class="ag-head"><b>${full(d)}</b><span>${label(d)}・${byDay[d].length} 件</span></div><section class="panel">${rowsOrEmpty(byDay[d], '', { noDate: true, note: true })}</section></div>`).join('')
@@ -1136,15 +1189,16 @@ function vCalendar() {
     </div>
   </div>
   <div class="cal-wrap">
-    <div class="cal"><div class="cal-head">${heads}</div>${html}</div>
+    <div><div class="cal"><div class="cal-head">${heads}</div>${html}</div><p class="cal-hint">點日期就能看這天的行程、直接新增；「＋」會新增到選取的日期。</p></div>
     ${dayPanel(UI.sel)}
   </div>`;
 }
 function chip(e) {
   const L = lvl(e);
-  const cls = `chip k-${e.k}${e.done ? ' done' : ''}${L ? ' l-' + L : ''}`;
+  const P = e.k === 'item' ? PRI[priOf(e.ref)] : null;
+  const cls = `chip k-${e.k}${e.done ? ' done' : ''}${L ? ' l-' + L : ''}${P ? ' pri-' + P.c : ''}`;
   let style, lead, label;
-  if (e.k === 'item') { style = `--c:${catColor(e.ref.cat, e.ref.scope)}`; lead = '<i></i>'; label = (e.allDay ? '<b>整日</b> ' : e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
+  if (e.k === 'item') { style = `--c:${catColor(e.ref.cat, e.ref.scope)}`; lead = '<i></i>'; label = (P ? `<b class="pm ${P.c}">${P.c === 'u' ? '急' : '重'}</b> ` : '') + (e.allDay ? '<b>整日</b> ' : e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
   else if (e.k === 'step') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.doc}</span>`; label = (e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
   else if (e.k === 'certday') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.medal}</span>`; label = `${e.done ? '取證' : '預計取證'}・${esc(shortName(e.app))}`; }
   else { style = '--c:var(--lilac)'; lead = `<span class="ic">${IC.hour}</span>`; label = `${esc(e.cert.project)} ${esc(e.cert.cert)} 到期`; }
@@ -1156,8 +1210,9 @@ function dayPanel(d) {
   const per = periods.map(a => `<div class="period" style="--tape:var(--tape-${a.color || 1})"><span class="tape-sw"></span><span>${esc(appName(a))}・認證期間第 <b class="num">${diff(a.applyDate, d) + 1}</b> 天／共 ${diff(a.applyDate, endOf(a)) + 1} 天</span></div>`).join('');
   return `<section class="panel daypanel">
     <div class="panel-h"><h2>${full(d)}</h2>${d === TODAY ? '<span class="tag today">今天</span>' : ''}<button class="btn sm act" data-act="new-item" data-date="${d}">＋ 新增</button></div>
+    ${qaBox(d)}
     ${per}
-    ${rowsOrEmpty(list, emptyBox('這天沒有安排', '<div>點月曆上任一天就能查看或新增。</div>'), { noDate: true, note: true })}
+    ${rowsOrEmpty(list, emptyBox('這天沒有安排', '<div>在上面輸入一句話就能加入，或按「＋ 新增」。</div>'), { noDate: true, note: true })}
     ${d <= TODAY ? moodBox(d, true) : ''}
   </section>`;
 }
@@ -1348,7 +1403,7 @@ function plain(e) {
   const r = e.k === 'item' ? e.ref : null;
   const extra = r ? [r.target && `對象：${r.target}`, r.company && `公司：${r.company}`, r.location && `地點：${r.location}`].filter(Boolean).join('／') : '';
   const tl = timeLabel(e);
-  return `${md(e.date)}（${wd(e.date)}）${tl ? ' ' + tl : ''} ${pre}${e.title}${extra ? `（${extra}）` : ''}`;
+  return `${md(e.date)}（${wd(e.date)}）${tl ? ' ' + tl : ''} ${pre}${r ? priWord(priOf(r)) : ''}${e.title}${extra ? `（${extra}）` : ''}`;
 }
 function reportText() {
   const D = reportData(); const R = D.R; const L = [];
@@ -1502,10 +1557,6 @@ function render() {
   paintSync();
   $('#fab').innerHTML = IC.plus;
   $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy');
-  $('#addMenu').innerHTML = `
-    ${SCOPES.map(s => `<button data-act="new-item" data-scope="${s.k}"><span><b>${s.t} 事項</b><small>${s.hint}</small></span></button>`).join('')}
-    <button data-act="new-app"><span><b>認證申請</b><small>申請日 → 取證日＋提交節點</small></span></button>
-    <button data-act="new-cert"><span><b>證書效期</b><small>到期日提示</small></span></button>`;
   $('#foot').innerHTML = `<span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
 }
@@ -1558,7 +1609,7 @@ function noticeTimes(e) {
   }
   return [{ at: new Date(y, m - 1, d - 1, 9, 0), kind: 'day' }];
 }
-const noticeName = e => e.k === 'certday' ? `預計取證：${appName(e.app)}` : e.k === 'step' ? `${appName(e.app)}｜${e.title}` : e.title;
+const noticeName = e => e.k === 'certday' ? `預計取證：${appName(e.app)}` : e.k === 'step' ? `${appName(e.app)}｜${e.title}` : priWord(priOf(e.ref)) + e.title;
 function noticeText(e, n) {
   const when = '明天';
   const t = timeLabel(e);
@@ -1693,44 +1744,158 @@ function normTime(raw) {
   if (h > 23 || m > 59) return null;
   return pad(h) + ':' + pad(m);
 }
+/* 一句話新增（參考 Apple 行事曆的「快速事件」）：從文字找出日期、時間、地點（@）、急件／重要、屬性（#工作），剩下的就是內容 */
+const QA_HINT = '可以寫：明天、下週三、10/20、14:00～15:30、下午2點、@地點、急件、#個人';
+const QA_WD = { 日: 0, 天: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6 };
+const QA_T = '(?:(?:上午|早上|中午|下午|晚上|傍晚|凌晨)\\s*)?\\d{1,2}(?:[:：]\\d{2}|點半|點\\d{1,2}分?|點)(?:\\s*(?:am|pm))?|\\d{1,2}\\s*(?:am|pm)';
+function parseQuick(raw, base) {
+  let s = ` ${String(raw || '').replace(/\s+/g, ' ')} `;
+  const take = re => { const m = s.match(re); if (m) s = s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length); return m; };
+  const r = { title: '', date: isDate(base) ? base : TODAY, time: '', endTime: '', location: '', pri: '', scope: '', allDay: false };
+  let m;
+  if (take(/\s(?:急件|緊急|!!!?|！！！?)(?=\s)/)) r.pri = 'urgent';
+  else if (take(/\s(?:重要|[!！])(?=\s)/)) r.pri = 'important';
+  if ((m = take(/\s#(工作|個人|shinnyo|真如)(?=\s)/i))) r.scope = { 工作: 'work', 個人: 'personal' }[m[1]] || 'shinnyo';
+  if ((m = take(/\s[@＠](\S+)/))) r.location = m[1];
+  if (take(/整天|整日/)) r.allDay = true;
+  const t0 = parse(TODAY);
+  const mk = (y, mo, d) => { const x = new Date(y, mo - 1, d); return x.getMonth() === ((mo - 1) % 12 + 12) % 12 && x.getDate() === d ? ymd(x) : null; };
+  if ((m = take(/(\d{4})\s*[\/.\-年]\s*(\d{1,2})\s*[\/.\-月]\s*(\d{1,2})\s*[日號]?/))) r.date = mk(+m[1], +m[2], +m[3]) || r.date;
+  else if ((m = take(/(\d{1,2})\s*[\/月]\s*(\d{1,2})\s*[日號]?/))) {
+    let d = mk(t0.getFullYear(), +m[1], +m[2]);
+    if (d && diff(TODAY, d) < -60) d = mk(t0.getFullYear() + 1, +m[1], +m[2]); // 寫 1/5 這種已經過很久的日期，當成明年
+    r.date = d || r.date;
+  } else if ((m = take(/大後天|後天|明天|明日|今天|今日/))) r.date = addDays(TODAY, { 今天: 0, 今日: 0, 明天: 1, 明日: 1, 後天: 2, 大後天: 3 }[m[0]]);
+  else if ((m = take(/(\d{1,3})\s*天後/))) r.date = addDays(TODAY, +m[1]);
+  else if ((m = take(/(下下|下|這|本)?\s*(?:週|周|星期|禮拜)\s*([一二三四五六日天])/))) {
+    const cur = (t0.getDay() + 6) % 7, tw = (QA_WD[m[2]] + 6) % 7; // 週一到週日為一週
+    r.date = addDays(TODAY, m[1] === '下下' ? 14 - cur + tw : m[1] === '下' ? 7 - cur + tw : tw >= cur ? tw - cur : 7 - cur + tw);
+  } else if ((m = take(/(\d{1,2})\s*[號日]/))) {
+    const n = +m[1]; let x = new Date(t0.getFullYear(), t0.getMonth(), n);
+    if (x.getDate() === n && ymd(x) < TODAY) x = new Date(t0.getFullYear(), t0.getMonth() + 1, n);
+    if (x.getDate() === n) r.date = ymd(x);
+  }
+  if (!r.allDay) {
+    if ((m = take(new RegExp(`(${QA_T})\\s*(?:-|－|~|～|〜|到|至|—)\\s*(${QA_T})`, 'i')))) {
+      r.time = normTime(m[1]) || '';
+      let e = normTime(m[2]) || '';
+      // 「下午2點到4點」：結束時間沿用下午
+      if (r.time && e && e <= r.time) { const h = +e.slice(0, 2); if (h < 12 && h + 12 > +r.time.slice(0, 2)) e = pad(h + 12) + e.slice(2); }
+      r.endTime = r.time && e > r.time ? e : '';
+    } else if ((m = take(new RegExp(`(${QA_T})`, 'i')))) r.time = normTime(m[1]) || '';
+  }
+  r.title = s.replace(/\s+/g, ' ').trim().replace(/^[，,、:：\-—]+|[，,、:：\-—]+$/g, '').trim();
+  return r;
+}
+function qaPreviewHtml(p, raw, scope) {
+  if (!String(raw || '').trim()) return QA_HINT;
+  if (!p.title) return '還差「要做的事」';
+  const t = p.allDay ? '整日' : p.time ? p.time + (p.endTime ? '～' + p.endTime : '') : '';
+  return '→ ' + [`${md(p.date)}（${wd(p.date)}）${t ? ' ' + t : ''}`, scopeOf(scope).t, PRI[p.pri] && PRI[p.pri].t, p.location && '@' + p.location]
+    .filter(Boolean).map(esc).join('・') + `・<b>${esc(p.title)}</b>`;
+}
+const qaScope = () => UI.qaScope || (UI.scope !== 'all' ? UI.scope : 'work');
+// 月曆選到某一天時，當天清單上方的快速新增列
+function qaBox(d) {
+  const sc = qaScope();
+  return `<div class="qa" data-date="${d}">
+    <div class="qa-row"><input id="qaIn" class="qa-in" enterkeyhint="done" autocomplete="off" placeholder="在 ${md(d)}（${wd(d)}）新增：14:00 開會 @3F" aria-label="快速新增"><button type="button" class="btn sm primary" data-act="qa-add">加入</button></div>
+    <div class="qa-opts">${SCOPES.map(x => `<button type="button" class="qa-sc" data-act="qa-scope" data-s="${x.k}" aria-pressed="${x.k === sc}">${x.t}</button>`).join('')}<button type="button" class="link-btn qa-more" data-act="qa-more">完整表單 ›</button></div>
+    <div class="qa-prev">${QA_HINT}</div>
+  </div>`;
+}
+function qaPreview(box) {
+  const inp = box.querySelector('.qa-in'); const p = parseQuick(inp.value, box.dataset.date);
+  box.querySelector('.qa-prev').innerHTML = qaPreviewHtml(p, inp.value, p.scope || qaScope());
+}
+function quickAdd(box) {
+  const inp = box.querySelector('.qa-in'); const p = parseQuick(inp.value, box.dataset.date);
+  if (!p.title) { toast('請輸入要做的事，例如：14:00 開會', 'worried'); inp.focus(); return; }
+  const scope = p.scope || qaScope();
+  if (UI.view === 'calendar') { UI.sel = p.date; UI.month = p.date.slice(0, 8) + '01'; }
+  Store.set('items', uid('i'), { scope, cat: CATS[scope][0].k, title: p.title, date: p.date, allDay: p.allDay, time: p.time, endTime: p.endTime, location: p.location,
+    pri: p.pri, star: !!p.pri, repeat: 'none', until: '', done: false, createdAt: iso() });
+  toast(`已新增「${p.title}」${md(p.date)}（${wd(p.date)}）${p.time ? ' ' + p.time : ''}`);
+}
+// 日期快捷鍵：今天／明天／後天／下週一
+function dateChips(id) {
+  const toMon = ((8 - parse(TODAY).getDay()) % 7) || 7;
+  return `<div class="d-chips">${[['今天', 0], ['明天', 1], ['後天', 2], ['下週一', toMon]].map(([l, n]) => `<button type="button" class="d-chip" data-act="d-chip" data-for="${id}" data-v="${addDays(TODAY, n)}">${l}</button>`).join('')}</div>`;
+}
+// 新增時最上面的類型切換（像 iPhone 新增行程時選日曆，這裡選要新增事項、認證申請或證書）
+const typeSeg = (cur, date) => `<div class="type-seg seg" role="group" aria-label="新增類型">${[['item', '事項', 'new-item'], ['app', '認證申請', 'new-app'], ['cert', '證書效期', 'new-cert']]
+  .map(([k, t, act]) => `<button type="button" data-act="${act}" ${k === 'item' && date ? `data-date="${date}"` : ''} aria-pressed="${k === cur}">${t}</button>`).join('')}</div>`;
 const catOptions = (scope, cur) => CATS[scope].map(c => `<option ${c.k === cur ? 'selected' : ''}>${c.k}</option>`).join('');
 
-function openItemForm(it, date, scope) {
+/* 新增／編輯事項：參考 iPhone 行事曆——上方「取消／加入」、內容與地點在最前面、日期時間一組、屬性像選日曆；
+   新增時最上面可以一句話輸入，會即時帶入下面的欄位 */
+function openItemForm(it, date, scope, pre) {
   const sc = it ? (it.scope || 'work') : (scope || (UI.scope !== 'all' ? UI.scope : 'work'));
-  const v = it || { date: date || TODAY, cat: CATS[sc][0].k, scope: sc, repeat: 'none' };
-  const rep = isRep(v);
+  const v = it || Object.assign({ date: date || TODAY, cat: CATS[sc][0].k, scope: sc, repeat: 'none' }, pre || {});
+  const rep = isRep(v), pv = priOf(v), allDay = !!v.allDay;
   const m = $('#modal');
   m.setAttribute('aria-label', it ? '編輯事項' : '新增事項');
-  m.innerHTML = `<form id="fItem" autocomplete="off" novalidate>
-    <div class="sheet-h"><div><h2>${it ? '編輯事項' : '新增事項'}</h2><p>${it && it.gsrc ? '來自 Google 日曆：標題、日期、時間、地點會同步回 Google' : '前一天提醒，也可以設定重複'}</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
-    <div class="form-grid">
-      <div class="field full"><label>屬性</label><div class="radio-seg" role="radiogroup" aria-label="屬性">${SCOPES.map(s => `<label><input type="radio" name="fi-scope" value="${s.k}" ${sc === s.k ? 'checked' : ''}><span>${s.t}</span></label>`).join('')}</div></div>
-      ${fld('fi-title', '內容 <span class="req">*</span>', inp('fi-title', v.title, 'maxlength="200" placeholder="例如：與實驗室確認測試排程、繳電話費"'), 'full')}
-      ${fld('fi-date', (rep ? '開始日期' : '日期') + ' <span class="req">*</span>', dateInp('fi-date', v.date))}
-      <div class="field checks"><label><input type="checkbox" id="fi-allday" ${v.allDay ? 'checked' : ''}> 整日</label></div>
-      ${fld('fi-time', '開始時間', timeInp('fi-time', v.time, v.allDay) + '<div class="hint">直接輸入：930、9.30、14:30、下午2點半</div>')}
-      ${fld('fi-end', '約略結束時間（選填）', timeInp('fi-end', v.endTime, v.allDay))}
-      ${fld('fi-cat', '類別', `<select id="fi-cat">${catOptions(sc, v.cat)}</select>`)}
-      <div class="field checks"><label><input type="checkbox" id="fi-star" ${v.star ? 'checked' : ''}> 重要／急件</label>${it && !rep ? `<label><input type="checkbox" id="fi-done" ${v.done ? 'checked' : ''}> 已完成</label>` : ''}</div>
-      ${fld('fi-repeat', '重複', `<select id="fi-repeat">${Object.keys(REPEAT).map(k => `<option value="${k}" ${k === (v.repeat || 'none') ? 'selected' : ''}>${REPEAT[k]}</option>`).join('')}</select>`)}
-      ${fld('fi-until', '重複到（可不填）', dateInp('fi-until', v.until))}
-      ${fld('fi-target', '對象', inp('fi-target', v.target, 'placeholder="聯絡人／窗口"'))}
-      ${fld('fi-company', '公司', inp('fi-company', v.company, 'placeholder="公司、實驗室或店家"'))}
-      ${fld('fi-location', '地點', inp('fi-location', v.location, 'placeholder="會議室、地址或線上"'))}
-      ${fld('fi-phone', '聯絡電話', inp('fi-phone', v.phone, 'type="tel" inputmode="tel" placeholder="02-1234-5678"'))}
-      ${fld('fi-link', '相關連結', inp('fi-link', v.link, 'type="url" inputmode="url" placeholder="https://（會議連結、雲端資料夾…）"'), 'full')}
-      ${fld('fi-note', '備註', `<textarea id="fi-note" maxlength="2000">${esc(v.note || '')}</textarea>`, 'full')}
-    </div>${foot(it ? 'item:' + it.id : '')}</form>`;
+  const row = (label, input, cls = '') => `<div class="fr ${cls}"><span class="fl">${label}</span><div class="fv">${input}</div></div>`;
+  const radios = (name, opts, cur, label) => `<div class="radio-seg sm" role="radiogroup" aria-label="${label}">${opts.map(([k, t]) => `<label><input type="radio" name="${name}" value="${k}" ${cur === k ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div>`;
+  m.innerHTML = `<form id="fItem" class="ios" autocomplete="off" novalidate>
+    <div class="sheet-bar"><button type="button" class="link-btn" data-act="close">取消</button><h2>${it ? '編輯事項' : '新增事項'}</h2><button type="submit" class="btn sm primary">${it ? '儲存' : '加入'}</button></div>
+    ${it ? (it.gsrc ? '<p class="form-note">來自 Google 日曆：標題、日期、時間、地點會同步回 Google</p>' : '') : typeSeg('item', v.date)}
+    ${it ? '' : `<div class="fg qf"><input id="fi-quick" class="fi-in" autocomplete="off" enterkeyhint="done" placeholder="一句話輸入：明天 14:00 拜訪實驗室 @新北 急件" aria-label="一句話輸入"><div class="qa-prev" id="fi-quick-prev">${QA_HINT}</div></div>`}
+    <div class="fg">
+      <input id="fi-title" class="fi-in" value="${esc(v.title || '')}" maxlength="200" placeholder="內容（必填）" aria-label="內容">
+      <input id="fi-location" class="fi-in" value="${esc(v.location || '')}" placeholder="地點" aria-label="地點">
+    </div>
+    <div class="fg">
+      ${row('整日', `<input type="checkbox" id="fi-allday" class="switch" ${allDay ? 'checked' : ''} aria-label="整日">`)}
+      ${row(rep ? '開始日期' : '日期', `<input type="date" id="fi-date" value="${esc(v.date)}" aria-label="日期"><span class="wd-hint">${wdHint(v.date)}</span>`)}
+      <div class="fr fr-chips">${dateChips('fi-date')}</div>
+      ${row('開始', timeInp('fi-time', v.time, allDay), 'fr-time' + (allDay ? ' off' : ''))}
+      ${row('結束', timeInp('fi-end', v.endTime, allDay), 'fr-time' + (allDay ? ' off' : ''))}
+    </div>
+    <div class="fg">
+      ${row('重複', `<select id="fi-repeat" aria-label="重複">${Object.keys(REPEAT).map(k => `<option value="${k}" ${k === (v.repeat || 'none') ? 'selected' : ''}>${REPEAT[k]}</option>`).join('')}</select>`)}
+      ${row('重複到', `<input type="date" id="fi-until" value="${esc(v.until || '')}" aria-label="重複到（可不填）"><span class="wd-hint">${wdHint(v.until)}</span>`, 'fr-until' + (rep ? '' : ' off'))}
+    </div>
+    <div class="fg">
+      ${row('屬性', radios('fi-scope', SCOPES.map(x => [x.k, x.t]), sc, '屬性'))}
+      ${row('類別', `<select id="fi-cat" aria-label="類別">${catOptions(sc, v.cat)}</select>`)}
+      ${row('優先', radios('fi-pri', PRI_OPTS, pv, '優先'))}
+    </div>
+    <div class="fg">
+      ${row('對象', inp('fi-target', v.target, 'placeholder="聯絡人／窗口" aria-label="對象"'))}
+      ${row('公司', inp('fi-company', v.company, 'placeholder="公司、實驗室或店家" aria-label="公司"'))}
+      ${row('電話', inp('fi-phone', v.phone, 'type="tel" inputmode="tel" placeholder="02-1234-5678" aria-label="聯絡電話"'))}
+      ${row('連結', inp('fi-link', v.link, 'type="url" inputmode="url" placeholder="https://" aria-label="相關連結"'))}
+    </div>
+    <div class="fg"><textarea id="fi-note" class="fi-in" maxlength="2000" placeholder="備註" aria-label="備註">${esc(v.note || '')}</textarea></div>
+    ${it ? `<div class="fg">${!rep ? row('已完成', `<input type="checkbox" id="fi-done" class="switch" ${v.done ? 'checked' : ''} aria-label="已完成">`) : ''}<button type="button" class="fr-del" data-act="del" data-key="item:${esc(it.id)}">刪除事項</button></div>` : ''}
+  </form>`;
   openLayer(m);
-  if (!isPhone()) $('#fi-title').focus();
+  if (!isPhone()) (it ? $('#fi-title') : $('#fi-quick')).focus();
   const form = $('#fItem');
   form.addEventListener('change', ev => {
     if (ev.target.name === 'fi-scope') {
       const s2 = ev.target.value; $('#fi-cat').innerHTML = catOptions(s2, CATS[s2][0].k);
     }
     if (ev.target.id === 'fi-allday') {
-      $('#fi-time').disabled = ev.target.checked; $('#fi-end').disabled = ev.target.checked;
+      const on = ev.target.checked;
+      $$('#fItem .fr-time').forEach(r => r.classList.toggle('off', on));
+      $('#fi-time').disabled = on; $('#fi-end').disabled = on;
     }
+    if (ev.target.id === 'fi-repeat') $('#fItem .fr-until').classList.toggle('off', ev.target.value === 'none');
+  });
+  const qf = $('#fi-quick');
+  if (qf) qf.addEventListener('input', () => {
+    const p = parseQuick(qf.value, v.date);
+    const scEl = form.querySelector('input[name="fi-scope"]:checked');
+    $('#fi-quick-prev').innerHTML = qaPreviewHtml(p, qf.value, p.scope || (scEl ? scEl.value : sc));
+    if (!qf.value.trim()) return;
+    $('#fi-title').value = p.title; $('#fi-location').value = p.location;
+    const fd = $('#fi-date'); fd.value = p.date; updateWdHint(fd);
+    const ad = $('#fi-allday'); if (ad.checked !== p.allDay) { ad.checked = p.allDay; ad.dispatchEvent(new Event('change', { bubbles: true })); }
+    $('#fi-time').value = p.time; $('#fi-end').value = p.endTime;
+    const pr = form.querySelector(`input[name="fi-pri"][value="${p.pri}"]`); if (pr) pr.checked = true;
+    if (p.scope) { const s2 = form.querySelector(`input[name="fi-scope"][value="${p.scope}"]`); if (s2 && !s2.checked) { s2.checked = true; s2.dispatchEvent(new Event('change', { bubbles: true })); } }
   });
   form.addEventListener('submit', ev => {
     ev.preventDefault();
@@ -1748,8 +1913,9 @@ function openItemForm(it, date, scope) {
     if (endTime && !time) { toast('填了結束時間，也請填開始時間', 'worried'); $('#fi-time').focus(); return; }
     if (endTime && endTime <= time) { toast('結束時間要晚於開始時間', 'worried'); $('#fi-end').focus(); return; }
     const done = it && !rep ? chk('fi-done') : false;
+    const prEl = form.querySelector('input[name="fi-pri"]:checked'); const pri = prEl ? prEl.value : '';
     const body = Object.assign({}, it || {}, {
-      scope: scEl ? scEl.value : 'work', title, date, allDay, time, endTime, cat: val('fi-cat'), star: chk('fi-star'), repeat, until: repeat !== 'none' ? until : '',
+      scope: scEl ? scEl.value : 'work', title, date, allDay, time, endTime, cat: val('fi-cat'), pri, star: !!pri, repeat, until: repeat !== 'none' ? until : '',
       target: val('fi-target'), company: val('fi-company'), location: val('fi-location'), phone: val('fi-phone'), link: val('fi-link'), note: val('fi-note'), updatedAt: iso()
     });
     if (repeat === 'none') { body.done = done; if (done && !(it && it.done)) body.doneAt = iso(); if (!done) body.doneAt = null; }
@@ -1776,7 +1942,8 @@ function openAppForm(a, preset) {
   const m = $('#modal');
   m.setAttribute('aria-label', a ? '編輯認證申請' : '新增認證申請');
   m.innerHTML = `<form id="fApp" autocomplete="off" novalidate>
-    <div class="sheet-h"><div><h2>${a ? '編輯認證申請' : '新增認證申請'}</h2><p>申請日到取證日會用紙膠帶標在月曆上，每個節點到期前兩天提醒</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="sheet-h"><div><h2>${a ? '編輯認證申請' : '新增認證申請'}</h2><p>申請日到取證日會標在月曆上，每個節點在前一天提醒</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    ${a ? '' : typeSeg('app')}
     <div class="form-grid">
       <div class="fsec">基本資料</div>
       ${fld('fa-name', '認證名稱 <span class="req">*</span>', inp('fa-name', v.name, 'maxlength="120" placeholder="例如：R12 CB 認證"'), 'full')}
@@ -1849,6 +2016,7 @@ function openCertForm(c) {
   const projs = Array.from(new Set(S.certs.map(x => x.project).filter(Boolean))).sort();
   m.innerHTML = `<form id="fCert" autocomplete="off" novalidate>
     <div class="sheet-h"><div><h2>${c ? '編輯證書' : '新增證書'}</h2><p>180 天內開始追蹤，90 天內與過期列入每日提醒</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    ${c ? '' : typeSeg('cert')}
     <div class="form-grid">
       ${fld('fc-project', '機型／專案 <span class="req">*</span>', inp('fc-project', v.project, 'list="projList" maxlength="80"') + `<datalist id="projList">${projs.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`)}
       ${fld('fc-cert', '認證項目 <span class="req">*</span>', inp('fc-cert', v.cert, 'list="certList" maxlength="120" placeholder="例如：CB (發證日+5年)"') + `<datalist id="certList">${names.map(p => `<option value="${esc(p)}">`).join('')}</datalist>`)}
@@ -2326,7 +2494,7 @@ function buildFeed() {
   for (const it of S.items) {
     if (!isDate(it.date) || it.gsrc) continue;
     const sc = it.scope || 'work';
-    const pre = (sc === 'personal' ? '' : `【${scopeOf(sc).t}】`) + (it.star ? '★' : '');
+    const pre = (sc === 'personal' ? '' : `【${scopeOf(sc).t}】`) + priWord(priOf(it));
     const time = it.allDay ? '' : (it.time || ''), endTime = it.allDay ? '' : (it.endTime || '');
     const base = { desc: `${scopeOf(sc).t}・${it.cat || '其他'}`, location: it.location, url };
     if (isRep(it)) {
@@ -3113,22 +3281,37 @@ function insertTemplate() {
   });
   toast('已加入 6 個常用節點，可以再調整日期與內容', 'happy');
 }
-function closeAddMenu() { $('#addMenu').hidden = true; $('#addBtn').setAttribute('aria-expanded', 'false'); }
 
 const ACT = {
   tab: b => go(b.dataset.view),
   'go-cert': b => { UI.certTab = b.dataset.tab || 'apps'; go('cert'); },
   scope: b => { UI.scope = b.dataset.s; prefs.scope = UI.scope; savePrefs(); render(); },
-  'add-menu': () => { const m = $('#addMenu'); m.hidden = !m.hidden; $('#addBtn').setAttribute('aria-expanded', String(!m.hidden)); },
-  'new-item': b => { closeAddMenu(); openItemForm(null, b.dataset.date, b.dataset.scope); },
-  'new-app': () => { closeAddMenu(); openAppForm(null); },
-  'new-cert': () => { closeAddMenu(); openCertForm(null); },
+  // ＋：在認證頁新增申請／證書，其他頁新增事項（月曆上是選取的那一天）
+  add: b => {
+    if (UI.view === 'cert') { if (UI.certTab === 'certs') openCertForm(null); else openAppForm(null); return; }
+    openItemForm(null, b.dataset.date || (UI.view === 'calendar' ? UI.sel : TODAY));
+  },
+  'new-item': b => openItemForm(null, b.dataset.date, b.dataset.scope),
+  'new-app': () => openAppForm(null),
+  'new-cert': () => openCertForm(null),
+  'd-chip': b => { const el = document.getElementById(b.dataset.for); if (el) { el.value = b.dataset.v; updateWdHint(el); } },
+  'qa-add': b => quickAdd(b.closest('.qa')),
+  'qa-more': b => {
+    const box = b.closest('.qa'), raw = box.querySelector('.qa-in').value, p = parseQuick(raw, box.dataset.date);
+    openItemForm(null, p.date, p.scope || qaScope(), raw.trim() ? { title: p.title, time: p.time, endTime: p.endTime, location: p.location, pri: p.pri, allDay: p.allDay } : null);
+  },
+  'qa-scope': b => { UI.qaScope = b.dataset.s; $$('.qa-sc').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.s === UI.qaScope))); $$('.qa').forEach(qaPreview); },
   drawer: () => { fillDrawer(); openLayer($('#drawer')); },
   close: b => closeLayer(b.closest('.layer')),
   toggle: b => toggle(b),
   edit: b => openEdit(b.dataset.key),
   del: b => doDelete(b),
-  pick: b => { UI.sel = b.dataset.date; render(); },
+  // 像 iPhone 行事曆：點日期＝選取，這天的行程與新增列就在下方（手機上若在畫面外，往下捲一點）
+  pick: b => {
+    UI.sel = b.dataset.date; render();
+    const p = $('.daypanel');
+    if (p && matchMedia('(max-width:1020px)').matches) { const top = p.getBoundingClientRect().top; if (top > innerHeight * 0.72) window.scrollBy({ top: top - innerHeight * 0.45, behavior: reduceMotion() ? 'auto' : 'smooth' }); }
+  },
   'cal-prev': () => { const d = parse(UI.month); UI.month = ymd(new Date(d.getFullYear(), d.getMonth() - 1, 1)); render(); },
   'cal-next': () => { const d = parse(UI.month); UI.month = ymd(new Date(d.getFullYear(), d.getMonth() + 1, 1)); render(); },
   'cal-today': () => { UI.month = TODAY.slice(0, 8) + '01'; UI.sel = TODAY; render(); },
@@ -3237,14 +3420,15 @@ async function handleQuoteFile(file) {
 const normTxtKeepLines = s => String(s || '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
 document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-act]');
-  if (!$('#addMenu').hidden && !ev.target.closest('#addWrap') && !ev.target.closest('#fab')) closeAddMenu();
   if (!b) return;
   const fn = ACT[b.dataset.act];
   if (fn) { ev.preventDefault(); fn(b, ev); }
 });
 $('#overlay').addEventListener('click', closeTop);
 document.addEventListener('keydown', ev => {
-  if (ev.key === 'Escape') { if (!$('#addMenu').hidden) { closeAddMenu(); return; } closeTop(); }
+  if (ev.key === 'Escape') { closeTop(); return; }
+  // 快速新增：按 Enter 加入（中文選字時的 Enter 不算）
+  if (ev.key === 'Enter' && ev.target.classList && ev.target.classList.contains('qa-in') && !ev.isComposing && ev.keyCode !== 229) { ev.preventDefault(); quickAdd(ev.target.closest('.qa')); }
 });
 document.addEventListener('input', ev => {
   if (ev.target.id === 'certSearch') { UI.certQ = ev.target.value; render(); }
@@ -3252,6 +3436,7 @@ document.addEventListener('input', ev => {
   if (ev.target.id === 'syncInput') UI.syncInput = ev.target.value;
   if (ev.target.id === 'quoteBulk') UI.quoteBulk = ev.target.value;
   if (ev.target.id === 'gUrl') UI.gUrl = ev.target.value;
+  if (ev.target.classList && ev.target.classList.contains('qa-in')) qaPreview(ev.target.closest('.qa'));
   if (ev.target.id === 'moodText') {
     const t = ev.target, d = t.dataset.date;
     UI.moodDraft = { date: d, text: t.value };
@@ -3271,6 +3456,7 @@ document.addEventListener('change', ev => {
   if (ev.target.type === 'date') updateWdHint(ev.target);
   if (ev.target.id === 'sndToggle') { prefs.snd = ev.target.checked; savePrefs(); if (ev.target.checked) chime(); }
   if (ev.target.id === 'agDone') { UI.agDone = ev.target.checked; render(); }
+  if (ev.target.id === 'agPri') { UI.agPri = ev.target.checked; render(); }
   if (ev.target.id === 'importFile') handleImportFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'excelFile') handleExcelFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'quoteFile') handleQuoteFile(ev.target.files && ev.target.files[0]);

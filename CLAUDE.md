@@ -19,7 +19,9 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 
 ## 資料模型（localStorage key: `msec.data.v1`，偏好設定：`msec.prefs.v1`）
 - `items`：事項。scope `work|personal|shinnyo`（屬性與類別定義在 `SCOPES`／`CATS`）、cat、date、
-  allDay（整日）、time（開始）、endTime（約略結束，選填）、title、target、company、location、phone、link、note、star。
+  allDay（整日）、time（開始）、endTime（約略結束，選填）、title、target、company、location、phone、link、note、
+  pri（優先：`''|important|urgent`＝一般／重要／急件，2026/10/14 新增；舊資料的 `star: true` 視為重要，`priOf()`；存檔時 star 跟著 pri 寫）。
+  急件／重要：事項前面有標籤、今日待辦與逾期排最前面、問候列顯示急件數、行程頁可「只看急件／重要」、推播與報表文字加【急件】。
   重複：repeat `none|daily|weekdays|weekly|monthly|yearly`、until；重複事項的完成記在 `doneDates[YYYY-MM-DD]`，
   一般事項用 `done`/`doneAt`。從 Google 主日曆帶進來的事項另有 `gsrc: 'primary'`、`gev`（Google 事件 id），見下方「Google 日曆連動」。
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
@@ -79,6 +81,15 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 - 開了 GitHub 同步時，這次開 App 要先 Gist 同步成功一次（`sync.okOnce`）才跑 Google 同步，避免用舊資料改 Google。
   時機：存檔後 3 秒、Gist 同步帶來變更後、畫面開著每 2 分鐘、切回 App。
 - 測試：沒有可用的 Google 帳號時，用本機假的 Apps Script（直接執行 GAS_CODE ＋ 假 Calendar 服務）測；`gUrlOk` 在 localhost 允許 `http://localhost:<port>/exec`。
+
+## 新增事項的方式（2026/10/14，使用者要求「參考 iPhone 行事曆」）
+- 「＋」（頁首按鈕／手機右下圓鈕）直接開新增表單：月曆頁用選取的那天、認證頁開認證申請或證書、其他頁用今天。沒有下拉選單了。
+- 新增表單像 iPhone「新增行程」：上方「取消／加入」、最上面可切換「事項／認證申請／證書效期」（`typeSeg`）、
+  一句話輸入（`parseQuick`，像 Apple 行事曆的快速事件）會即時帶入下面欄位；內容與地點在前，整日開關、日期（今天／明天／後天／下週一捷徑）、
+  開始／結束、重複（「重複到」只在有重複時出現）、屬性、類別、優先；編輯時下方有「已完成」與「刪除事項」。
+- 月曆：點日期＝選取，下方（電腦是右側）當天清單上有一行快速新增（`qaBox`，Enter 加入、可選屬性、「完整表單 ›」帶著內容開表單）。
+- `parseQuick` 認得：今天／明天／後天／大後天、N天後、（下／下下）週X、M/D、YYYY/M/D、N號；14:00、下午2點半、2pm、範圍「下午2點到4點」；
+  `@地點`、`急件`／`!!`、`重要`／`!`（要用空白隔開）、`#工作／#個人／#shinnyo`、整天。
 
 ## 視覺風格（使用者指定：簡約、像無印良品，不要太可愛；不要粉紅色）
 2026/10/13 起由「日系手帳＋可愛小貼圖」改為 MUJI 風：
