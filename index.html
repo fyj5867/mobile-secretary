@@ -238,6 +238,10 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .mood-row .d{color:var(--sub);font-family:var(--f-num);font-size:12.5px}
 .mood-row .t{font-family:var(--f-read);line-height:1.7;overflow-wrap:anywhere}
 
+.ver-foot{text-align:center;margin:22px 0 0;font-family:var(--f-num);font-size:11.5px;letter-spacing:.06em;color:var(--faint)}
+.ver-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0!important;font-size:13px;color:var(--sub)}
+.ver-line b{font-family:var(--f-num);color:var(--ink);font-weight:600}
+
 /* ---------- agenda ---------- */
 .ag-day{margin-bottom:14px}
 .ag-head{display:flex;align-items:baseline;gap:8px;padding:0 4px 6px}
@@ -616,7 +620,9 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-const APP_VERSION = '1.0.0';
+/* 版本：和 sw.js 的 CACHE（msec-v18）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 18;
+const APP_DATE = '2026/10/14';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -1077,7 +1083,8 @@ function vToday() {
       </section>` : ''}
     </div>
   </div>
-  ${moodBox(TODAY)}`;
+  ${moodBox(TODAY)}
+  <p class="ver-foot">行動祕書 v${APP_VERSION}・${APP_DATE}</p>`;
 }
 
 /* 每日心情結語：一天一則、100 字內（id j<日期>，跨裝置同一天同一則）。存在自己的資料與私密同步，不進行事曆、不進 Google、不進報表文字。
@@ -1526,7 +1533,8 @@ function vSettings() {
         ${samples ? `<button class="btn danger" data-act="clear-samples">清除 ${samples} 筆範例資料</button>` : ''}
         <button class="btn danger" data-act="clear-all">清除全部資料</button>
       </div>
-      <p class="muted" style="margin-top:12px;font-size:12.5px">行動祕書 v${APP_VERSION}・提醒規則：事項前一天、證書 180／90 天</p>
+      <p class="ver-line">目前版本 <b>v${APP_VERSION}</b>（${APP_DATE}）<button class="link-btn" data-act="check-update">檢查更新</button></p>
+      <p class="muted" style="margin-top:4px;font-size:12.5px">提醒規則：事項前一天、證書 180／90 天</p>
     </section>
   </div>`;
 }
@@ -1557,7 +1565,7 @@ function render() {
   paintSync();
   $('#fab').innerHTML = IC.plus;
   $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy');
-  $('#foot').innerHTML = `<span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
+  $('#foot').innerHTML = `<span>版本 <b>v${APP_VERSION}</b>（${APP_DATE}）</span><span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
 }
 function go(view) {
@@ -3354,6 +3362,18 @@ const ACT = {
   'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); },
   'excel-import': () => { const f = $('#excelFile'); f.value = ''; f.click(); },
   'excel-apply': () => applyCertDiff(),
+  // 讀伺服器上 sw.js 的版本號，比這台新就更新並重新整理
+  'check-update': async () => {
+    try {
+      const txt = await fetch('sw.js', { cache: 'no-store' }).then(r => r.text());
+      const m = txt.match(/msec-v(d+)/); const latest = m ? +m[1] : APP_VERSION;
+      if (latest > APP_VERSION) {
+        toast(`有新版 v${latest}，正在更新…`);
+        try { const r = navigator.serviceWorker && await navigator.serviceWorker.getRegistration(); if (r) await r.update(); } catch (e) {}
+        setTimeout(() => location.reload(), 800);
+      } else toast(`已經是最新版 v${APP_VERSION}（${APP_DATE}）`);
+    } catch (e) { toast('目前無法檢查更新，請確認網路連線', 'worried'); }
+  },
   'g-setup': () => openGSetup(),
   'g-copy-code': () => copyText(gasCode(), '程式碼已複製，請貼到 Apps Script 的編輯器'),
   'g-connect': b => gConnect(($('#gUrl') || {}).value, b),

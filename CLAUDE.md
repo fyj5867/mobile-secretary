@@ -129,4 +129,5 @@ node tools/serve.js . 8765
 
 ## 部署
 推到 GitHub repository 的 `main`，Settings → Pages 設定 Branch `main` / `(root)`。
-改版後記得把 `sw.js` 的 `CACHE` 版本號 +1，手機才會拿到新版。
+改版後記得把 `sw.js` 的 `CACHE` 版本號 +1，手機才會拿到新版；**同時把 index.html 的 `APP_VERSION`（同一個數字）與 `APP_DATE` 一起改**——
+使用者靠今日頁最下方、設定頁「目前版本 vNN」確認有沒有更新到；設定頁「檢查更新」會讀伺服器上的 sw.js 版本號來比對。
