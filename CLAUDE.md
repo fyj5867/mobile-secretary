@@ -26,6 +26,10 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   一般事項用 `done`/`doneAt`。從 Google 主日曆帶進來的事項另有 `gsrc: 'primary'`、`gev`（Google 事件 id），見下方「Google 日曆連動」。
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
+  `bill`（2026/10/15 新增，報價與請款）：{ quote 收到報價單, sign 回簽報價單, invoice 收到發票, claim 發票請款：勾選的日期或 ''；amount 報價金額 }，
+  步驟定義在 `BILL`；卡片上可直接勾（記今天，再按取消），表單「報價與請款」可改日期與金額。
+  認證頁第三個分頁「報表」（`vCertReport`）：依配合單位（`company`）統計案件、節點進度、報價合計、帳務完成；案件進度表；
+  可「複製報表文字」與匯出 CSV（含報價與請款各步驟日期）。
 - `certs`：證書效期。project、cert、due、no、state `normal|renewing|retired`、note。
   **主資料是使用者每月審查的 Excel《TWINHEAD_安規認證到期管理_YYYYMMDD.xlsx》**（存在她的 Google Drive，每月一份新檔）。
   證書效期頁「從效期表更新」用 SheetJS（cdnjs xlsx 0.18.5，點按鈕才載入）讀「到期提醒總覽」工作表：

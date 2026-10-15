@@ -346,6 +346,24 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .stickers .stamp{width:26px;height:26px}
 .stickers .pend{width:26px;height:26px;display:grid;place-items:center}
 .stickers .pend i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--faint)}
+.bill{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.bill-h{font-size:12.5px;color:var(--sub);margin-right:2px}
+.bill-h b{font-family:var(--f-num);color:var(--ink);font-weight:600}
+.bill-chk{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--card);border-radius:3px;padding:2px 9px;font-size:12.5px;cursor:pointer;color:var(--sub)}
+.bill-chk svg{width:12px;height:12px;opacity:.25}
+.bill-chk.on{border-color:var(--mint);color:var(--mint-tx);background:var(--mint-soft)}
+.bill-chk.on svg{opacity:1}
+.bill-chk small{font-family:var(--f-num);font-size:11px}
+.bill-amt{margin-left:auto;font-family:var(--f-num);font-size:13px;color:var(--ink)}
+.bill-ed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
+.bill-ed .bi{display:flex;align-items:center;gap:8px;background:var(--card-2);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:14px}
+.bill-ed .bi input[type=checkbox]{width:17px;height:17px;accent-color:var(--mint)}
+.bill-ed .bi input[type=date]{margin-left:auto;border:0;background:transparent;font-size:14px;min-width:0;color:var(--sub)}
+.bdots{display:inline-flex;gap:3px;vertical-align:-1px}
+.bdots i{width:9px;height:9px;border-radius:50%;border:1px solid var(--faint)}
+.bdots i.on{background:var(--mint);border-color:var(--mint)}
+.cr-prog{display:flex;align-items:center;gap:6px;min-width:110px}
+.cr-prog .prog{flex:1;min-width:50px}
 .app-foot{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 .app-note{font-size:12.5px;color:var(--sub);margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}
 .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
@@ -560,6 +578,7 @@ td.proj{font-weight:700}
   .modal.daily{width:100%;padding:0 0 env(safe-area-inset-bottom,0px)}
   @keyframes sheet{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
   .form-grid{grid-template-columns:minmax(0,1fr)}
+  .bill-ed{grid-template-columns:minmax(0,1fr)}
   .checks{padding-top:2px}
   .step-ed{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .step-ed .se-title{grid-column:1/-1;order:-1}
@@ -622,8 +641,8 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v19）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 19;
+/* 版本：和 sw.js 的 CACHE（msec-v20）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 20;
 const APP_DATE = '2026/10/15';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
@@ -695,6 +714,11 @@ const priWord = p => PRI[p] ? `【${PRI[p].t}】` : '';
 const STATUS = { active: { t: '進行中', cls: 'today' }, obtained: { t: '已取證', cls: 'done' }, paused: { t: '暫停', cls: 'later' }, cancelled: { t: '已取消', cls: 'later' } };
 const CSTATE = { normal: '追蹤中', renewing: '續證中', retired: '不續證／停用' };
 const SCHEMES = ['CB', 'UL / cUL', 'CE (LVD)', 'CE (RED)', 'CE (EMC)', 'FCC', 'BSMI', 'NCC', 'CCC', 'PSE', 'KC', 'NOM', 'EAC', 'UKCA', 'TELEC / MIC', 'IECEx', 'ATEX', 'C1D2', 'MIL-STD-810', 'IP Rating', 'Energy Star', 'EPEAT', 'TS'];
+/* 報價與請款：四個勾選步驟，勾選時記下日期（a.bill = { quote, sign, invoice, claim: 'YYYY-MM-DD' 或 '', amount }） */
+const BILL = [['quote', '收到報價單'], ['sign', '回簽報價單'], ['invoice', '收到發票'], ['claim', '發票請款']];
+const billOf = a => a.bill || {};
+const billDone = a => BILL.filter(([k]) => isDate(billOf(a)[k])).length;
+const money = n => Number(n) > 0 ? 'NT$' + Number(n).toLocaleString('en-US') : '';
 const STEP_TPL = [
   [0, '申請表／授權書簽回'], [.15, '關鍵零件清單（BOM / CDF）'], [.3, '送樣（主機＋Adapter＋電池）'],
   [.5, '使用手冊／標籤圖／警語'], [.75, '測試報告初稿確認'], [.95, '證書草稿確認']
@@ -835,7 +859,7 @@ function demoData() {
       { id: 'di9', sample: true, scope: 'personal', title: '【範例】媽媽生日', date: d(20), cat: '家庭', repeat: 'yearly', note: '提前訂蛋糕' }
     ],
     apps: [
-      { id: 'da1', sample: true, name: '【範例】X 機種 CB 認證', scheme: 'CB', project: 'X 機種', company: '範例實驗室', target: '王小姐', phone: '02-1234-5678', applyDate: d(-14), certDate: d(45), status: 'active', color: 1, steps: [
+      { id: 'da1', sample: true, name: '【範例】X 機種 CB 認證', scheme: 'CB', project: 'X 機種', company: '範例實驗室', target: '王小姐', phone: '02-1234-5678', applyDate: d(-14), certDate: d(45), status: 'active', color: 1, bill: { quote: d(-20), sign: d(-16), invoice: '', claim: '', amount: 150000 }, steps: [
         { id: 's1', date: d(-14), title: '申請表／授權書簽回', done: true }, { id: 's2', date: d(-6), title: '關鍵零件清單（BOM / CDF）', done: true },
         { id: 's3', date: d(2), title: '送樣（主機＋Adapter＋電池）' }, { id: 's4', date: d(14), title: '使用手冊／標籤圖／警語' },
         { id: 's5', date: d(30), title: '測試報告初稿確認' }, { id: 's6', date: d(43), title: '證書草稿確認' }] },
@@ -1227,9 +1251,9 @@ function dayPanel(d) {
 }
 
 function vCert() {
-  const segs = [['apps', '認證申請', S.apps.filter(isLive).length], ['certs', '證書效期', S.certs.filter(c => ['expired', 'warn'].includes(certLvl(c))).length]]
+  const segs = [['apps', '認證申請', S.apps.filter(isLive).length], ['certs', '證書效期', S.certs.filter(c => ['expired', 'warn'].includes(certLvl(c))).length], ['report', '報表', 0]]
     .map(([k, t, n]) => `<button data-act="cert-tab" data-t="${k}" aria-pressed="${UI.certTab === k}">${t}${n ? `<span class="c">${n}</span>` : ''}</button>`).join('');
-  return `<div class="toolbar"><div class="seg" role="group" aria-label="認證">${segs}</div></div>` + (UI.certTab === 'certs' ? vCerts() : vApps());
+  return `<div class="toolbar"><div class="seg" role="group" aria-label="認證">${segs}</div></div>` + (UI.certTab === 'certs' ? vCerts() : UI.certTab === 'report' ? vCertReport() : vApps());
 }
 function vApps() {
   const f = UI.appFilter;
@@ -1274,9 +1298,88 @@ function appCard(a) {
     <div class="app-prog"><span>提交節點 <b>${dn}/${steps.length}</b></span><div class="prog"><i style="width:${steps.length ? dn / steps.length * 100 : 0}%"></i></div></div>
     ${steps.length ? `<div class="stickers" aria-hidden="true">${stickers}</div>` : ''}
     ${evs.length ? `<div class="rows" style="margin-top:6px">${evs.map(e => evRow(e, { noApp: true, noEdit: true })).join('')}</div>` : `<div class="more">尚未設定提交節點，按編輯可以「套用常用節點」。</div>`}
+    <div class="bill"><span class="bill-h">報價與請款 <b>${billDone(a)}/${BILL.length}</b></span>${BILL.map(([k, t]) => { const d = billOf(a)[k]; return `<button type="button" class="bill-chk ${isDate(d) ? 'on' : ''}" data-act="bill" data-id="${esc(a.id)}" data-k="${k}" aria-pressed="${isDate(d)}">${IC.check}${t}${isDate(d) ? `<small>${md(d)}</small>` : ''}</button>`; }).join('')}${money(billOf(a).amount) ? `<span class="bill-amt">報價 ${money(billOf(a).amount)}</span>` : ''}</div>
     ${a.note ? `<div class="app-note">${esc(a.note)}</div>` : ''}
     <div class="app-foot">${st === 'active' ? `<button class="btn sm primary" data-act="app-obtain" data-id="${esc(a.id)}">${IC.medal}標記已取證</button>` : ''}<button class="btn sm" data-act="edit" data-key="app:${esc(a.id)}">${IC.edit}編輯節點與資料</button></div>
   </article>`;
+}
+/* 認證報表：配合單位（公司／實驗室）× 案件 × 進度，另外看報價與請款走到哪一步 */
+function certReportData() {
+  const f = UI.crFilter || 'active';
+  const apps = S.apps.filter(a => f === 'all' ? true : f === 'active' ? isLive(a) : a.status === 'obtained')
+    .slice().sort((a, b) => (a.company || '').localeCompare(b.company || '', 'zh-Hant') || ((endOf(a) || '') < (endOf(b) || '') ? -1 : 1));
+  const row = a => {
+    const steps = a.steps || [], dn = steps.filter(x => x.done).length, end = endOf(a);
+    const next = steps.filter(x => !x.done && isDate(x.date)).sort((x, y) => x.date < y.date ? -1 : 1)[0];
+    return { a, dn, total: steps.length, end, left: isDate(end) ? diff(TODAY, end) : null, next, bd: billDone(a), amt: Number(billOf(a).amount) || 0 };
+  };
+  const rows = apps.map(row);
+  const units = {};
+  rows.forEach(r => {
+    const k = r.a.company || '（未填配合單位）';
+    const u = units[k] = units[k] || { name: k, n: 0, live: 0, got: 0, other: 0, dn: 0, total: 0, amt: 0, billOk: 0 };
+    u.n++; if (isLive(r.a)) u.live++; else if (r.a.status === 'obtained') u.got++; else u.other++;
+    u.dn += r.dn; u.total += r.total; u.amt += r.amt; if (r.bd === BILL.length) u.billOk++;
+  });
+  const sum = (fn) => rows.reduce((n, r) => n + fn(r), 0);
+  return {
+    f, rows, units: Object.values(units).sort((x, y) => y.n - x.n),
+    stepsDone: sum(r => r.dn), stepsAll: sum(r => r.total), amt: sum(r => r.amt),
+    waitSign: rows.filter(r => isDate(billOf(r.a).quote) && !isDate(billOf(r.a).sign)).length,
+    waitClaim: rows.filter(r => isDate(billOf(r.a).invoice) && !isDate(billOf(r.a).claim)).length
+  };
+}
+const crFilterName = f => ({ active: '進行中', obtained: '已取證', all: '全部' })[f];
+function vCertReport() {
+  const D = certReportData();
+  const seg = [['active', '進行中'], ['obtained', '已取證'], ['all', '全部']].map(([k, t]) => `<button data-act="cr-filter" data-f="${k}" aria-pressed="${D.f === k}">${t}</button>`).join('');
+  const rate = D.stepsAll ? Math.round(D.stepsDone / D.stepsAll * 100) : 0;
+  const dots = a => `<span class="bdots" title="${BILL.map(([k, t]) => t + (isDate(billOf(a)[k]) ? ' ' + md(billOf(a)[k]) : ' 未完成')).join('、')}">${BILL.map(([k]) => `<i class="${isDate(billOf(a)[k]) ? 'on' : ''}"></i>`).join('')}</span>`;
+  const unitRows = D.units.map(u => `<tr><td class="proj">${esc(u.name)}</td><td class="num">${u.n}</td><td class="num">${u.live}／${u.got}${u.other ? `／${u.other}` : ''}</td><td><div class="cr-prog"><div class="prog"><i style="width:${u.total ? u.dn / u.total * 100 : 0}%"></i></div><span class="num">${u.dn}/${u.total}</span></div></td><td class="num">${money(u.amt) || '—'}</td><td class="num">${u.billOk}/${u.n}</td></tr>`).join('');
+  const caseRows = D.rows.map(r => { const a = r.a, st = a.status || 'active'; return `<tr>
+    <td class="wrap" style="color:var(--ink);font-size:13.5px">${appTag(a)}${a.scheme ? `<span class="scheme">${esc(a.scheme)}</span>` : ''}${a.project ? `<div class="muted" style="font-size:12px">${esc(a.project)}</div>` : ''}</td>
+    <td>${esc(a.company || '—')}</td>
+    <td class="num">${isDate(a.applyDate) ? md(a.applyDate) : '—'} → ${isDate(r.end) ? md(r.end) : '—'}</td>
+    <td><div class="cr-prog"><div class="prog"><i style="width:${r.total ? r.dn / r.total * 100 : 0}%"></i></div><span class="num">${r.dn}/${r.total}</span></div>${r.next ? `<div class="muted" style="font-size:12px">下一步 ${md(r.next.date)} ${esc(r.next.title)}</div>` : ''}</td>
+    <td>${dots(a)} <span class="num muted">${r.bd}/${BILL.length}</span>${r.amt ? `<div class="num muted" style="font-size:12px">${money(r.amt)}</div>` : ''}</td>
+    <td>${st === 'active' && r.left != null ? `<span class="tag ${r.left < 0 ? 'overdue' : r.left <= 14 ? 'soon' : 'later'}">${r.left < 0 ? `已過 ${-r.left} 天` : `剩 ${r.left} 天`}</span>` : `<span class="tag ${STATUS[st] ? STATUS[st].cls : 'later'}">${STATUS[st] ? STATUS[st].t : esc(st)}</span>`}</td>
+  </tr>`; }).join('');
+  return `<div class="toolbar"><div class="seg" role="group" aria-label="報表範圍">${seg}</div><div class="grow"></div>
+    <button class="btn sm" data-act="cr-copy">${IC.copy}複製報表文字</button><button class="btn sm" data-act="cr-csv">${IC.dl}匯出 CSV</button></div>
+  <div class="kpis">
+    <div class="kpi"><div class="l">${crFilterName(D.f)}案件</div><div class="v">${D.rows.length}<small>件</small></div><div class="s">配合單位 ${D.units.length} 家</div></div>
+    <div class="kpi"><div class="l">節點完成</div><div class="v">${rate}<small>%</small></div><div class="s">${D.stepsDone}/${D.stepsAll} 個節點</div></div>
+    <div class="kpi"><div class="l">待回簽報價單</div><div class="v" style="color:var(--sun-tx)">${D.waitSign}</div><div class="s">已收報價、還沒回簽</div></div>
+    <div class="kpi"><div class="l">待發票請款</div><div class="v" style="color:var(--red-tx)">${D.waitClaim}</div><div class="s">報價合計 ${money(D.amt) || '—'}</div></div>
+  </div>
+  ${D.rows.length ? `<section class="panel" style="padding:0;overflow:hidden;margin-bottom:16px"><div class="panel-h" style="padding:12px 18px 10px;margin:0;border-bottom:1px solid var(--line)"><h2>依配合單位</h2><span class="n">進行中／已取證</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>配合單位</th><th>案件</th><th>進行中／已取證</th><th>節點進度</th><th>報價金額</th><th>帳務完成</th></tr></thead><tbody>${unitRows}</tbody></table></div></section>
+  <section class="panel" style="padding:0;overflow:hidden"><div class="panel-h" style="padding:12px 18px 10px;margin:0;border-bottom:1px solid var(--line)"><h2>案件進度表</h2><span class="n">報價與請款：${BILL.map(([, t]) => t).join(' → ')}</span></div>
+    <div class="tbl-wrap"><table><thead><tr><th>案件</th><th>配合單位</th><th>期間</th><th>節點</th><th>報價與請款</th><th>狀態</th></tr></thead><tbody>${caseRows}</tbody></table></div></section>`
+  : `<section class="panel">${emptyBox(`沒有${crFilterName(D.f)}的認證案件`, '<div>切換上方的「進行中／已取證／全部」看看。</div>')}</section>`}`;
+}
+function certReportText() {
+  const D = certReportData(), L = [];
+  const bills = a => BILL.map(([k, t]) => `${t}${isDate(billOf(a)[k]) ? '✓' + md(billOf(a)[k]) : '—'}`).join(' ');
+  L.push(`【認證案件報表】${TODAY.replace(/-/g, '/')}・${crFilterName(D.f)} ${D.rows.length} 件`);
+  L.push(`節點完成 ${D.stepsDone}/${D.stepsAll}；待回簽報價單 ${D.waitSign} 件；待發票請款 ${D.waitClaim} 件${D.amt ? `；報價合計 ${money(D.amt)}` : ''}`, '');
+  L.push('一、依配合單位');
+  D.units.forEach(u => L.push(`  - ${u.name}：${u.n} 件（進行中 ${u.live}、已取證 ${u.got}${u.other ? `、其他 ${u.other}` : ''}）；節點 ${u.dn}/${u.total}${u.amt ? `；報價 ${money(u.amt)}` : ''}；帳務完成 ${u.billOk}/${u.n}`));
+  L.push('', '二、案件進度');
+  D.rows.forEach((r, i) => {
+    const a = r.a, st = a.status || 'active';
+    const when = st === 'active' && r.left != null ? (r.left >= 0 ? `剩 ${r.left} 天` : `已過 ${-r.left} 天`) : (STATUS[st] ? STATUS[st].t : st);
+    L.push(`  ${i + 1}. ${appName(a)}${a.scheme ? `（${a.scheme}）` : ''}｜${a.company || '未填單位'}｜${isDate(a.applyDate) ? md(a.applyDate) : '—'}→${isDate(r.end) ? md(r.end) : '—'} ${when}`);
+    L.push(`     節點 ${r.dn}/${r.total}${r.next ? `，下一步 ${md(r.next.date)} ${r.next.title}` : ''}｜${bills(a)}${r.amt ? `｜報價 ${money(r.amt)}` : ''}`);
+  });
+  return L.join('\n');
+}
+function certReportCSV() {
+  const D = certReportData();
+  const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const head = ['認證名稱', '認證類別', '機種／專案', '配合單位', '窗口', '申請日', '預計取證日', '實際取證日', '狀態', '節點完成', '節點總數', '下一個節點', '報價金額'].concat(BILL.map(([, t]) => t), ['備註']);
+  const rows = D.rows.map(r => { const a = r.a; return [appName(a), a.scheme, a.project, a.company, a.target, a.applyDate, a.certDate, a.actualCertDate, STATUS[a.status || 'active'] ? STATUS[a.status || 'active'].t : a.status, r.dn, r.total, r.next ? `${r.next.date} ${r.next.title}` : '', r.amt || ''].concat(BILL.map(([k]) => billOf(a)[k] || ''), [a.note]).map(q).join(','); });
+  return '\uFEFF' + [head.map(q).join(',')].concat(rows).join('\r\n');
 }
 function vCerts() {
   const all = S.certs;
@@ -2002,6 +2105,9 @@ function openAppForm(a, preset) {
       <div class="fsec">提交節點（要交的內容）</div>
       <div class="full"><div class="steps-ed" id="fa-steps">${(v.steps || []).slice().sort((x, y) => (x.date || '') < (y.date || '') ? -1 : 1).map(stepRow).join('')}</div>
         <div class="steps-tools"><button type="button" class="btn sm" data-act="step-add">${IC.plus}新增節點</button><button type="button" class="btn sm" data-act="step-tpl">套用常用節點</button></div></div>
+      <div class="fsec">報價與請款</div>
+      ${fld('fa-amount', '報價金額（NT$，選填）', inp('fa-amount', billOf(v).amount || '', 'inputmode="numeric" placeholder="例如：150000"'))}
+      <div class="full bill-ed">${BILL.map(([k, t]) => `<label class="bi"><input type="checkbox" data-bill="${k}" ${isDate(billOf(v)[k]) ? 'checked' : ''}> ${t}<input type="date" data-bill-d="${k}" value="${esc(billOf(v)[k] || '')}" aria-label="${t}日期"></label>`).join('')}</div>
       <div class="fsec">取證與效期</div>
       ${fld('fa-actual', '實際取證日', dateInp('fa-actual', v.actualCertDate))}
       ${fld('fa-certno', '證書編號', inp('fa-certno', v.certNo))}
@@ -2010,6 +2116,12 @@ function openAppForm(a, preset) {
     </div>${foot(a ? 'app:' + a.id : '')}</form>`;
   openLayer(m);
   if (preset && preset.focus) { const f = document.getElementById(preset.focus); if (f) f.focus(); } else if (!isPhone()) $('#fa-name').focus();
+  // 勾選時自動填上今天，取消勾選就清掉日期；直接選日期也算勾選
+  $('#fApp').addEventListener('change', ev => {
+    const k = ev.target.dataset.bill, kd = ev.target.dataset.billD;
+    if (k) { const d = $(`#fApp [data-bill-d="${k}"]`); d.value = ev.target.checked ? (d.value || TODAY) : ''; }
+    if (kd) $(`#fApp [data-bill="${kd}"]`).checked = isDate(ev.target.value);
+  });
   $('#fApp').addEventListener('submit', ev => {
     ev.preventDefault();
     const name = val('fa-name'), applyDate = val('fa-apply'), certDate = val('fa-cert');
@@ -2024,12 +2136,14 @@ function openAppForm(a, preset) {
       const done = $('.se-done', r).checked;
       return { id, date: $('.se-date', r).value, time: normTime($('.se-time', r).value) || '', title: $('.se-title', r).value.trim(), done, doneAt: done ? (prev.doneAt || iso()) : null };
     }).filter(s => s.title || s.date);
+    const bill = { amount: Number(String(val('fa-amount')).replace(/[^\d.]/g, '')) || '' };
+    BILL.forEach(([k]) => { const c = $(`#fApp [data-bill="${k}"]`), d = $(`#fApp [data-bill-d="${k}"]`).value; bill[k] = c.checked ? (isDate(d) ? d : TODAY) : ''; });
     const colorEl = document.querySelector('input[name="fa-color"]:checked');
     const status = val('fa-status');
     const body = Object.assign({}, a || {}, {
       name, scheme: val('fa-scheme'), project: val('fa-project'), company: val('fa-company'), target: val('fa-target'), phone: val('fa-phone'),
       location: val('fa-location'), link: val('fa-link'), applyDate, certDate, status, color: colorEl ? Number(colorEl.value) : 1,
-      steps, actualCertDate: val('fa-actual'), certNo: val('fa-certno'), expiry: val('fa-expiry'), note: val('fa-note'), updatedAt: iso()
+      steps, bill, actualCertDate: val('fa-actual'), certNo: val('fa-certno'), expiry: val('fa-expiry'), note: val('fa-note'), updatedAt: iso()
     });
     if (!a) body.createdAt = iso();
     if (status === 'obtained' && !isDate(body.actualCertDate)) body.actualCertDate = TODAY;
@@ -3357,6 +3471,18 @@ const ACT = {
   'cal-today': () => { UI.month = TODAY.slice(0, 8) + '01'; UI.sel = TODAY; render(); },
   'cert-tab': b => { UI.certTab = b.dataset.t; render(); },
   'app-filter': b => { UI.appFilter = b.dataset.f; render(); },
+  'cr-filter': b => { UI.crFilter = b.dataset.f; render(); },
+  'cr-copy': () => copyText(certReportText(), '認證報表文字已複製，可以直接貼到郵件或 Teams'),
+  'cr-csv': () => shareOrDownload(`認證案件報表_${crFilterName(UI.crFilter || 'active')}_${TODAY}.csv`, certReportCSV(), 'text/csv'),
+  // 卡片上直接勾報價與請款：勾＝記下今天，再按一次取消
+  bill: b => {
+    const a = S.apps.find(x => x.id === b.dataset.id); if (!a) return;
+    const k = b.dataset.k, bill = Object.assign({}, billOf(a));
+    bill[k] = isDate(bill[k]) ? '' : TODAY;
+    Store.patch('apps', a.id, { bill });
+    const t = (BILL.find(x => x[0] === k) || [])[1];
+    toast(bill[k] ? `已勾選「${t}」${md(TODAY)}` : `已取消「${t}」`, bill[k] ? 'happy' : 'calm');
+  },
   'app-obtain': b => { const a = S.apps.find(x => x.id === b.dataset.id); if (a) openAppForm(a, { status: 'obtained', actualCertDate: a.actualCertDate || TODAY, focus: 'fa-expiry' }); },
   'ag-days': b => { UI.agDays = Number(b.dataset.n); render(); },
   'rep-mode': b => { UI.repMode = b.dataset.m; render(); },
