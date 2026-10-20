@@ -660,8 +660,8 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v23）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 23;
+/* 版本：和 sw.js 的 CACHE（msec-v24）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 24;
 const APP_DATE = '2026/10/20';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
@@ -719,7 +719,7 @@ const CATS = {
   ],
   personal: [
     { k: '生活', c: 'var(--peach)' }, { k: '家庭', c: 'var(--accent)' }, { k: '健康', c: 'var(--leaf)' }, { k: '運動', c: 'var(--sun)' },
-    { k: '繳費理財', c: 'var(--red)' }, { k: '學習', c: 'var(--teal)' }, { k: '休閒', c: 'var(--lilac)' }, { k: '其他', c: 'var(--faint)' }
+    { k: '繳費理財', c: 'var(--red)' }, { k: '學習', c: 'var(--teal)' }, { k: '休閒旅行', c: 'var(--lilac)' }, { k: '其他', c: 'var(--faint)' }
   ],
   shinnyo: [
     { k: '法會', c: 'var(--lilac)' }, { k: '修行', c: 'var(--teal)' }, { k: '志工服務', c: 'var(--leaf)' },
@@ -737,7 +737,10 @@ const catColor = (k, scope) => {
   for (const l of lists) { const f = l.find(c => c.k === k); if (f) return f.c; }
   return 'var(--faint)';
 };
-const timeLabel = e => e.allDay ? '整日' : e.time ? (e.endTime ? `${e.time}～${e.endTime}` : e.time) : '';
+// 多天事項（日期區間）：endDate 只用在不重複的事項；e.span = { s, e, i, n }（開始、結束、第幾天、共幾天）
+const spanEnd = it => !isRep(it) && isDate(it.endDate) && it.endDate > it.date ? it.endDate : '';
+const spanLabel = it => `${md(it.date)}${!it.allDay && it.time ? ' ' + it.time : ''}～${md(it.endDate)}${!it.allDay && it.endTime ? ' ' + it.endTime : ''}`;
+const timeLabel = e => e.span ? spanLabel(e.ref) : e.allDay ? '整日' : e.time ? (e.endTime ? `${e.time}～${e.endTime}` : e.time) : '';
 const REPEAT = { none: '不重複', daily: '每天', weekdays: '每個工作日（一～五）', weekly: '每週', monthly: '每月', yearly: '每年' };
 /* 優先程度（參考 iPhone 提醒事項的「!」）：急件 > 重要 > 一般。舊資料的 star: true 視為「重要」 */
 const PRI = { urgent: { t: '急件', c: 'u', rank: 0 }, important: { t: '重要', c: 'i', rank: 1 } };
@@ -854,6 +857,8 @@ function loadData() {
 function migrateItems() {
   let moved = false;
   S.items.forEach(it => { if (it.scope === 'personal' && it.cat === 'Shinnyo') { it.scope = 'shinnyo'; it.cat = '其他'; it.updatedAt = iso(); moved = true; } });
+  // v24：個人類別「休閒」改名「休閒旅行」（使用者要求）
+  S.items.forEach(it => { if ((it.scope || 'work') === 'personal' && it.cat === '休閒') { it.cat = '休閒旅行'; it.updatedAt = iso(); moved = true; } });
   return moved;
 }
 function saveData() {
@@ -956,10 +961,12 @@ function buildEvents() {
   for (const it of S.items) {
     if (!isDate(it.date)) continue;
     const rep = isRep(it);
-    const dates = rep ? occurrences(it, lo, hi) : [it.date];
+    const end = spanEnd(it), n = end ? diff(it.date, end) + 1 : 1;
+    const dates = rep ? occurrences(it, lo, hi) : end ? Array.from({ length: n }, (x, i) => addDays(it.date, i)).filter(d => d >= lo && d <= hi) : [it.date];
     for (const d of dates) {
-      const done = rep ? !!(it.doneDates && it.doneDates[d]) : (!!it.done || (!!it.gsrc && it.date < TODAY));
-      out.push({ k: 'item', key: rep ? `item:${it.id}:${d}` : `item:${it.id}`, id: it.id, date: d, allDay: !!it.allDay, time: it.allDay ? '' : (it.time || ''), endTime: it.allDay ? '' : (it.endTime || ''), title: it.title || '（未命名事項）', done, live: true, ref: it, rep, scope: it.scope || 'work' });
+      const done = rep ? !!(it.doneDates && it.doneDates[d]) : (!!it.done || (!!it.gsrc && (end || it.date) < TODAY));
+      const span = end ? { s: it.date, e: end, i: diff(it.date, d), n } : null;
+      out.push({ k: 'item', key: rep ? `item:${it.id}:${d}` : `item:${it.id}`, id: it.id, date: d, allDay: !!it.allDay || (span && span.i > 0), time: it.allDay || (span && span.i > 0) ? '' : (it.time || ''), endTime: it.allDay || span ? '' : (it.endTime || ''), title: it.title || '（未命名事項）', done, live: true, ref: it, rep, span, scope: it.scope || 'work' });
     }
   }
   for (const a of S.apps) {
@@ -981,6 +988,11 @@ const certEv = c => ({ k: 'cert', key: 'cert:' + c.id, id: c.id, date: c.due, ti
 function lvl(e) {
   if (e.k === 'cert') return null;
   if (e.done || !e.live) return null;
+  if (e.span) {
+    if (TODAY > e.span.e) return e.date === e.span.e ? 'overdue' : null;
+    if (TODAY >= e.span.s) return e.date === TODAY ? 'today' : null;
+    return e.span.i === 0 && diff(TODAY, e.span.s) <= LEAD ? 'soon' : null;
+  }
   const d = diff(TODAY, e.date);
   if (e.rep) {
     if (d < 0) return null;
@@ -1002,6 +1014,12 @@ function certLvl(c) {
 }
 function dueTag(e) {
   if (e.done) return { cls: 'done', txt: '已完成' };
+  if (e.span) {
+    if (TODAY > e.span.e) return { cls: 'overdue', txt: `逾期 ${diff(e.span.e, TODAY)} 天` };
+    if (TODAY >= e.span.s) return { cls: 'today', txt: `進行中 ${diff(e.span.s, TODAY) + 1}/${e.span.n}` };
+    const n = diff(TODAY, e.span.s);
+    return n === 1 ? { cls: 'soon', txt: '明天開始' } : n === 2 ? { cls: 'soon', txt: '後天開始' } : { cls: 'later', txt: `${n} 天後開始` };
+  }
   const d = diff(TODAY, e.date);
   if (e.k === 'certday' && d < 0) return { cls: 'overdue', txt: '取證日已過' };
   if (d < 0) return e.rep ? { cls: 'later', txt: '未打勾' } : { cls: 'overdue', txt: `逾期 ${-d} 天` };
@@ -1042,6 +1060,7 @@ function evRow(e, o = {}) {
   if (e.rep) title += `<span class="rep-ic" title="${esc(REPEAT[e.ref.repeat] || '')}">${IC.repeat}</span>`;
   const meta = [];
   const tl = timeLabel(e);
+  if (e.span) meta.push(`<span class="m">第 ${e.span.i + 1}／${e.span.n} 天</span>`);
   if (!o.noDate) meta.push(`<span class="m num">${md(e.date)}（${wd(e.date)}）${tl ? ' ' + tl : ''}</span>`);
   else if (tl) meta.push(`<span class="m num">${tl}</span>`);
   let note = '';
@@ -1268,7 +1287,7 @@ function chip(e) {
   const P = e.k === 'item' ? PRI[priOf(e.ref)] : null;
   const cls = `chip k-${e.k}${e.done ? ' done' : ''}${L ? ' l-' + L : ''}${P ? ' pri-' + P.c : ''}`;
   let style, lead, label;
-  if (e.k === 'item') { style = `--c:${catColor(e.ref.cat, e.ref.scope)}`; lead = '<i></i>'; label = (P ? `<b class="pm ${P.c}">${P.c === 'u' ? '急' : '重'}</b> ` : '') + (e.allDay ? '<b>整日</b> ' : e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
+  if (e.k === 'item') { style = `--c:${catColor(e.ref.cat, e.ref.scope)}`; lead = '<i></i>'; label = (P ? `<b class="pm ${P.c}">${P.c === 'u' ? '急' : '重'}</b> ` : '') + (e.span && e.span.i > 0 ? '<b>⋯</b> ' : e.allDay ? '<b>整日</b> ' : e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
   else if (e.k === 'step') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.doc}</span>`; label = (e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
   else if (e.k === 'certday') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.medal}</span>`; label = `${e.done ? '取證' : '預計取證'}・${esc(shortName(e.app))}`; }
   else { style = '--c:var(--lilac)'; lead = `<span class="ic">${IC.hour}</span>`; label = `${esc(e.cert.project)} ${esc(e.cert.cert)} 到期`; }
@@ -1462,7 +1481,8 @@ function reportData() {
   const R = range();
   const inR = s => isDate(s) && s >= R.s && s <= R.e;
   const ev = EV.filter(scopeOk);
-  const work = ev.filter(e => (e.k === 'item' || e.k === 'step') && inR(e.date));
+  const once = new Set(); const first = e => !e.span || (!once.has(e.id) && once.add(e.id)); // 多天事項只算一次
+  const work = ev.filter(e => (e.k === 'item' || e.k === 'step') && inR(e.date)).filter(first);
   const done = work.filter(e => e.done);
   const open = work.filter(e => !e.done && e.live);
   const late = open.filter(e => e.date < TODAY);
@@ -1471,7 +1491,8 @@ function reportData() {
   const newApps = showWork ? S.apps.filter(a => inR(a.applyDate)) : [];
   const gotApps = showWork ? S.apps.filter(a => a.status === 'obtained' && inR(endOf(a))) : [];
   const activeApps = showWork ? S.apps.filter(isLive) : [];
-  const nextWork = ev.filter(e => (e.k === 'item' || e.k === 'step' || e.k === 'certday') && !e.done && e.live && e.date >= R.next.s && e.date <= R.next.e);
+  once.clear();
+  const nextWork = ev.filter(e => (e.k === 'item' || e.k === 'step' || e.k === 'certday') && !e.done && e.live && e.date >= R.next.s && e.date <= R.next.e).filter(first);
   const certSoon = showWork ? S.certs.filter(c => certLvl(c) !== 'retired' && isDate(c.due) && diff(R.e, c.due) <= WARN).sort((a, b) => a.due < b.due ? -1 : 1) : [];
   const days = []; for (let d = R.s; d <= R.e; d = addDays(d, 1)) { const l = work.filter(e => e.date === d); days.push({ d, done: l.filter(e => e.done).length, open: l.filter(e => !e.done).length }); }
   const cats = {};
@@ -1756,7 +1777,7 @@ function fillDrawer() {
    App 開著或在背景時由 App 發通知；App 關著時靠 iPhone 行事曆（訂閱或匯出的 .ics，見 alarmsFor）。 */
 const NTF_KEY = 'msec.ntf.v1';
 function noticeTimes(e) {
-  if (!['item', 'step', 'certday'].includes(e.k) || e.done || !e.live) return [];
+  if (!['item', 'step', 'certday'].includes(e.k) || e.done || !e.live || (e.span && e.span.i > 0)) return [];
   const [y, m, d] = e.date.split('-').map(Number);
   if (e.time && !e.allDay) {
     const [h, mi] = e.time.split(':').map(Number);
@@ -1923,7 +1944,7 @@ function normTime(raw) {
   return pad(h) + ':' + pad(m);
 }
 /* 一句話新增（參考 Apple 行事曆的「快速事件」）：從文字找出日期、時間、地點（@）、急件／重要、屬性（#工作），剩下的就是內容 */
-const QA_HINT = '可以寫：明天、下週三、10/20、十月二十號、14:00～15:30、下午兩點半、@地點、急件、#個人';
+const QA_HINT = '可以寫：明天、下週三、10/20、10/20-10/23、十月二十號、14:00～15:30、下午兩點半、@地點、急件、#個人';
 const QA_WD = { 日: 0, 天: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6 };
 const QA_T = '(?:(?:上午|早上|中午|下午|晚上|傍晚|凌晨)\\s*)?\\d{1,2}(?:[:：]\\d{2}|點半|點\\d{1,2}分?|點)(?:\\s*(?:am|pm))?|\\d{1,2}\\s*(?:am|pm)';
 // 中文數字（兩點半、十月二十號、三天後）轉成阿拉伯數字；只轉後面接「點／時／月／號／天後」的，「早一點」「一點點」「第三點」不轉
@@ -1937,7 +1958,7 @@ const zhDigits = t => String(t || '')
 function parseQuick(raw, base) {
   let s = ` ${zhDigits(String(raw || '')).replace(/\s+/g, ' ')} `;
   const take = re => { const m = s.match(re); if (m) s = s.slice(0, m.index) + ' ' + s.slice(m.index + m[0].length); return m; };
-  const r = { title: '', date: isDate(base) ? base : TODAY, time: '', endTime: '', location: '', pri: '', scope: '', allDay: false };
+  const r = { title: '', date: isDate(base) ? base : TODAY, endDate: '', time: '', endTime: '', location: '', pri: '', scope: '', allDay: false };
   let m;
   if (take(/\s(?:急件|緊急|!!!?|！！！?)(?=\s)/)) r.pri = 'urgent';
   else if (take(/\s(?:重要|[!！])(?=\s)/)) r.pri = 'important';
@@ -1946,8 +1967,34 @@ function parseQuick(raw, base) {
   if (take(/整天|整日/)) r.allDay = true;
   const t0 = parse(TODAY);
   const mk = (y, mo, d) => { const x = new Date(y, mo - 1, d); return x.getMonth() === ((mo - 1) % 12 + 12) % 12 && x.getDate() === d ? ymd(x) : null; };
-  if ((m = take(/(\d{4})\s*[\/.\-年]\s*(\d{1,2})\s*[\/.\-月]\s*(\d{1,2})\s*[日號]?/))) r.date = mk(+m[1], +m[2], +m[3]) || r.date;
-  else if ((m = take(/(\d{1,2})\s*[\/月]\s*(\d{1,2})\s*[日號]?/))) {
+  const RSEP = '\\s*(?:-|－|~|～|〜|到|至|—)\\s*';
+  if ((m = take(new RegExp(`(\\d{1,2})\\s*[\\/月]\\s*(\\d{1,2})[日號]?\\s*(${QA_T})${RSEP}(\\d{1,2})\\s*[\\/月]\\s*(\\d{1,2})[日號]?\\s*(${QA_T})`, 'i')))) {
+    // 起訖都有時間：10/20 09:00-10/23 17:00（像 iPhone 的「開始／結束」）
+    let a = mk(t0.getFullYear(), +m[1], +m[2]);
+    if (a && diff(TODAY, a) < -60) a = mk(t0.getFullYear() + 1, +m[1], +m[2]);
+    if (a) {
+      const ay = +a.slice(0, 4), em = +m[4];
+      let b = mk(ay, em, +m[5]); if (b && b < a) b = mk(ay + 1, em, +m[5]);
+      r.date = a; r.time = normTime(m[3]) || '';
+      if (b && b > a) { r.endDate = b; r.endTime = normTime(m[6]) || ''; }
+      else if (b === a) { const e2 = normTime(m[6]) || ''; if (e2 > r.time) r.endTime = e2; }
+      r.timeSet = true;
+    }
+  } else if ((m = take(new RegExp(`(\\d{1,2})\\s*[\\/月]\\s*(\\d{1,2})[日號]?${RSEP}(?:(\\d{1,2})\\s*[\\/月]\\s*)?(\\d{1,2})[日號]?`)))) {
+    // 日期區間：10/20-10/23、10/20～23、10月20號到23號（年份同單一日期的規則；跨年的結束日自動算明年）
+    let a = mk(t0.getFullYear(), +m[1], +m[2]);
+    if (a && diff(TODAY, a) < -60) a = mk(t0.getFullYear() + 1, +m[1], +m[2]);
+    if (a) {
+      const ay = +a.slice(0, 4), em = m[3] ? +m[3] : +m[1];
+      let b = mk(ay, em, +m[4]); if (b && b < a) b = mk(ay + 1, em, +m[4]);
+      r.date = a; if (b && b > a) r.endDate = b;
+    }
+  } else if ((m = take(/(\d{1,2})[號日]\s*(?:-|－|~|～|〜|到|至|—)\s*(\d{1,2})[號日]/))) {
+    const x = new Date(t0.getFullYear(), t0.getMonth(), +m[1]), y = new Date(t0.getFullYear(), t0.getMonth(), +m[2]);
+    if (ymd(x) < TODAY) { x.setMonth(x.getMonth() + 1); y.setMonth(y.getMonth() + 1); }
+    r.date = ymd(x); if (ymd(y) > r.date) r.endDate = ymd(y);
+  } else if ((m = take(/(\d{4})\s*[\/.\-年]\s*(\d{1,2})\s*[\/.\-月]\s*(\d{1,2})[日號]?/))) r.date = mk(+m[1], +m[2], +m[3]) || r.date;
+  else if ((m = take(/(\d{1,2})\s*[\/月]\s*(\d{1,2})[日號]?/))) {
     let d = mk(t0.getFullYear(), +m[1], +m[2]);
     if (d && diff(TODAY, d) < -60) d = mk(t0.getFullYear() + 1, +m[1], +m[2]); // 寫 1/5 這種已經過很久的日期，當成明年
     r.date = d || r.date;
@@ -1956,12 +2003,12 @@ function parseQuick(raw, base) {
   else if ((m = take(/(下下|下|這|本)?\s*(?:週|周|星期|禮拜)\s*([一二三四五六日天])/))) {
     const cur = (t0.getDay() + 6) % 7, tw = (QA_WD[m[2]] + 6) % 7; // 週一到週日為一週
     r.date = addDays(TODAY, m[1] === '下下' ? 14 - cur + tw : m[1] === '下' ? 7 - cur + tw : tw >= cur ? tw - cur : 7 - cur + tw);
-  } else if ((m = take(/(\d{1,2})\s*[號日]/))) {
+  } else if ((m = take(/(\d{1,2})[號日]/))) {
     const n = +m[1]; let x = new Date(t0.getFullYear(), t0.getMonth(), n);
     if (x.getDate() === n && ymd(x) < TODAY) x = new Date(t0.getFullYear(), t0.getMonth() + 1, n);
     if (x.getDate() === n) r.date = ymd(x);
   }
-  if (!r.allDay) {
+  if (!r.allDay && !r.timeSet) {
     if ((m = take(new RegExp(`(${QA_T})\\s*(?:-|－|~|～|〜|到|至|—)\\s*(${QA_T})`, 'i')))) {
       r.time = normTime(m[1]) || '';
       let e = normTime(m[2]) || '';
@@ -1970,6 +2017,7 @@ function parseQuick(raw, base) {
       r.endTime = r.time && e > r.time ? e : '';
     } else if ((m = take(new RegExp(`(${QA_T})`, 'i')))) r.time = normTime(m[1]) || '';
   }
+  delete r.timeSet;
   r.title = s.replace(/\s+/g, ' ').trim().replace(/^[，,、:：\-—]+|[，,、:：\-—]+$/g, '').trim();
   return r;
 }
@@ -1977,7 +2025,7 @@ function qaPreviewHtml(p, raw, scope) {
   if (!String(raw || '').trim()) return QA_HINT;
   if (!p.title) return '還差「要做的事」';
   const t = p.allDay ? '整日' : p.time ? p.time + (p.endTime ? '～' + p.endTime : '') : '';
-  return '→ ' + [`${md(p.date)}（${wd(p.date)}）${t ? ' ' + t : ''}`, scopeOf(scope).t, PRI[p.pri] && PRI[p.pri].t, p.location && '@' + p.location]
+  return '→ ' + [`${md(p.date)}（${wd(p.date)}）${p.endDate ? `～${md(p.endDate)}（${wd(p.endDate)}）` : ''}${t ? ' ' + t : ''}`, scopeOf(scope).t, PRI[p.pri] && PRI[p.pri].t, p.location && '@' + p.location]
     .filter(Boolean).map(esc).join('・') + `・<b>${esc(p.title)}</b>`;
 }
 const qaScope = () => UI.qaScope || (UI.scope !== 'all' ? UI.scope : 'work');
@@ -2000,7 +2048,7 @@ function quickAdd(box) {
   const scope = p.scope || qaScope();
   if (UI.view === 'calendar') { UI.sel = p.date; UI.month = p.date.slice(0, 8) + '01'; }
   Store.set('items', uid('i'), { scope, cat: CATS[scope][0].k, title: p.title, date: p.date, allDay: p.allDay, time: p.time, endTime: p.endTime, location: p.location,
-    pri: p.pri, star: !!p.pri, repeat: 'none', until: '', done: false, createdAt: iso() });
+    pri: p.pri, star: !!p.pri, endDate: p.endDate || '', repeat: 'none', until: '', done: false, createdAt: iso() });
   toast(`已新增「${p.title}」${md(p.date)}（${wd(p.date)}）${p.time ? ' ' + p.time : ''}`);
 }
 // 日期快捷鍵：今天／明天／後天／下週一
@@ -2035,6 +2083,7 @@ function openItemForm(it, date, scope, pre) {
       ${row('整日', `<input type="checkbox" id="fi-allday" class="switch" ${allDay ? 'checked' : ''} aria-label="整日">`)}
       ${row(rep ? '開始日期' : '日期', `<input type="date" id="fi-date" value="${esc(v.date)}" aria-label="日期"><span class="wd-hint">${wdHint(v.date)}</span>`)}
       <div class="fr fr-chips">${dateChips('fi-date')}</div>
+      ${row('到', `<input type="date" id="fi-enddate" value="${esc(spanEnd(v) || '')}" aria-label="結束日期（多天才填）"><span class="wd-hint">${spanEnd(v) ? wdHint(v.endDate) : '多天的活動才填'}</span>`, 'fr-enddate' + (rep ? ' off' : ''))}
       ${row('開始', timeInp('fi-time', v.time, allDay), 'fr-time' + (allDay ? ' off' : ''))}
       ${row('結束', timeInp('fi-end', v.endTime, allDay), 'fr-time' + (allDay ? ' off' : ''))}
     </div>
@@ -2068,7 +2117,7 @@ function openItemForm(it, date, scope, pre) {
       $$('#fItem .fr-time').forEach(r => r.classList.toggle('off', on));
       $('#fi-time').disabled = on; $('#fi-end').disabled = on;
     }
-    if (ev.target.id === 'fi-repeat') $('#fItem .fr-until').classList.toggle('off', ev.target.value === 'none');
+    if (ev.target.id === 'fi-repeat') { $('#fItem .fr-until').classList.toggle('off', ev.target.value === 'none'); $('#fItem .fr-enddate').classList.toggle('off', ev.target.value !== 'none'); }
   });
   const qf = $('#fi-quick');
   if (qf) qf.addEventListener('input', () => {
@@ -2078,6 +2127,7 @@ function openItemForm(it, date, scope, pre) {
     if (!qf.value.trim()) return;
     $('#fi-title').value = p.title; $('#fi-location').value = p.location;
     const fd = $('#fi-date'); fd.value = p.date; updateWdHint(fd);
+    const fe = $('#fi-enddate'); fe.value = p.endDate || ''; updateWdHint(fe);
     const ad = $('#fi-allday'); if (ad.checked !== p.allDay) { ad.checked = p.allDay; ad.dispatchEvent(new Event('change', { bubbles: true })); }
     $('#fi-time').value = p.time; $('#fi-end').value = p.endTime;
     const pr = form.querySelector(`input[name="fi-pri"][value="${p.pri}"]`); if (pr) pr.checked = true;
@@ -2097,11 +2147,14 @@ function openItemForm(it, date, scope, pre) {
     if (time === null) { toast('開始時間看不懂，請輸入像 930 或 14:30 的格式', 'worried'); $('#fi-time').focus(); return; }
     if (endTime === null) { toast('結束時間看不懂，請輸入像 1100 或 17:30 的格式', 'worried'); $('#fi-end').focus(); return; }
     if (endTime && !time) { toast('填了結束時間，也請填開始時間', 'worried'); $('#fi-time').focus(); return; }
-    if (endTime && endTime <= time) { toast('結束時間要晚於開始時間', 'worried'); $('#fi-end').focus(); return; }
+    const endDate0 = repeat === 'none' ? val('fi-enddate') : '';
+    if (isDate(endDate0) && endDate0 < date) { toast('結束日期不能早於開始日期', 'worried'); $('#fi-enddate').focus(); return; }
+    const endDate = isDate(endDate0) && endDate0 > date ? endDate0 : '';
+    if (!endDate && endTime && endTime <= time) { toast('結束時間要晚於開始時間', 'worried'); $('#fi-end').focus(); return; }
     const done = it && !rep ? chk('fi-done') : false;
     const prEl = form.querySelector('input[name="fi-pri"]:checked'); const pri = prEl ? prEl.value : '';
     const body = Object.assign({}, it || {}, {
-      scope: scEl ? scEl.value : 'work', title, date, allDay, time, endTime, cat: val('fi-cat'), pri, star: !!pri, repeat, until: repeat !== 'none' ? until : '',
+      scope: scEl ? scEl.value : 'work', title, date, endDate, allDay, time, endTime, cat: val('fi-cat'), pri, star: !!pri, repeat, until: repeat !== 'none' ? until : '',
       target: val('fi-target'), company: val('fi-company'), location: val('fi-location'), phone: val('fi-phone'), link: val('fi-link'), note: val('fi-note'), updatedAt: iso()
     });
     if (repeat === 'none') { body.done = done; if (done && !(it && it.done)) body.doneAt = iso(); if (!done) body.doneAt = null; }
@@ -2400,13 +2453,13 @@ const alarmDayBefore = t => t ? '-P1D' : '-PT15H';
 const alarmsFor = t => [alarmDayBefore(t)];
 const FEED_VER = 2; // 提醒規則改變時 +1，讓訂閱的行事曆立刻拿到新的提醒時間
 const icsStamp = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
-function vevent({ uid: u, date, time, endTime, summary, desc, location, url, rrule, alarms, durMin = 30 }) {
+function vevent({ uid: u, date, endDate, time, endTime, summary, desc, location, url, rrule, alarms, durMin = 30 }) {
   const L = ['BEGIN:VEVENT', `UID:${u}@mobile-secretary`, `DTSTAMP:${icsStamp()}`];
   if (time) {
     L.push(`DTSTART:${icsDate(date)}T${time.replace(':', '')}00`);
-    L.push(endTime && endTime > time ? `DTEND:${icsDate(date)}T${endTime.replace(':', '')}00` : `DURATION:PT${durMin}M`);
+    L.push(endDate ? `DTEND:${icsDate(endDate)}T${(endTime || time).replace(':', '')}00` : endTime && endTime > time ? `DTEND:${icsDate(date)}T${endTime.replace(':', '')}00` : `DURATION:PT${durMin}M`);
   }
-  else { L.push(`DTSTART;VALUE=DATE:${icsDate(date)}`, `DTEND;VALUE=DATE:${icsDate(addDays(date, 1))}`); }
+  else { L.push(`DTSTART;VALUE=DATE:${icsDate(date)}`, `DTEND;VALUE=DATE:${icsDate(addDays(endDate || date, 1))}`); }
   if (rrule) L.push(`RRULE:${rrule}`);
   L.push(`SUMMARY:${icsText(summary)}`);
   if (desc) L.push(`DESCRIPTION:${icsText(desc)}`);
@@ -2437,8 +2490,8 @@ function exportEventsICS() {
       const al = alarmsFor(time, it.repeat);
       evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary, rrule: rr, alarms: al }, base)));
     } else {
-      if (it.done || it.date < TODAY || it.date > hi) continue;
-      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary, alarms: alarmsFor(time) }, base)));
+      if (it.done || (spanEnd(it) || it.date) < TODAY || it.date > hi) continue;
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, endDate: spanEnd(it), time, endTime, summary, alarms: alarmsFor(time) }, base)));
     }
   }
   for (const a of S.apps) {
@@ -2552,7 +2605,7 @@ async function syncNow(manual) {
     const mStr = canon(merged);
     const changed = mStr !== canon(local);
     applyRemoteLock(remote && remote.lock);
-    if (changed) { applyData(merged); saveData(); render(); }
+    if (changed) { applyData(merged); if (migrateItems()) scheduleSync(800); saveData(); render(); }
     // 雲端檔的加密狀態和這台的設定不同（剛開啟加密、換了密語、或被舊版改回明文）也要重新上傳
     const needData = !remote || mStr !== canon(remote) || (remote.encSalt || null) !== (syncCfg.ek ? syncCfg.esalt : null) || JSON.stringify(lockShared()) !== JSON.stringify(remote.lock || null);
     const needFeed = needData || !g.files[ICS_FILE] || syncCfg.feedDay !== TODAY || syncCfg.feedVer !== FEED_VER;
@@ -2739,7 +2792,7 @@ function buildFeed() {
     } else {
       if (it.date < lo || it.date > hi) continue;
       const future = it.date >= TODAY && !it.done;
-      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, time, endTime, summary: (it.done ? '✓ ' : '') + pre + it.title, alarms: future ? alarmsFor(time) : [] }, base)));
+      evs.push(vevent(Object.assign({ uid: 'item-' + it.id, date: it.date, endDate: spanEnd(it), time, endTime, summary: (it.done ? '✓ ' : '') + pre + it.title, alarms: future ? alarmsFor(time) : [] }, base)));
     }
   }
   for (const a of S.apps) {
@@ -2947,17 +3000,18 @@ const gTZ = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZon
 const gT = s => Date.parse(s || '') || 0;
 const gLocal = d => `${ymd(d)}T${gHM(d)}:00`;
 const gPlus = (t, n) => { const [h, m] = t.split(':').map(Number); const x = h * 60 + m + n; return x < 1440 ? pad(Math.floor(x / 60)) + ':' + pad(x % 60) : ''; };
-const gItemF = it => ({ title: it.title || '', location: it.location || '', date: it.date, allDay: !!it.allDay, time: it.time || '', endTime: it.endTime || '', repeat: it.gsrc ? 'none' : (it.repeat || 'none'), until: it.until || '' });
+const gItemF = it => ({ title: it.title || '', location: it.location || '', date: it.date, endDate: spanEnd(it), allDay: !!it.allDay, time: it.time || '', endTime: it.endTime || '', repeat: it.gsrc ? 'none' : (it.repeat || 'none'), until: it.until || '' });
 // 比較用的標準形：沒填時間＝整日；結束時間剛好一小時視同沒填（App 沒填結束時間時寫進 Google 是一小時）
 function gNorm(f) {
   const allDay = !!f.allDay || !f.time;
   const time = allDay ? '' : f.time;
+  const endDate = isDate(f.endDate) && f.endDate > f.date ? f.endDate : '';
   let endTime = allDay ? '' : (f.endTime || '');
-  if (endTime && (endTime <= time || endTime === gPlus(time, 60))) endTime = '';
+  if (!endDate && endTime && (endTime <= time || endTime === gPlus(time, 60))) endTime = '';
   const repeat = f.repeat && f.repeat !== 'none' ? f.repeat : 'none';
-  return { title: String(f.title || '').trim(), location: String(f.location || '').trim(), date: f.date, allDay, time, endTime, repeat, until: repeat !== 'none' && isDate(f.until) ? f.until : '' };
+  return { title: String(f.title || '').trim(), location: String(f.location || '').trim(), date: f.date, endDate, allDay, time, endTime, repeat, until: repeat !== 'none' && isDate(f.until) ? f.until : '' };
 }
-const G_GROUPS = { title: ['title'], loc: ['location'], time: ['date', 'allDay', 'time', 'endTime'], rep: ['repeat', 'until'] };
+const G_GROUPS = { title: ['title'], loc: ['location'], time: ['date', 'endDate', 'allDay', 'time', 'endTime'], rep: ['repeat', 'until'] };
 function gDiff(a, b, withRep) {
   const x = gNorm(a), y = gNorm(b);
   return Object.keys(G_GROUPS).filter(g => (g !== 'rep' || withRep) && G_GROUPS[g].some(k => x[k] !== y[k]));
@@ -2966,18 +3020,18 @@ function gFields(g, groups) {
   const f = {};
   if (groups.includes('title')) f.title = g.title;
   if (groups.includes('loc')) f.location = g.location;
-  if (groups.includes('time')) Object.assign(f, { date: g.date, allDay: g.allDay, time: g.time, endTime: g.endTime });
+  if (groups.includes('time')) Object.assign(f, { date: g.date, endDate: g.endDate, allDay: g.allDay, time: g.time, endTime: g.endTime });
   if (groups.includes('rep')) Object.assign(f, { repeat: g.repeat, until: g.until });
   return f;
 }
 // Google 事件 → App 欄位
 function evF(e) {
   const s = e.start || {}, en = e.end || {};
-  const f = { title: e.summary || '（無標題）', location: e.location || '', date: '', allDay: true, time: '', endTime: '', repeat: 'none', until: '' };
+  const f = { title: e.summary || '（無標題）', location: e.location || '', date: '', endDate: '', allDay: true, time: '', endTime: '', repeat: 'none', until: '' };
   if (s.dateTime) {
     const d = new Date(s.dateTime); f.date = ymd(d); f.allDay = false; f.time = gHM(d);
-    if (en.dateTime) { const x = new Date(en.dateTime); if (ymd(x) === f.date && gHM(x) > f.time) f.endTime = gHM(x); }
-  } else if (s.date) f.date = s.date;
+    if (en.dateTime) { const x = new Date(en.dateTime); if (ymd(x) === f.date) { if (gHM(x) > f.time) f.endTime = gHM(x); } else if (ymd(x) > f.date) { f.endDate = ymd(x); f.endTime = gHM(x); } }
+  } else if (s.date) { f.date = s.date; if (en.date && diff(s.date, en.date) > 1) f.endDate = addDays(en.date, -1); }
   return Object.assign(f, gParseRule(e.recurrence, f.date));
 }
 function gParseRule(rec, date) {
@@ -3003,15 +3057,12 @@ function gParseRule(rec, date) {
 // App 欄位 → Google 時間（一律用這台裝置的時區）
 function gTimeBody(f, e) {
   const n = gNorm(f);
-  if (n.allDay) {
-    let span = 1;
-    if (e && e.start && e.start.date && e.end && e.end.date) span = Math.max(1, diff(e.start.date, e.end.date));
-    return { start: { date: n.date }, end: { date: addDays(n.date, span) } };
-  }
+  if (n.allDay) return { start: { date: n.date }, end: { date: addDays(n.endDate || n.date, 1) } };
   const [y, mo, d] = n.date.split('-').map(Number), [h, mi] = n.time.split(':').map(Number);
   const st = new Date(y, mo - 1, d, h, mi);
   let en;
-  if (f.endTime && f.endTime > n.time) { const [eh, em] = f.endTime.split(':').map(Number); en = new Date(y, mo - 1, d, eh, em); }
+  if (n.endDate) { const [ey, emo, ed] = n.endDate.split('-').map(Number), [eh, em] = (f.endTime || n.time).split(':').map(Number); en = new Date(ey, emo - 1, ed, eh, em); }
+  else if (f.endTime && f.endTime > n.time) { const [eh, em] = f.endTime.split(':').map(Number); en = new Date(y, mo - 1, d, eh, em); }
   else {
     let dur = 60;
     if (e && e.start && e.start.dateTime && e.end && e.end.dateTime) { const x = (new Date(e.end.dateTime) - new Date(e.start.dateTime)) / 6e4; if (x > 0) dur = x; }
@@ -3108,6 +3159,7 @@ function gPlanApp(evs, P) {
     }
     if (!e.start) continue;
     const g = evF(e), two = o.kind === 'item', withRep = two && g.repeat !== 'custom';
+    if (two && o.ref.endDate === undefined && g.endDate) { gSet(P, o.ref, gFields(g, ['time'])); continue; }
     const groups = gDiff(o.f, g, withRep);
     if (groups.length && two && gT(e.updated) > gT(o.upd)) { gSet(P, o.ref, gFields(g, groups)); continue; }
     const body = groups.length ? gPatchBody(o.f, e, groups, withRep, gRem(o)) : {};
@@ -3173,12 +3225,14 @@ function gPlanPrimary(evs, P, lo, hi) {
 function gImport(e, P) {
   const g = evF(e), id = gItemId(e.id);
   if (!isDate(g.date)) return;
-  P.add.set(id, { id, gsrc: 'primary', gev: e.id, scope: gcal.scope || 'personal', cat: '其他', title: g.title, date: g.date, allDay: g.allDay, time: g.time, endTime: g.endTime,
+  P.add.set(id, { id, gsrc: 'primary', gev: e.id, scope: gcal.scope || 'personal', cat: '其他', title: g.title, date: g.date, endDate: g.endDate, allDay: g.allDay, time: g.time, endTime: g.endTime,
     location: g.location, note: gDesc(e.description), link: safeUrl(e.link), repeat: 'none', until: '', done: false, createdAt: iso(),
     updatedAt: e.updated || iso() }); // 用 Google 的修改時間：別台裝置若已補過屬性、備註，合併時以那邊為準
 }
 function gCompareImported(it, e, P) {
-  const g = evF(e), groups = gDiff(gItemF(it), g, false);
+  const g = evF(e);
+  if (it.endDate === undefined && g.endDate) { gSet(P, it, gFields(g, ['time'])); return; }
+  const groups = gDiff(gItemF(it), g, false);
   if (!groups.length) return;
   if (gT(e.updated) > gT(it.updatedAt)) { gSet(P, it, gFields(g, groups)); return; }
   P.ops.push({ op: 'patch', cal: 'primary', id: e.id, body: gPatchBody(gItemF(it), e, groups, false, null), then: r => {
@@ -3755,7 +3809,7 @@ const ACT = {
   'qa-add': b => quickAdd(b.closest('.qa')),
   'qa-more': b => {
     const box = b.closest('.qa'), raw = box.querySelector('.qa-in').value, p = parseQuick(raw, box.dataset.date);
-    openItemForm(null, p.date, p.scope || qaScope(), raw.trim() ? { title: p.title, time: p.time, endTime: p.endTime, location: p.location, pri: p.pri, allDay: p.allDay } : null);
+    openItemForm(null, p.date, p.scope || qaScope(), raw.trim() ? { title: p.title, endDate: p.endDate, time: p.time, endTime: p.endTime, location: p.location, pri: p.pri, allDay: p.allDay } : null);
   },
   'qa-scope': b => { UI.qaScope = b.dataset.s; $$('.qa-sc').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.s === UI.qaScope))); $$('.qa').forEach(qaPreview); },
   drawer: () => { fillDrawer(); openLayer($('#drawer')); },

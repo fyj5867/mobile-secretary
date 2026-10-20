@@ -23,7 +23,10 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   pri（優先：`''|important|urgent`＝一般／重要／急件，2026/10/14 新增；舊資料的 `star: true` 視為重要，`priOf()`；存檔時 star 跟著 pri 寫）。
   急件／重要：事項前面有標籤、今日待辦與逾期排最前面、問候列顯示急件數、行程頁可「只看急件／重要」、推播與報表文字加【急件】。
   重複：repeat `none|daily|weekdays|weekly|monthly|yearly`、until；重複事項的完成記在 `doneDates[YYYY-MM-DD]`，
-  一般事項用 `done`/`doneAt`。從 Google 主日曆帶進來的事項另有 `gsrc: 'primary'`、`gev`（Google 事件 id），見下方「Google 日曆連動」。
+  一般事項用 `done`/`doneAt`。
+  多天事項（v24，2026/10/20）：`endDate`（只用在不重複的事項，`spanEnd()`）；開始時間屬於第一天、結束時間屬於最後一天。
+  `buildEvents` 每天產生一筆、帶 `e.span = {s,e,i,n}`；只在第一天前一天推播、狀態「進行中 x/n」、沒完成時只在最後一天算一次逾期、報表只算一次。
+  一句話輸入認得 10/20-10/23、10/20～23、二十號到二十三號、10/20 09:00-10/23 17:00。Google 兩邊都帶區間；v23 以前帶進來的多天 Google 行程第一次同步會補上 endDate（不會把 Google 縮成一天）。從 Google 主日曆帶進來的事項另有 `gsrc: 'primary'`、`gev`（Google 事件 id），見下方「Google 日曆連動」。
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
   `bill`（2026/10/15 新增，報價與請款）：{ quote 收到報價單, sign 回簽報價單, invoice 收到發票, claim 發票請款：勾選的日期或 ''；amount 報價金額 }，
