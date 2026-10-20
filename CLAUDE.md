@@ -71,10 +71,13 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   內容只放標題、時間、地點、屬性・類別，不放電話／對象／備註（使用者隱私偏好）。單向：iPhone 端修改不會回 App。
 
 ## 資安（2026/10/20 新增，使用者要求）
-- **App 鎖**（每台裝置各自設定，`msec.lock.v1`，不同步、不進備份）：PIN（4～8 碼）或密碼，只存 PBKDF2-SHA256（15 萬次）雜湊與 salt。
+- **App 鎖**（`msec.lock.v1`；v23 起**跟著雲端同步**：使用者回報 iPhone 打開沒上鎖——她以為設一次全部裝置都有。
+  payload 的 `lock` 只放 {kind, salt, hash, iter, delay, at}，以 `at` 最新為準；關閉也同步（`msec.lockoff.v1` 記時間）；
+  Face ID 註冊 `wa` 只屬於各裝置。沒有鎖時今日頁最上方有「設定 App 鎖」提示）：PIN（4～8 碼）或密碼，只存 PBKDF2-SHA256（15 萬次）雜湊與 salt。
   上鎖時 `body.app-locked` 只顯示 `#lockScreen`；自動上鎖：離開 App 超過 `delay` 分鐘（0＝每次進入都要解鎖，**預設**，使用者要求「一進入就要密碼」）、
   或畫面開著沒操作超過 max(delay,5) 分鐘。可用 WebAuthn 平台驗證（Face ID／指紋／Windows Hello，`lockCfg.wa` 存 credential id）解鎖。
-  錯 5 次開始冷卻。「忘記密碼」＝清除這台的資料與連線設定（不能只清鎖，否則有同步的人一清就能把資料抓回來），再重新配對取回。
+  錯 5 次開始冷卻。「忘記密碼」：① 貼上同一個 GitHub 帳號的金鑰（呼叫 /user 比對 login）證明是本人 → 關閉鎖（同步到各裝置）再設新 PIN；
+  ② 或清除這台的資料與連線設定（不能只清鎖而不驗證，否則任何人一清就能把資料抓回來）。
   頁首鎖頭按鈕可立即上鎖。這是防「拿到沒鎖的裝置」的鎖，不是磁碟加密。
 - **雲端同步加密**：secret Gist 不是私密的（知道網址就能讀），所以 `msec-data.json` 可加密成
   `{ enc:1, kdf:{alg,iter,salt}, iv, ct }`（AES-GCM，金鑰＝PBKDF2(同步密語, salt, 25 萬次)）。金鑰存在各裝置 `syncCfg.ek/esalt`，不存密語原文。
