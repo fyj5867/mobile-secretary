@@ -72,7 +72,7 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 
 ## 資安（2026/10/20 新增，使用者要求）
 - **App 鎖**（每台裝置各自設定，`msec.lock.v1`，不同步、不進備份）：PIN（4～8 碼）或密碼，只存 PBKDF2-SHA256（15 萬次）雜湊與 salt。
-  上鎖時 `body.app-locked` 只顯示 `#lockScreen`；自動上鎖：離開 App 超過 `delay` 分鐘（0＝離開就鎖，App 切換畫面也看不到）、
+  上鎖時 `body.app-locked` 只顯示 `#lockScreen`；自動上鎖：離開 App 超過 `delay` 分鐘（0＝每次進入都要解鎖，**預設**，使用者要求「一進入就要密碼」）、
   或畫面開著沒操作超過 max(delay,5) 分鐘。可用 WebAuthn 平台驗證（Face ID／指紋／Windows Hello，`lockCfg.wa` 存 credential id）解鎖。
   錯 5 次開始冷卻。「忘記密碼」＝清除這台的資料與連線設定（不能只清鎖，否則有同步的人一清就能把資料抓回來），再重新配對取回。
   頁首鎖頭按鈕可立即上鎖。這是防「拿到沒鎖的裝置」的鎖，不是磁碟加密。

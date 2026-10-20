@@ -658,8 +658,8 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v21）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 21;
+/* 版本：和 sw.js 的 CACHE（msec-v22）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 22;
 const APP_DATE = '2026/10/20';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
@@ -1633,10 +1633,10 @@ function vSettings() {
         ${qs.length > 6 ? `<button class="link-btn" data-act="quote-all" style="margin-top:8px">${UI.quoteAll ? '收起' : `顯示全部 ${qs.length} 段`}</button>` : ''}` : ''}
     </section>`;
   return `<div class="set-grid">
+    ${lockPanel()}
     ${syncPanel}
     ${gPanel()}
     ${quotePanel}
-    ${lockPanel()}
     <section class="panel">
       <div class="panel-h"><h2>安裝到手機主畫面</h2>${standalone ? '<span class="tag done">已安裝</span>' : ''}</div>
       ${installEvt ? `<p>這台裝置可以直接安裝成 App。</p><div class="set-acts" style="margin-bottom:10px"><button class="btn primary" data-act="install">${IC.phoneDev}安裝行動祕書</button></div>` : ''}
@@ -3422,7 +3422,7 @@ const LOCK_ITER = 150000;
 let lockCfg = (() => { try { const c = JSON.parse(ls.get(LOCK_KEY)); return c && c.hash && c.salt ? c : null; } catch (e) { return null; } })();
 const saveLock = () => lockCfg ? ls.set(LOCK_KEY, JSON.stringify(lockCfg)) : ls.del(LOCK_KEY);
 const lock = { on: false, hiddenAt: 0, lastAct: Date.now(), fails: 0, waitUntil: 0 };
-const LOCK_DELAYS = [[0, '離開 App 就上鎖'], [1, '1 分鐘'], [5, '5 分鐘'], [15, '15 分鐘'], [30, '30 分鐘']];
+const LOCK_DELAYS = [[0, '每次進入都要解鎖（離開 App 就上鎖）'], [1, '1 分鐘'], [5, '5 分鐘'], [15, '15 分鐘'], [30, '30 分鐘']];
 const lockDelay = () => (lockCfg && Number(lockCfg.delay)) || 0;
 const isPin = v => /^\d{4,8}$/.test(v);
 let BIO = false;
@@ -3491,11 +3491,11 @@ function forgotLock(btn) {
 }
 function lockPanel() {
   const head = `<div class="panel-h"><h2>App 鎖</h2><span class="tag ${lockCfg ? 'done' : 'later'}">${lockCfg ? '已開啟' : '未開啟'}</span></div>`;
-  if (!lockCfg) return `<section class="panel">${head}
-    <p>打開行動祕書時要先輸入 PIN 或密碼，離開 App 一段時間後自動上鎖；iPhone 可以改用 Face ID。每台裝置分別設定，不會同步。</p>
+  if (!lockCfg) return `<section class="panel span2">${head}
+    <p>設定後，<b>每次打開行動祕書都要先輸入 PIN 或密碼</b>才看得到內容；iPhone 可以改用 Face ID。電腦和手機要各設定一次（每台裝置分別設定，不會同步）。</p>
     <div class="set-acts"><button class="btn primary" data-act="lock-setup">${IC.lock}設定 App 鎖</button></div></section>`;
-  return `<section class="panel">${head}
-    <div class="field" style="max-width:320px;margin-bottom:10px"><label for="lockDelay">自動上鎖</label><select id="lockDelay">${LOCK_DELAYS.map(([n, t]) => `<option value="${n}" ${lockDelay() === n ? 'selected' : ''}>${n ? `離開 App 或沒有操作 ${t}後` : t}</option>`).join('')}</select></div>
+  return `<section class="panel span2">${head}
+    <div class="field" style="max-width:360px;margin-bottom:10px"><label for="lockDelay">自動上鎖</label><select id="lockDelay">${LOCK_DELAYS.map(([n, t]) => `<option value="${n}" ${lockDelay() === n ? 'selected' : ''}>${n ? `離開 App 或沒有操作 ${t}後` : t}</option>`).join('')}</select></div>
     <p>${lockCfg.wa ? '已啟用 Face ID／指紋解鎖。' : ''}電腦開著不動超過 ${Math.max(lockDelay(), 5)} 分鐘也會自動上鎖；右上角的鎖頭可以隨時上鎖。</p>
     <div class="set-acts">
       <button class="btn" data-act="lock-now">${IC.lock}立即上鎖</button>
@@ -3515,7 +3515,7 @@ function openLockForm(mode) {
       ${mode !== 'off' ? `<div class="field full"><label>類型</label><div class="radio-seg" role="radiogroup" aria-label="類型">${[['pin', '數字 PIN（4～8 碼）'], ['pw', '密碼（4 個字以上）']].map(([k, t]) => `<label><input type="radio" name="lk-kind" value="${k}" ${kind0 === k ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div>
       ${fld('lk-new', '新的 PIN／密碼', pw('lk-new'))}
       ${fld('lk-new2', '再輸入一次', pw('lk-new2'))}
-      ${mode === 'set' ? fld('lk-delay', '自動上鎖', `<select id="lk-delay">${LOCK_DELAYS.map(([n, t]) => `<option value="${n}" ${n === 5 ? 'selected' : ''}>${n ? `離開 App 或沒有操作 ${t}後` : t}</option>`).join('')}</select>`, 'full') : ''}` : ''}
+      ${mode === 'set' ? fld('lk-delay', '自動上鎖', `<select id="lk-delay">${LOCK_DELAYS.map(([n, t]) => `<option value="${n}" ${n === 0 ? 'selected' : ''}>${n ? `離開 App 或沒有操作 ${t}後` : t}</option>`).join('')}</select>`, 'full') : ''}` : ''}
     </div>
     ${mode === 'set' ? '<p class="muted" style="font-size:12.5px;margin:12px 0 0">請記住 PIN。忘記時只能清除這台裝置的資料再重新設定；有開雲端同步的話，重新配對就能取回資料。</p>' : ''}
     <div class="form-foot"><button type="button" class="btn ghost" data-act="close">取消</button><button type="submit" class="btn ${mode === 'off' ? 'danger' : 'primary'}">${mode === 'off' ? '關閉 App 鎖' : '儲存'}</button></div></form>`;
