@@ -31,12 +31,20 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   認證頁第三個分頁「報表」（`vCertReport`）：依配合單位（`company`）統計案件、節點進度、報價合計、帳務完成；案件進度表；
   可「複製報表文字」與匯出 CSV（含報價與請款各步驟日期）。
 - `certs`：證書效期。project、cert、due、no、state `normal|renewing|retired`、note。
-  **主資料是使用者每月審查的 Excel《TWINHEAD_安規認證到期管理_YYYYMMDD.xlsx》**（存在她的 Google Drive，每月一份新檔）。
-  證書效期頁「從效期表更新」用 SheetJS（cdnjs xlsx 0.18.5，點按鈕才載入）讀「到期提醒總覽」工作表：
-  標題列含「機型／認證‧憑證項目／到期日／備註」，到期日是公式（讀存檔時的計算值）。以「機型＋認證項目」比對（`certKey`），
-  先顯示差異（新增／到期日變更／不變／表中沒有）再套用；新證書 id = `hashId(certKey)`（tw 開頭，跨裝置一致）。
-  單向：不寫回 Excel（Excel 的到期日是公式，寫回會弄壞）。App 的續證狀態／證書編號／備註保留；到期日往後延時「續證中」自動變回「追蹤中」；
-  表中沒有的不自動刪，讓使用者勾選「不續證／停用」。Excel 檔本身不要放進版控。
+  **主資料是唯一來源 Excel `Z:\交接區\Joyce 記錄區\TWINHEAD_Safety_application_and_standard_revision_Joyce.xlsx`**
+  的「系統效期管理」「Battery 效期管理」「Adapter效期管理」三個分頁（2026-10-15 使用者指定；取代先前每月一份的
+  《TWINHEAD_安規認證到期管理_YYYYMMDD.xlsx》）。
+  進料方式：在 `C:\Users\joyce_fan\OneDrive\安規報價試算器\` 跑
+  `.\update-cert-board.ps1 -AppJson "C:\Users\joyce_fan\Mobile-secretary\_private\行動祕書_匯入_證書效期.json"`，
+  再到 App「設定 → 匯入備份／證書資料」選該檔「合併匯入」。同一支腳本也更新安規認證效期看板，兩邊數字一定一致。
+  匯入檔的 id 用 App 自己的 `hashId(certKey)`（tw 開頭、跨裝置一致），所以重複匯入是更新同一筆、不會長出重複證書。
+  note 會寫入各認證的提前通知月數（例「提前 3 個月通知（自 2025/03/18 起）｜65W｜適用 S14、Z14」）；
+  `state` 一律 `normal`，180／90 天的追蹤與提醒門檻仍由 App 自己算。
+  ⚠ 合併匯入是整筆取代同 id 的證書，**App 裡手動填的續證狀態／證書編號／備註會被蓋掉**；
+  ⚠ 新表沒有的舊證書不會被刪，要在 App 裡勾「不續證／停用」。
+  證書效期頁的「從效期表更新」（SheetJS 讀「到期提醒總覽」工作表）**自 2026-10-15 起停用不再使用** ——
+  那條路讀的是另一份月檔，會變成第二份真相；程式碼保留但不要再叫使用者用它，也不要據此修改資料流。
+  單向：不寫回 Excel。Excel 檔本身不要放進版控。
 - `quotes`：每日一句（{id, text}）。內容是使用者自己提供的《這時候，深呼吸》段落，**有版權，絕對不要寫進程式碼或 commit**；
   只透過 App 載入：今日卡片／設定「載入 Word 檔」直接讀她的 `這時候深呼吸.docx`（JSZip，點按鈕才載入；每段以「-」開頭、{}→「」），
   或匯入 `_private/每日一句_這時候深呼吸.json`、或設定頁貼上。使用者要的是「App 每天自動貼一篇」，載入一次後就全自動，
@@ -61,6 +69,18 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   iPhone 主畫面 App 與 Safari 的儲存空間是分開的，所以從 Safari 開的配對頁會提供「複製配對碼」給主畫面 App 貼上。
 - 行事曆訂閱網址：`https://gist.githubusercontent.com/<login>/<gistId>/raw/msec-calendar.ics`（webcal://）。
   內容只放標題、時間、地點、屬性・類別，不放電話／對象／備註（使用者隱私偏好）。單向：iPhone 端修改不會回 App。
+
+## 資安（2026/10/20 新增，使用者要求）
+- **App 鎖**（每台裝置各自設定，`msec.lock.v1`，不同步、不進備份）：PIN（4～8 碼）或密碼，只存 PBKDF2-SHA256（15 萬次）雜湊與 salt。
+  上鎖時 `body.app-locked` 只顯示 `#lockScreen`；自動上鎖：離開 App 超過 `delay` 分鐘（0＝離開就鎖，App 切換畫面也看不到）、
+  或畫面開著沒操作超過 max(delay,5) 分鐘。可用 WebAuthn 平台驗證（Face ID／指紋／Windows Hello，`lockCfg.wa` 存 credential id）解鎖。
+  錯 5 次開始冷卻。「忘記密碼」＝清除這台的資料與連線設定（不能只清鎖，否則有同步的人一清就能把資料抓回來），再重新配對取回。
+  頁首鎖頭按鈕可立即上鎖。這是防「拿到沒鎖的裝置」的鎖，不是磁碟加密。
+- **雲端同步加密**：secret Gist 不是私密的（知道網址就能讀），所以 `msec-data.json` 可加密成
+  `{ enc:1, kdf:{alg,iter,salt}, iv, ct }`（AES-GCM，金鑰＝PBKDF2(同步密語, salt, 25 萬次)）。金鑰存在各裝置 `syncCfg.ek/esalt`，不存密語原文。
+  沒有金鑰或密語錯 → `sync.err='needpass'`，**絕不上傳**，設定頁出現輸入框；配對碼的 `e` 欄位會帶金鑰，掃 QR 的新裝置不用再輸入。
+  換密語：舊金鑰暫存 `prevKeys`，讀舊檔、寫新檔後清掉；其他裝置會被要求輸入新密語。雲端檔的加密狀態與本機不一致（例如舊版裝置寫回明文）就重新上傳加密版。
+  沒有「取消加密」（避免各裝置互相改回）。`msec-calendar.ics` 為了 iPhone 訂閱維持明文（只有標題、時間、地點）。
 
 ## Google 日曆連動（雙向，2026/10 新增；使用者的個人 Gmail）
 - **不用 Google Cloud 專案**：使用者把 index.html 裡的 `GAS_CODE` 貼到自己帳號的 Apps Script（script.new），在「服務」加入

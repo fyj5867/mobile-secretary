@@ -242,6 +242,21 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .ver-line{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:12px 0 0!important;font-size:13px;color:var(--sub)}
 .ver-line b{font-family:var(--f-num);color:var(--ink);font-weight:600}
 
+/* ---------- App 鎖 ---------- */
+body.app-locked > *:not(#lockScreen){visibility:hidden}
+.lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px;padding-top:calc(24px + env(safe-area-inset-top,0px));overflow:auto}
+.lock-box{width:min(340px,100%);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.lock-box .lock-dog{width:64px;height:64px}
+.lock-box h2{margin:4px 0 6px;font-weight:500;font-size:17px;letter-spacing:.1em}
+.lock-form{display:flex;gap:8px;width:100%}
+.lock-form input{flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:9px 12px;font-size:18px;letter-spacing:.3em;text-align:center;outline:0}
+.lock-form input:focus{border-color:var(--accent)}
+.lock-msg{min-height:1.4em;margin:0;font-size:13px;color:var(--red-tx)}
+.lock-note{margin:0;font-size:12px;color:var(--faint);line-height:1.6}
+.enc-box{background:var(--card-2);border-radius:6px;padding:10px 12px;margin:0 0 12px}
+.enc-box p{margin:0 0 8px!important}
+.enc-box.warn{border-left:3px solid var(--red)}
+
 /* ---------- agenda ---------- */
 .ag-day{margin-bottom:14px}
 .ag-head{display:flex;align-items:baseline;gap:8px;padding:0 4px 6px}
@@ -618,6 +633,7 @@ td.proj{font-weight:700}
     <nav class="tabs" id="tabs" aria-label="切換頁面"></nav>
     <div class="scope" id="scopeSeg" role="group" aria-label="顯示範圍"></div>
     <div class="top-actions">
+      <button class="round" id="lockBtn" data-act="lock-now" aria-label="立即上鎖" hidden></button>
       <button class="round" id="bellBtn" data-act="drawer" aria-label="提醒通知"></button>
       <button class="round" id="gearBtn" data-act="tab" data-view="settings" aria-label="設定"></button>
       <button class="btn primary" id="addBtn" data-act="add">＋ 新增</button>
@@ -634,6 +650,7 @@ td.proj{font-weight:700}
 <div id="dailyPop" class="modal daily layer" role="dialog" aria-modal="true" aria-label="今日一句" hidden></div>
 <div id="modal" class="modal layer" role="dialog" aria-modal="true" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
+<div id="lockScreen" class="lock" role="dialog" aria-modal="true" aria-label="行動祕書已上鎖" hidden></div>
 <input type="file" id="importFile" accept=".json,application/json" hidden>
 <input type="file" id="quoteFile" accept=".docx,.json,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/json" hidden>
 <input type="file" id="excelFile" accept=".xlsx,.xlsm,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
@@ -641,9 +658,9 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v20）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 20;
-const APP_DATE = '2026/10/15';
+/* 版本：和 sw.js 的 CACHE（msec-v21）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 21;
+const APP_DATE = '2026/10/20';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -669,6 +686,22 @@ const ls = {
   set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
   del(k) { try { localStorage.removeItem(k); } catch (e) {} }
 };
+/* 加密小工具（瀏覽器內建 WebCrypto）：PBKDF2-SHA256 由密碼推出金鑰、AES-GCM 加解密 */
+const b64e = buf => { const u = buf instanceof Uint8Array ? buf : new Uint8Array(buf); let t = ''; for (let i = 0; i < u.length; i += 0x8000) t += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(t); };
+const b64d = str => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+const randB64 = n => b64e(crypto.getRandomValues(new Uint8Array(n)));
+async function pbkdf2(pass, saltB64, iter) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveBits']);
+  return b64e(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64d(saltB64), iterations: iter, hash: 'SHA-256' }, base, 256));
+}
+const aesKey = raw => crypto.subtle.importKey('raw', b64d(raw), 'AES-GCM', false, ['encrypt', 'decrypt']);
+async function sealText(text, raw) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(raw), new TextEncoder().encode(text));
+  return { iv: b64e(iv), ct: b64e(ct) };
+}
+async function openText(iv, ct, raw) { return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64d(iv) }, await aesKey(raw), b64d(ct))); }
+const sameHash = (a, b) => { if (!a || !b || a.length !== b.length) return false; let x = 0; for (let i = 0; i < a.length; i++) x |= a.charCodeAt(i) ^ b.charCodeAt(i); return x === 0; };
 const safeUrl = u => { u = String(u || '').trim(); if (!u) return ''; if (!/^https?:\/\//i.test(u)) { if (/^[a-z]+:/i.test(u)) return ''; u = 'https://' + u; } return u; };
 const reduceMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 const isPhone = () => { try { return matchMedia('(max-width:760px)').matches; } catch (e) { return false; } };
@@ -753,7 +786,8 @@ const IC = {
   list: sv('<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/>'),
   cal: sv('<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>'),
   chart: sv('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
-  phoneDev: sv('<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>')
+  phoneDev: sv('<rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/>'),
+  lock: sv('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>')
 };
 
 /* ================= mascot & stamp ================= */
@@ -1563,6 +1597,9 @@ function vSettings() {
       <div class="panel-h"><h2>雲端同步（電腦・手機連動）</h2><span id="syncStatus" class="tag ${st.cls}">${st.txt}</span></div>
       <div class="stat-line"><span>GitHub 帳號 <b>${esc(syncCfg.login || '')}</b></span><span>最後同步 <b>${syncCfg.lastSync ? new Date(syncCfg.lastSync).toLocaleString('zh-TW', { hour12: false }) : '—'}</b></span></div>
       <p>在任何一台裝置新增或修改，都會自動同步到其他已連動的裝置（打開 App、切回 App、以及每分鐘自動檢查一次）。</p>
+      ${sync.err === 'needpass' ? `<div class="enc-box warn"><p><b>這份同步資料有加密。</b>請輸入同步密語（在另一台裝置設定的那一組），這台才會開始同步。</p>
+        <div class="sync-row"><input id="syncPass" type="password" autocomplete="off" placeholder="同步密語" aria-label="同步密語"><button class="btn primary" data-act="sync-pass">解鎖同步</button></div></div>`
+      : `<div class="enc-box"><p>雲端資料加密：<b>${syncCfg.ek ? '已開啟' : '未開啟'}</b>${syncCfg.ek ? '（GitHub 上只存加密後的內容）' : '（目前知道同步網址的人看得到內容，建議開啟）'}</p><button class="btn sm" data-act="enc-set">${IC.lock}${syncCfg.ek ? '變更同步密語' : '開啟加密'}</button></div>`}
       <div class="set-acts">
         <button class="btn primary" data-act="sync-now">${IC.repeat}立即同步</button>
         <button class="btn" data-act="pair-out">${IC.phoneDev}配對其他裝置</button>
@@ -1599,6 +1636,7 @@ function vSettings() {
     ${syncPanel}
     ${gPanel()}
     ${quotePanel}
+    ${lockPanel()}
     <section class="panel">
       <div class="panel-h"><h2>安裝到手機主畫面</h2>${standalone ? '<span class="tag done">已安裝</span>' : ''}</div>
       ${installEvt ? `<p>這台裝置可以直接安裝成 App。</p><div class="set-acts" style="margin-bottom:10px"><button class="btn primary" data-act="install">${IC.phoneDev}安裝行動祕書</button></div>` : ''}
@@ -1669,6 +1707,7 @@ function render() {
   const gear = $('#gearBtn'); gear.innerHTML = IC.gear; if (UI.view === 'settings') gear.setAttribute('aria-current', 'page'); else gear.removeAttribute('aria-current');
   paintSync();
   $('#fab').innerHTML = IC.plus;
+  const lb = $('#lockBtn'); lb.hidden = !lockCfg; lb.innerHTML = IC.lock;
   $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy');
   $('#foot').innerHTML = `<span>版本 <b>v${APP_VERSION}</b>（${APP_DATE}）</span><span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
@@ -1770,6 +1809,7 @@ function openDaily() {
   return true;
 }
 function maybeDaily() {
+  if (lock.on) return false;
   if (!quoteOf(TODAY)) return false;
   const key = `msec.daily:${TODAY}`;
   if (shownDaily.has(key) || ls.get(key)) return false;
@@ -2437,13 +2477,33 @@ async function gh(method, path, body, token) {
   if (!res.ok) { const e = new Error('GitHub ' + res.status); e.status = res.status; throw e; }
   return res.status === 204 ? null : res.json();
 }
-async function readRemote(g) {
+/* 雲端同步加密：開啟後 msec-data.json 只放 { enc, kdf: { salt, iter }, iv, ct }，金鑰由「同步密語」推導、只存在各裝置（syncCfg.ek）。
+   換密語時舊金鑰暫存在 prevKeys，讀得到舊檔、寫回新檔後就清掉。iPhone 行事曆訂閱檔（只有標題、時間、地點）不加密。 */
+const SYNC_ITER = 250000;
+const syncErr = (code, kdf) => { const e = new Error(code); e.code = code; e.kdf = kdf; return e; };
+async function readRemote(g, cfg = syncCfg) {
   const f = g && g.files && g.files[DATA_FILE];
   if (!f) return null;
   let txt = f.content;
   if (f.truncated && f.raw_url) txt = await fetch(f.raw_url, { cache: 'no-store' }).then(r => r.text());
-  try { const d = JSON.parse(txt); return { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes), journal: cleanDocs(d.journal), deleted: d.deleted && typeof d.deleted === 'object' ? d.deleted : {} }; }
-  catch (e) { return null; }
+  let d; try { d = JSON.parse(txt); } catch (e) { return null; }
+  let encSalt = null;
+  if (d && d.enc) {
+    const kdf = d.kdf || {};
+    const keys = [cfg && cfg.ek ? { salt: cfg.esalt, ek: cfg.ek } : null].concat((cfg && cfg.prevKeys) || []).filter(Boolean);
+    const k = keys.find(x => x.salt === kdf.salt);
+    if (!k) throw syncErr('needpass', kdf);
+    try { d = JSON.parse(await openText(d.iv, d.ct, k.ek)); } catch (e) { throw syncErr('badpass', kdf); }
+    encSalt = kdf.salt;
+  }
+  return { items: cleanDocs(d.items), apps: cleanDocs(d.apps), certs: cleanDocs(d.certs), quotes: cleanDocs(d.quotes), journal: cleanDocs(d.journal), deleted: d.deleted && typeof d.deleted === 'object' ? d.deleted : {}, encSalt };
+}
+// 要上傳的資料：開了加密就先加密
+async function payloadData() {
+  const txt = payload();
+  if (!syncCfg || !syncCfg.ek) return txt;
+  const box = await sealText(txt, syncCfg.ek);
+  return JSON.stringify({ app: 'mobile-secretary', v: 2, enc: 1, kdf: { alg: 'PBKDF2-SHA256', iter: syncCfg.eiter || SYNC_ITER, salt: syncCfg.esalt }, iv: box.iv, ct: box.ct });
 }
 const snapshot = () => ({ items: S.items, apps: S.apps, certs: S.certs, quotes: S.quotes, journal: S.journal, deleted: S.deleted });
 function applyData(m) { COLS.forEach(col => { S[col] = m[col] || []; }); S.deleted = m.deleted; }
@@ -2489,12 +2549,14 @@ async function syncNow(manual) {
     const mStr = canon(merged);
     const changed = mStr !== canon(local);
     if (changed) { applyData(merged); saveData(); render(); }
-    const needData = !remote || mStr !== canon(remote);
+    // 雲端檔的加密狀態和這台的設定不同（剛開啟加密、換了密語、或被舊版改回明文）也要重新上傳
+    const needData = !remote || mStr !== canon(remote) || (remote.encSalt || null) !== (syncCfg.ek ? syncCfg.esalt : null);
     const needFeed = needData || !g.files[ICS_FILE] || syncCfg.feedDay !== TODAY || syncCfg.feedVer !== FEED_VER;
     if (needData || needFeed) {
       const files = { [ICS_FILE]: { content: buildFeed() } };
-      if (needData) files[DATA_FILE] = { content: payload() };
+      if (needData) files[DATA_FILE] = { content: await payloadData() };
       await gh('PATCH', '/gists/' + syncCfg.gistId, { files });
+      if (needData) delete syncCfg.prevKeys;
       syncCfg.feedDay = TODAY; syncCfg.feedVer = FEED_VER;
     }
     syncCfg.lastSync = iso(); saveSyncCfg();
@@ -2502,8 +2564,10 @@ async function syncNow(manual) {
     if (gReady() && (changed || gs.waiting || Date.now() - gs.last > 110000)) scheduleGsync(changed ? 1500 : 600);
     if (manual) toast('同步完成，所有裝置都是最新資料', 'happy');
   } catch (e) {
-    sync.err = e.status === 401 || e.status === 403 ? 'auth' : e.status === 404 ? 'missing' : 'net';
-    const msg = { auth: '雲端同步失敗：GitHub 金鑰無效或已過期，請到「設定 → 雲端同步」重新連線', missing: '雲端同步失敗：找不到同步資料（Gist 可能被刪除），請重新連線', net: '暫時連不上 GitHub，稍後會自動再同步' }[sync.err];
+    if (e.code === 'needpass' || e.code === 'badpass') { sync.err = 'needpass'; sync.kdf = e.kdf; }
+    else sync.err = e.status === 401 || e.status === 403 ? 'auth' : e.status === 404 ? 'missing' : 'net';
+    const msg = { auth: '雲端同步失敗：GitHub 金鑰無效或已過期，請到「設定 → 雲端同步」重新連線', missing: '雲端同步失敗：找不到同步資料（Gist 可能被刪除），請重新連線', net: '暫時連不上 GitHub，稍後會自動再同步', needpass: '雲端資料有加密：請到「設定 → 雲端同步」輸入同步密語' }[sync.err];
+    if (sync.err === 'needpass' && UI.view === 'settings' && !layers.length) render();
     if (manual || sync.errToast !== sync.err) { toast(msg, 'worried'); sync.errToast = sync.err; }
   } finally {
     sync.busy = false; paintSync();
@@ -2516,6 +2580,7 @@ function syncStatusText() {
   if (sync.err === 'auth') return { cls: 'overdue', txt: '金鑰失效' };
   if (sync.err === 'missing') return { cls: 'overdue', txt: '找不到雲端資料' };
   if (sync.err === 'net') return { cls: 'soon', txt: '離線，稍後再試' };
+  if (sync.err === 'needpass') return { cls: 'overdue', txt: '需要同步密語' };
   const t = syncCfg.lastSync ? new Date(syncCfg.lastSync) : null;
   return { cls: 'done', txt: t ? `已同步 ${pad(t.getHours())}:${pad(t.getMinutes())}` : '已連線' };
 }
@@ -2532,11 +2597,11 @@ function paintSync() {
 }
 const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64u = s => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
-const pairCode = () => 'MSEC1.' + b64u(JSON.stringify(Object.assign({ t: syncCfg.token, g: syncCfg.gistId }, gReady() ? { s: { u: gcal.url, k: gcal.key } } : {})));
+const pairCode = () => 'MSEC1.' + b64u(JSON.stringify(Object.assign({ t: syncCfg.token, g: syncCfg.gistId }, gReady() ? { s: { u: gcal.url, k: gcal.key } } : {}, syncCfg.ek ? { e: { k: syncCfg.ek, s: syncCfg.esalt, i: syncCfg.eiter || SYNC_ITER } } : {})));
 function readPairCode(code) {
   try {
     const o = JSON.parse(unb64u(String(code).trim().replace(/^MSEC1\./, '')));
-    return o && o.t && o.g ? { token: o.t, gistId: o.g, gs: o.s && o.s.u && o.s.k ? { url: o.s.u, key: o.s.k } : null } : null;
+    return o && o.t && o.g ? { token: o.t, gistId: o.g, gs: o.s && o.s.u && o.s.k ? { url: o.s.u, key: o.s.k } : null, enc: o.e && o.e.k && o.e.s ? { ek: o.e.k, esalt: o.e.s, eiter: o.e.i || SYNC_ITER } : null } : null;
   }
   catch (e) { return null; }
 }
@@ -2546,8 +2611,8 @@ const feedUrl = () => `https://gist.githubusercontent.com/${syncCfg.login}/${syn
 
 async function connectSync(raw, btn) {
   const s = String(raw || '').trim();
-  let token = s, gistId = null, gsIn = null;
-  if (s.startsWith('MSEC1.')) { const p = readPairCode(s); if (!p) { toast('配對碼不完整，請重新複製一次', 'worried'); return; } token = p.token; gistId = p.gistId; gsIn = p.gs; }
+  let token = s, gistId = null, gsIn = null, encIn = null;
+  if (s.startsWith('MSEC1.')) { const p = readPairCode(s); if (!p) { toast('配對碼不完整，請重新複製一次', 'worried'); return; } token = p.token; gistId = p.gistId; gsIn = p.gs; encIn = p.enc; }
   if (!/^(ghp_|github_pat_)[A-Za-z0-9_]{20,}$/.test(token)) { toast('這看起來不是 GitHub 金鑰：金鑰是 ghp_ 開頭的一長串，配對碼是 MSEC1. 開頭', 'worried'); return; }
   if (btn) { btn.disabled = true; btn.textContent = '連線中…'; }
   try {
@@ -2557,18 +2622,27 @@ async function connectSync(raw, btn) {
       const found = (list || []).find(x => x.description === GIST_DESC);
       if (found) gistId = found.id;
     }
-    let first = false;
+    let first = false, needPass = null;
     if (gistId) {
-      const remote = await readRemote(await gh('GET', '/gists/' + gistId, null, token));
-      if (remote && onlySamples()) applyData(mergeData({ items: [], apps: [], certs: [], quotes: [], journal: [], deleted: {} }, remote)); // 新裝置：直接用雲端資料
+      try {
+        const remote = await readRemote(await gh('GET', '/gists/' + gistId, null, token), encIn);
+        if (remote && onlySamples()) applyData(mergeData({ items: [], apps: [], certs: [], quotes: [], journal: [], deleted: {} }, remote)); // 新裝置：直接用雲端資料
+      } catch (e) { if (e.code === 'needpass' || e.code === 'badpass') needPass = e.kdf; else throw e; }
     } else {
       const created = await gh('POST', '/gists', { description: GIST_DESC, public: false, files: { [DATA_FILE]: { content: payload() }, [ICS_FILE]: { content: buildFeed() } } }, token);
       gistId = created.id; first = true;
     }
-    syncCfg = { token, gistId, login: user.login, since: iso() }; saveSyncCfg();
+    syncCfg = Object.assign({ token, gistId, login: user.login, since: iso() }, encIn && !needPass ? encIn : {}); saveSyncCfg();
     const withG = gsIn && !gReady();
     if (withG) { gcal = { url: gsIn.url, key: gsIn.key, scope: (gcal && gcal.scope) || 'personal', since: iso() }; saveGcal(); }
     UI.syncInput = '';
+    if (needPass) {
+      // 雲端資料有加密：先連上，等使用者輸入同步密語才開始同步
+      sync.err = 'needpass'; sync.kdf = needPass; sync.errToast = 'needpass';
+      saveData(); closeLayer($('#modal')); UI.view = 'settings'; render();
+      toast('已連上，這份同步資料有加密：請在下方輸入同步密語', 'calm');
+      return;
+    }
     saveData(); render();
     await syncNow(false);
     toast(first ? `已在 ${user.login} 的 GitHub 建立同步空間，這台裝置開始同步` : `已連線到 ${user.login} 的同步資料，這台裝置開始同步${withG ? '（Google 日曆也一起連動）' : ''}`, 'happy');
@@ -3339,6 +3413,178 @@ function gDisconnect(btn) {
   });
 }
 
+/* ================= App 鎖（這台裝置自己的 PIN／密碼；可用 Face ID／指紋／Windows Hello） =================
+   設定存在 msec.lock.v1（只在這台裝置，不同步、不進備份）：PIN 只存 PBKDF2 雜湊，不存原文。
+   上鎖時畫面只剩解鎖頁；離開 App 超過設定時間、或電腦放著不動，就自動上鎖。
+   這道鎖防的是「別人拿到沒上鎖的手機／電腦」；雲端那份由同步加密保護。 */
+const LOCK_KEY = 'msec.lock.v1';
+const LOCK_ITER = 150000;
+let lockCfg = (() => { try { const c = JSON.parse(ls.get(LOCK_KEY)); return c && c.hash && c.salt ? c : null; } catch (e) { return null; } })();
+const saveLock = () => lockCfg ? ls.set(LOCK_KEY, JSON.stringify(lockCfg)) : ls.del(LOCK_KEY);
+const lock = { on: false, hiddenAt: 0, lastAct: Date.now(), fails: 0, waitUntil: 0 };
+const LOCK_DELAYS = [[0, '離開 App 就上鎖'], [1, '1 分鐘'], [5, '5 分鐘'], [15, '15 分鐘'], [30, '30 分鐘']];
+const lockDelay = () => (lockCfg && Number(lockCfg.delay)) || 0;
+const isPin = v => /^\d{4,8}$/.test(v);
+let BIO = false;
+(async () => { try { BIO = !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch (e) { BIO = false; } })();
+
+function lockNow() {
+  if (!lockCfg) return;
+  lock.on = true; document.body.classList.add('app-locked');
+  const el = $('#lockScreen'), pin = lockCfg.kind === 'pin';
+  el.innerHTML = `<div class="lock-box">
+    ${mascot('calm', 'lock-dog')}
+    <h2>行動祕書已上鎖</h2>
+    <form id="lockForm" class="lock-form" autocomplete="off" novalidate>
+      <input id="lockPin" type="password" ${pin ? 'inputmode="numeric" pattern="[0-9]*" maxlength="8"' : ''} autocomplete="off" placeholder="${pin ? '輸入 PIN' : '輸入密碼'}" aria-label="解鎖密碼">
+      <button type="submit" class="btn primary">解鎖</button>
+    </form>
+    ${lockCfg.wa ? `<button type="button" class="btn" data-act="lock-bio">用 Face ID／指紋解鎖</button>` : ''}
+    <p class="lock-msg" id="lockMsg" aria-live="polite"></p>
+    <button type="button" class="link-btn" data-act="lock-forgot">忘記密碼？</button>
+    <p class="lock-note">忘記密碼只能清除這台裝置的資料再重新設定；雲端同步的資料不受影響，之後用配對碼重新連線就能取回。</p>
+  </div>`;
+  el.hidden = false;
+  $('#lockForm').addEventListener('submit', ev => { ev.preventDefault(); tryUnlock($('#lockPin').value); });
+  if (!isPhone()) setTimeout(() => { const i = $('#lockPin'); if (i) i.focus(); }, 50);
+}
+async function tryUnlock(v) {
+  const msg = $('#lockMsg');
+  if (Date.now() < lock.waitUntil) { msg.textContent = `嘗試太多次，請 ${Math.ceil((lock.waitUntil - Date.now()) / 1000)} 秒後再試`; return; }
+  if (!v) return;
+  if (sameHash(await pbkdf2(v, lockCfg.salt, lockCfg.iter || LOCK_ITER), lockCfg.hash)) { lock.fails = 0; unlockApp(); return; }
+  lock.fails++; $('#lockPin').value = '';
+  if (lock.fails >= 5) { const sec = 30 * Math.pow(2, Math.min(lock.fails - 5, 4)); lock.waitUntil = Date.now() + sec * 1000; msg.textContent = `嘗試太多次，請 ${sec} 秒後再試`; }
+  else msg.textContent = `${lockCfg.kind === 'pin' ? 'PIN' : '密碼'}不對，還可以再試 ${5 - lock.fails} 次`;
+}
+function unlockApp() {
+  lock.on = false; lock.lastAct = Date.now();
+  document.body.classList.remove('app-locked');
+  const el = $('#lockScreen'); el.hidden = true; el.innerHTML = '';
+  render();
+  setTimeout(() => { maybeDaily(); checkNotices(); }, 300);
+}
+// Face ID／指紋：用裝置內建的驗證（WebAuthn），只在這台裝置確認是本人
+async function bioUnlock() {
+  try {
+    await navigator.credentials.get({ publicKey: { challenge: crypto.getRandomValues(new Uint8Array(32)), allowCredentials: [{ type: 'public-key', id: b64d(lockCfg.wa) }], userVerification: 'required', timeout: 60000 } });
+    unlockApp();
+  } catch (e) { const m = $('#lockMsg'); if (m) m.textContent = '沒有完成 Face ID／指紋驗證，可以改輸入密碼'; }
+}
+async function bioRegister() {
+  try {
+    const cred = await navigator.credentials.create({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)), rp: { name: '行動祕書' },
+      user: { id: crypto.getRandomValues(new Uint8Array(16)), name: '行動祕書', displayName: '行動祕書 App 鎖' },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+      timeout: 60000, attestation: 'none' } });
+    lockCfg.wa = b64e(cred.rawId); saveLock(); render();
+    toast('已啟用 Face ID／指紋解鎖（只在這台裝置）', 'happy');
+  } catch (e) { toast('沒有完成設定：這台裝置可能不支援，或已取消', 'worried'); }
+}
+function forgotLock(btn) {
+  arm(btn, '會清除這台裝置的資料，再按一次確認', () => {
+    [DATA_KEY, SYNC_KEY, GCAL_KEY, LOCK_KEY, NTF_KEY].forEach(k => ls.del(k));
+    location.reload();
+  });
+}
+function lockPanel() {
+  const head = `<div class="panel-h"><h2>App 鎖</h2><span class="tag ${lockCfg ? 'done' : 'later'}">${lockCfg ? '已開啟' : '未開啟'}</span></div>`;
+  if (!lockCfg) return `<section class="panel">${head}
+    <p>打開行動祕書時要先輸入 PIN 或密碼，離開 App 一段時間後自動上鎖；iPhone 可以改用 Face ID。每台裝置分別設定，不會同步。</p>
+    <div class="set-acts"><button class="btn primary" data-act="lock-setup">${IC.lock}設定 App 鎖</button></div></section>`;
+  return `<section class="panel">${head}
+    <div class="field" style="max-width:320px;margin-bottom:10px"><label for="lockDelay">自動上鎖</label><select id="lockDelay">${LOCK_DELAYS.map(([n, t]) => `<option value="${n}" ${lockDelay() === n ? 'selected' : ''}>${n ? `離開 App 或沒有操作 ${t}後` : t}</option>`).join('')}</select></div>
+    <p>${lockCfg.wa ? '已啟用 Face ID／指紋解鎖。' : ''}電腦開著不動超過 ${Math.max(lockDelay(), 5)} 分鐘也會自動上鎖；右上角的鎖頭可以隨時上鎖。</p>
+    <div class="set-acts">
+      <button class="btn" data-act="lock-now">${IC.lock}立即上鎖</button>
+      <button class="btn" data-act="lock-change">變更${lockCfg.kind === 'pin' ? ' PIN' : '密碼'}</button>
+      ${BIO ? (lockCfg.wa ? '<button class="btn" data-act="lock-bio-off">停用 Face ID／指紋</button>' : '<button class="btn" data-act="lock-bio-on">啟用 Face ID／指紋解鎖</button>') : ''}
+      <button class="btn danger" data-act="lock-off">關閉 App 鎖</button>
+    </div></section>`;
+}
+function openLockForm(mode) {
+  const m = $('#modal'); m.setAttribute('aria-label', 'App 鎖');
+  const needOld = mode !== 'set', kind0 = lockCfg ? lockCfg.kind : 'pin';
+  const pw = id => `<input id="${id}" type="password" autocomplete="off" ${kind0 === 'pin' ? 'inputmode="numeric"' : ''}>`;
+  m.innerHTML = `<form id="fLock" autocomplete="off" novalidate>
+    <div class="sheet-h"><div><h2>${mode === 'off' ? '關閉 App 鎖' : mode === 'change' ? '變更 App 鎖' : '設定 App 鎖'}</h2><p>只在這台裝置有效；PIN 不會上傳，也不會存原文</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="form-grid">
+      ${needOld ? fld('lk-old', '目前的 PIN／密碼', pw('lk-old'), 'full') : ''}
+      ${mode !== 'off' ? `<div class="field full"><label>類型</label><div class="radio-seg" role="radiogroup" aria-label="類型">${[['pin', '數字 PIN（4～8 碼）'], ['pw', '密碼（4 個字以上）']].map(([k, t]) => `<label><input type="radio" name="lk-kind" value="${k}" ${kind0 === k ? 'checked' : ''}><span>${t}</span></label>`).join('')}</div></div>
+      ${fld('lk-new', '新的 PIN／密碼', pw('lk-new'))}
+      ${fld('lk-new2', '再輸入一次', pw('lk-new2'))}
+      ${mode === 'set' ? fld('lk-delay', '自動上鎖', `<select id="lk-delay">${LOCK_DELAYS.map(([n, t]) => `<option value="${n}" ${n === 5 ? 'selected' : ''}>${n ? `離開 App 或沒有操作 ${t}後` : t}</option>`).join('')}</select>`, 'full') : ''}` : ''}
+    </div>
+    ${mode === 'set' ? '<p class="muted" style="font-size:12.5px;margin:12px 0 0">請記住 PIN。忘記時只能清除這台裝置的資料再重新設定；有開雲端同步的話，重新配對就能取回資料。</p>' : ''}
+    <div class="form-foot"><button type="button" class="btn ghost" data-act="close">取消</button><button type="submit" class="btn ${mode === 'off' ? 'danger' : 'primary'}">${mode === 'off' ? '關閉 App 鎖' : '儲存'}</button></div></form>`;
+  openLayer(m);
+  const form = $('#fLock');
+  form.addEventListener('change', ev => { if (ev.target.name === 'lk-kind') $$('#lk-new, #lk-new2').forEach(i => ev.target.value === 'pin' ? i.setAttribute('inputmode', 'numeric') : i.removeAttribute('inputmode')); });
+  if (!isPhone()) { const f = form.querySelector('input[type=password]'); if (f) f.focus(); }
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    if (needOld && !sameHash(await pbkdf2($('#lk-old').value, lockCfg.salt, lockCfg.iter || LOCK_ITER), lockCfg.hash)) { toast('目前的 PIN／密碼不對', 'worried'); return; }
+    if (mode === 'off') { lockCfg = null; saveLock(); closeLayer(m); render(); toast('已關閉這台裝置的 App 鎖', 'calm'); return; }
+    const kEl = form.querySelector('input[name="lk-kind"]:checked'), kind = kEl ? kEl.value : 'pin';
+    const p1 = $('#lk-new').value, p2 = $('#lk-new2').value;
+    if (kind === 'pin' ? !isPin(p1) : p1.length < 4) { toast(kind === 'pin' ? 'PIN 請輸入 4～8 個數字' : '密碼至少 4 個字', 'worried'); return; }
+    if (p1 !== p2) { toast('兩次輸入的不一樣', 'worried'); return; }
+    const salt = randB64(16);
+    lockCfg = Object.assign({}, lockCfg || {}, { kind, salt, hash: await pbkdf2(p1, salt, LOCK_ITER), iter: LOCK_ITER, delay: mode === 'set' ? Number(val('lk-delay')) : lockDelay() });
+    saveLock(); lock.lastAct = Date.now(); closeLayer(m); render();
+    toast(mode === 'set' ? `App 鎖已開啟${BIO ? '，也可以在下方啟用 Face ID／指紋解鎖' : ''}` : '已更新 App 鎖', 'happy');
+  });
+}
+/* 同步密語：開啟加密／變更密語；在需要密語的裝置上解鎖同步 */
+function openEncForm() {
+  if (!syncCfg) return;
+  if (sync.err === 'needpass') { toast('請先輸入目前的同步密語', 'worried'); return; }
+  const m = $('#modal'); m.setAttribute('aria-label', '同步資料加密');
+  m.innerHTML = `<form id="fEnc" autocomplete="off" novalidate>
+    <div class="sheet-h"><div><h2>${syncCfg.ek ? '變更同步密語' : '開啟雲端資料加密'}</h2><p>上傳到 GitHub 前先加密，別人拿到同步網址也只看到亂碼</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <ul class="set-list" style="margin-bottom:12px">
+      <li>同步密語至少 8 個字，建議用一句自己記得的話。<b>請記下來</b>：其他裝置第一次同步時要輸入一次（用「配對其他裝置」掃 QR Code 的話會自動帶過去）。</li>
+      <li>忘記密語時，雲端那份就解不開；只要還有一台裝置記得，就能在那台重新設定。</li>
+      <li>iPhone 行事曆訂閱需要讀得到內容，那份檔案（只有標題、時間、地點）不加密。</li>
+    </ul>
+    <div class="form-grid">
+      ${fld('enc-1', '同步密語', '<input id="enc-1" type="password" autocomplete="new-password">')}
+      ${fld('enc-2', '再輸入一次', '<input id="enc-2" type="password" autocomplete="new-password">')}
+    </div>
+    <div class="form-foot"><button type="button" class="btn ghost" data-act="close">取消</button><button type="submit" class="btn primary">${syncCfg.ek ? '變更並重新加密' : '開始加密'}</button></div></form>`;
+  openLayer(m);
+  if (!isPhone()) $('#enc-1').focus();
+  $('#fEnc').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const p1 = $('#enc-1').value, p2 = $('#enc-2').value;
+    if (p1.length < 8) { toast('同步密語至少 8 個字', 'worried'); return; }
+    if (p1 !== p2) { toast('兩次輸入的不一樣', 'worried'); return; }
+    const btn = ev.target.querySelector('button[type=submit]'); btn.disabled = true; btn.textContent = '加密中…';
+    const salt = randB64(16), ek = await pbkdf2(p1, salt, SYNC_ITER);
+    if (syncCfg.ek) syncCfg.prevKeys = [{ salt: syncCfg.esalt, ek: syncCfg.ek }].concat(syncCfg.prevKeys || []).slice(0, 3);
+    Object.assign(syncCfg, { ek, esalt: salt, eiter: SYNC_ITER }); saveSyncCfg();
+    closeLayer($('#modal'));
+    await syncNow(false);
+    render();
+    toast(sync.err ? '已設定，連上網路後就會加密上傳' : '雲端同步資料已加密。其他裝置下次同步時，請輸入同一組同步密語', sync.err ? 'calm' : 'happy');
+  });
+}
+async function unlockSync(pass, btn) {
+  pass = String(pass || '');
+  if (!pass) { toast('請輸入同步密語', 'worried'); return; }
+  const kdf = sync.kdf || {};
+  if (!kdf.salt) { syncNow(true); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '解鎖中…'; }
+  Object.assign(syncCfg, { ek: await pbkdf2(pass, kdf.salt, kdf.iter || SYNC_ITER), esalt: kdf.salt, eiter: kdf.iter || SYNC_ITER }); saveSyncCfg();
+  sync.err = null; sync.errToast = 'needpass';
+  await syncNow(false);
+  if (sync.err === 'needpass') { delete syncCfg.ek; delete syncCfg.esalt; delete syncCfg.eiter; saveSyncCfg(); toast('同步密語不對，請再試一次', 'worried'); }
+  else if (!sync.err) toast('已解鎖，資料同步完成', 'happy');
+  render();
+}
+
 /* ================= actions ================= */
 function findByKey(key) {
   const [k, a, b] = key.split(':');
@@ -3520,6 +3766,16 @@ const ACT = {
   'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); },
   'excel-import': () => { const f = $('#excelFile'); f.value = ''; f.click(); },
   'excel-apply': () => applyCertDiff(),
+  'lock-setup': () => openLockForm('set'),
+  'lock-change': () => openLockForm('change'),
+  'lock-off': () => openLockForm('off'),
+  'lock-now': () => lockNow(),
+  'lock-bio': () => bioUnlock(),
+  'lock-bio-on': () => bioRegister(),
+  'lock-bio-off': () => { lockCfg.wa = null; saveLock(); render(); toast('已停用 Face ID／指紋解鎖', 'calm'); },
+  'lock-forgot': b => forgotLock(b),
+  'enc-set': () => openEncForm(),
+  'sync-pass': b => unlockSync(($('#syncPass') || {}).value, b),
   // 讀伺服器上 sw.js 的版本號，比這台新就更新並重新整理
   'check-update': async () => {
     try {
@@ -3605,6 +3861,7 @@ document.addEventListener('click', ev => {
 $('#overlay').addEventListener('click', closeTop);
 document.addEventListener('keydown', ev => {
   if (keyTime(ev)) return;
+  if (ev.key === 'Enter' && ev.target.id === 'syncPass') { ev.preventDefault(); unlockSync(ev.target.value, $('[data-act="sync-pass"]')); return; }
   if (ev.key === 'Escape') { closeTop(); return; }
   // 快速新增：按 Enter 加入（中文選字時的 Enter 不算）
   if (ev.key === 'Enter' && ev.target.classList && ev.target.classList.contains('qa-in') && !ev.isComposing && ev.keyCode !== 229) { ev.preventDefault(); quickAdd(ev.target.closest('.qa')); }
@@ -3640,6 +3897,7 @@ document.addEventListener('change', ev => {
   if (ev.target.id === 'excelFile') handleExcelFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'quoteFile') handleQuoteFile(ev.target.files && ev.target.files[0]);
   if (ev.target.id === 'moodText') { clearTimeout(UI.moodTimer); saveMood(ev.target.dataset.date, ev.target.value); }
+  if (ev.target.id === 'lockDelay' && lockCfg) { lockCfg.delay = Number(ev.target.value); saveLock(); toast('已更新自動上鎖時間', 'happy'); }
   if (ev.target.id === 'gScope' && gcal) { gcal.scope = ev.target.value; saveGcal(); toast(`之後從 Google 帶進來的行程會放在「${scopeOf(gcal.scope).t}」`, 'happy'); }
 });
 document.addEventListener('focusin', ev => {
@@ -3673,6 +3931,7 @@ if ((location.hash || '').startsWith('#pair=')) {
 const hashView = (location.hash || '').replace('#', '');
 UI.view = VIEWS[hashView] ? hashView : (VIEWS[prefs.view] ? prefs.view : 'today');
 if (incomingPair) UI.view = 'settings';
+if (lockCfg) lockNow();
 render();
 if (incomingPair) openPairIn(incomingPair);
 else setTimeout(() => { maybeDaily(); checkNotices(); }, 900);
@@ -3691,6 +3950,14 @@ function tick() {
   maybeDaily(); checkNotices();
 }
 setInterval(tick, 20000);
+// App 鎖：離開 App 時記下時間（設定「離開就上鎖」時立刻鎖，App 切換畫面也看不到內容），回來時超過設定時間就上鎖
+['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(t => document.addEventListener(t, () => { lock.lastAct = Date.now(); }, { passive: true, capture: true }));
+document.addEventListener('visibilitychange', () => {
+  if (!lockCfg || lock.on) return;
+  if (document.hidden) { lock.hiddenAt = Date.now(); if (!lockDelay()) lockNow(); }
+  else if (Date.now() - lock.hiddenAt >= lockDelay() * 60000) lockNow();
+});
+setInterval(() => { if (lockCfg && !lock.on && !document.hidden && Date.now() - lock.lastAct > Math.max(lockDelay(), 5) * 60000) lockNow(); }, 20000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); if (!layers.length) render(); if (syncCfg) syncNow(false); else if (gReady() && Date.now() - gs.last > 30000) gsyncNow(false); } });
 let lastMinute = nowHM();
 setInterval(() => { const n = nowHM(); if (n !== lastMinute) { lastMinute = n; if (UI.view === 'today' && !layers.length) render(); } }, 60000);
