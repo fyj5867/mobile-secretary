@@ -363,6 +363,16 @@ body.app-locked > *:not(#lockScreen){visibility:hidden}
 .stickers .stamp{width:26px;height:26px}
 .stickers .pend{width:26px;height:26px;display:grid;place-items:center}
 .stickers .pend i{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--faint)}
+.memo-tag{display:inline-block;font-size:11px;line-height:16px;padding:0 5px;border:1px solid var(--line);border-radius:3px;margin-right:6px;color:var(--sub);vertical-align:1px}
+.memo-ed{grid-template-columns:150px minmax(0,1fr) auto auto}
+.cbrief{margin-top:16px}
+.cb-list{list-style:none;margin:0;padding:0}
+.cb-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.cb-list li:first-child{border-top:0}
+.cb-list .tag{margin-top:1px;min-width:56px;text-align:center}
+.cb-t{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.55}
+.cb-t b{font-weight:500}
+.tick.sm{width:22px;height:22px}
 .bill{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .bill-h{font-size:12.5px;color:var(--sub);margin-right:2px}
 .bill-h b{font-family:var(--f-num);color:var(--ink);font-weight:600}
@@ -599,6 +609,7 @@ td.proj{font-weight:700}
   .checks{padding-top:2px}
   .step-ed{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   .step-ed .se-title{grid-column:1/-1;order:-1}
+  .memo-ed .me-text{grid-column:1/-1;order:-1}
 }
 @media (max-width:640px){
   .cal{--dh:26px;--lh:7px;--ch:20px;border-radius:8px}
@@ -660,9 +671,9 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v24）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 24;
-const APP_DATE = '2026/10/20';
+/* 版本：和 sw.js 的 CACHE（msec-v25）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 25;
+const APP_DATE = '2026/10/21';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -903,7 +914,8 @@ function demoData() {
       { id: 'da1', sample: true, name: '【範例】X 機種 CB 認證', scheme: 'CB', project: 'X 機種', company: '範例實驗室', target: '王小姐', phone: '02-1234-5678', applyDate: d(-14), certDate: d(45), status: 'active', color: 1, bill: { quote: d(-20), sign: d(-16), invoice: '', claim: '', amount: 150000 }, steps: [
         { id: 's1', date: d(-14), title: '申請表／授權書簽回', done: true }, { id: 's2', date: d(-6), title: '關鍵零件清單（BOM / CDF）', done: true },
         { id: 's3', date: d(2), title: '送樣（主機＋Adapter＋電池）' }, { id: 's4', date: d(14), title: '使用手冊／標籤圖／警語' },
-        { id: 's5', date: d(30), title: '測試報告初稿確認' }, { id: 's6', date: d(43), title: '證書草稿確認' }] },
+        { id: 's5', date: d(30), title: '測試報告初稿確認' }, { id: 's6', date: d(43), title: '證書草稿確認' }],
+        memos: [{ id: 'm1', date: d(1), text: '打電話跟實驗室確認收樣與排測時間' }] },
       { id: 'da2', sample: true, name: '【範例】Y 機種 BSMI 申請', scheme: 'BSMI', project: 'Y 機種', company: '範例驗證機構', applyDate: d(-5), certDate: d(70), status: 'active', color: 3, steps: [
         { id: 's1', date: d(-5), title: '申請書與型式試驗文件', done: true }, { id: 's2', date: TODAY, time: '16:00', title: '寄送型式試驗樣品' },
         { id: 's3', date: d(18), title: '中文標示／說明書確認' }, { id: 's4', date: d(65), title: '領取證書' }] }
@@ -974,6 +986,11 @@ function buildEvents() {
     (a.steps || []).forEach(st => {
       if (!isDate(st.date)) return;
       out.push({ k: 'step', key: `step:${a.id}:${st.id}`, appId: a.id, stepId: st.id, date: st.date, time: st.time || '', title: st.title || '（未命名節點）', app: a, done: !!st.done, live, scope: 'work' });
+    });
+    // 日程備註：有日期的追蹤事項（打電話確認、催報告…），和節點一樣會提醒、會出現在月曆
+    (a.memos || []).forEach(mo => {
+      if (!isDate(mo.date) || !String(mo.text || '').trim()) return;
+      out.push({ k: 'memo', key: `memo:${a.id}:${mo.id}`, appId: a.id, memoId: mo.id, date: mo.date, time: mo.time || '', title: mo.text, app: a, done: !!mo.done, live, scope: 'work' });
     });
     const cd = endOf(a);
     if (isDate(cd)) out.push({ k: 'certday', key: 'certday:' + a.id, appId: a.id, date: cd, time: '', title: a.status === 'obtained' ? '已取證' : '預計取證日', app: a, done: a.status === 'obtained', live, scope: 'work' });
@@ -1048,13 +1065,14 @@ function evRow(e, o = {}) {
   const t = e.k === 'cert' ? certTag(e.cert) : dueTag(e);
   const L = lvl(e);
   let lead;
-  if (e.k === 'item' || e.k === 'step') {
+  if (e.k === 'item' || e.k === 'step' || e.k === 'memo') {
     lead = `<button class="tick ${e.done ? 'on' : ''}" data-act="toggle" data-key="${esc(e.key)}" aria-pressed="${e.done}" aria-label="${e.done ? '取消完成' : '標記完成'}：${esc(e.title)}" ${e.live ? '' : 'disabled'}>${IC.check}</button>`;
   } else {
     lead = `<span class="row-ic k-${e.k}">${e.k === 'cert' ? IC.hour : IC.medal}</span>`;
   }
   let title = '';
-  if ((e.k === 'step' || e.k === 'certday') && !o.noApp) title += appTag(e.app);
+  if ((e.k === 'step' || e.k === 'certday' || e.k === 'memo') && !o.noApp) title += appTag(e.app);
+  if (e.k === 'memo') title += '<span class="memo-tag">備註</span>';
   if (e.k === 'item') title += priTag(priOf(e.ref));
   title += esc(e.k === 'cert' ? e.title + ' 證書到期' : e.title);
   if (e.rep) title += `<span class="rep-ic" title="${esc(REPEAT[e.ref.repeat] || '')}">${IC.repeat}</span>`;
@@ -1096,6 +1114,37 @@ function rowsOrEmpty(list, emptyHtml, o = {}) {
 }
 const scopeWord = () => UI.scope === 'all' ? '' : scopeOf(UI.scope).t;
 
+/* 今日頁「認證提示」：把認證相關要注意的事整理成一張條列——逾期／今天／兩天內的節點與日程備註、
+   報價與請款卡住的、兩週內預計取證、90 天內到期的證書。依急迫程度排序 */
+function certBrief() {
+  const out = [];
+  const tagOf = n => n < 0 ? { cls: 'overdue', t: `逾期 ${-n} 天` } : n === 0 ? { cls: 'today', t: '今天' } : n === 1 ? { cls: 'soon', t: '明天' } : { cls: 'soon', t: '後天' };
+  EV.filter(e => (e.k === 'step' || e.k === 'memo') && e.live && !e.done && diff(TODAY, e.date) <= LEAD).forEach(e => {
+    const n = diff(TODAY, e.date), tg = tagOf(n), kind = e.k === 'memo' ? '備註' : '節點';
+    out.push({ r: n < 0 ? 0 : n === 0 ? 1 : 2, d: e.date, key: e.key, tag: tg, app: e.app,
+      html: `<b>${kind}</b> ${esc(e.title)}${e.time ? ` <span class="num">${e.time}</span>` : ''}`, text: `${tg.t}｜${appName(e.app)}｜${kind}：${e.title}` });
+  });
+  S.apps.filter(isLive).forEach(a => {
+    const b = billOf(a);
+    if (isDate(b.quote) && !isDate(b.sign)) out.push({ r: 3, d: b.quote, app: a, tag: { cls: 'soon', t: '待回簽' }, html: `報價單 ${md(b.quote)} 收到，還沒回簽`, text: `待回簽｜${appName(a)}｜報價單 ${md(b.quote)} 收到，還沒回簽` });
+    if (isDate(b.invoice) && !isDate(b.claim)) out.push({ r: 3, d: b.invoice, app: a, tag: { cls: 'soon', t: '待請款' }, html: `發票 ${md(b.invoice)} 收到，還沒請款`, text: `待請款｜${appName(a)}｜發票 ${md(b.invoice)} 收到，還沒請款` });
+    const end = endOf(a);
+    if (isDate(end)) { const n = diff(TODAY, end); if (n >= 0 && n <= 14) out.push({ r: 4, d: end, app: a, tag: { cls: n <= 2 ? 'soon' : 'later', t: n ? `${n} 天後` : '今天' }, html: `預計取證 ${md(end)}（${wd(end)}）`, text: `${n ? n + ' 天後' : '今天'}｜${appName(a)}｜預計取證 ${md(end)}` }); }
+  });
+  const certs = S.certs.filter(c => ['expired', 'warn'].includes(certLvl(c)));
+  if (certs.length) {
+    const exp = certs.filter(c => certLvl(c) === 'expired').length;
+    out.push({ r: 5, d: '', tag: { cls: exp ? 'overdue' : 'watch', t: '證書' }, html: `90 天內到期 <b class="num">${certs.length - exp}</b> 筆${exp ? `、已過期 <b class="num">${exp}</b> 筆` : ''}（詳見下方「證書到期提示」）`, text: `證書｜90 天內到期 ${certs.length - exp} 筆${exp ? `、已過期 ${exp} 筆` : ''}` });
+  }
+  return out.sort((x, y) => x.r - y.r || (x.d < y.d ? -1 : x.d > y.d ? 1 : 0));
+}
+function certBriefPanel() {
+  const list = certBrief();
+  return `<section class="panel cbrief"><div class="panel-h"><h2>認證提示</h2><span class="n">${list.length} 則</span>${list.length ? `<button class="btn sm act" data-act="cb-copy">${IC.copy}複製</button>` : ''}</div>
+    ${list.length ? `<ul class="cb-list">${list.map(x => `<li><span class="tag ${x.tag.cls}">${x.tag.t}</span><span class="cb-t">${x.app ? appTag(x.app) : ''}${x.html}</span>${x.key ? `<button class="tick sm" data-act="toggle" data-key="${esc(x.key)}" aria-label="標記完成">${IC.check}</button>` : x.app ? `<button class="ico" data-act="edit" data-key="app:${esc(x.app.id)}" aria-label="開啟">${IC.edit}</button>` : ''}</li>`).join('')}</ul>`
+      : emptyBox('認證這邊目前沒有要注意的事', '<div>兩天內的節點與日程備註、報價回簽、發票請款、兩週內取證、90 天內到期的證書，都會整理在這裡。</div>')}
+  </section>`;
+}
 /* ================= views ================= */
 function vToday() {
   const ev = EV.filter(scopeOk);
@@ -1141,6 +1190,7 @@ function vToday() {
     <div class="next-ntf"><div class="nn-h">接下來的推播</div>${nextNoticesHtml(3)}</div>
   </section>
   ${quoteCard()}
+  ${showWork ? certBriefPanel() : ''}
   ${sampleBar}
   <div class="grid2">
     <div class="stack">
@@ -1288,7 +1338,7 @@ function chip(e) {
   const cls = `chip k-${e.k}${e.done ? ' done' : ''}${L ? ' l-' + L : ''}${P ? ' pri-' + P.c : ''}`;
   let style, lead, label;
   if (e.k === 'item') { style = `--c:${catColor(e.ref.cat, e.ref.scope)}`; lead = '<i></i>'; label = (P ? `<b class="pm ${P.c}">${P.c === 'u' ? '急' : '重'}</b> ` : '') + (e.span && e.span.i > 0 ? '<b>⋯</b> ' : e.allDay ? '<b>整日</b> ' : e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
-  else if (e.k === 'step') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.doc}</span>`; label = (e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
+  else if (e.k === 'step' || e.k === 'memo') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${e.k === 'memo' ? IC.edit : IC.doc}</span>`; label = (e.time ? `<b>${e.time}</b> ` : '') + esc(e.title); }
   else if (e.k === 'certday') { style = `--c:var(--tape-${e.app.color || 1})`; lead = `<span class="ic">${IC.medal}</span>`; label = `${e.done ? '取證' : '預計取證'}・${esc(shortName(e.app))}`; }
   else { style = '--c:var(--lilac)'; lead = `<span class="ic">${IC.hour}</span>`; label = `${esc(e.cert.project)} ${esc(e.cert.cert)} 到期`; }
   return `<span class="${cls}" style="${style}">${lead}<span class="ct">${label}</span></span>`;
@@ -1354,6 +1404,7 @@ function appCard(a) {
     <div class="app-prog"><span>提交節點 <b>${dn}/${steps.length}</b></span><div class="prog"><i style="width:${steps.length ? dn / steps.length * 100 : 0}%"></i></div></div>
     ${steps.length ? `<div class="stickers" aria-hidden="true">${stickers}</div>` : ''}
     ${evs.length ? `<div class="rows" style="margin-top:6px">${evs.map(e => evRow(e, { noApp: true, noEdit: true })).join('')}</div>` : `<div class="more">尚未設定提交節點，按編輯可以「套用常用節點」。</div>`}
+    ${(() => { const ms = EV.filter(e => e.k === 'memo' && e.appId === a.id); return ms.length ? `<div class="sub-h" style="margin-top:12px">日程備註</div><div class="rows">${ms.map(e => evRow(e, { noApp: true, noEdit: true })).join('')}</div>` : ''; })()}
     <div class="bill"><span class="bill-h">報價與請款 <b>${billDone(a)}/${BILL.length}</b></span>${BILL.map(([k, t]) => { const d = billOf(a)[k]; return `<button type="button" class="bill-chk ${isDate(d) ? 'on' : ''}" data-act="bill" data-id="${esc(a.id)}" data-k="${k}" aria-pressed="${isDate(d)}">${IC.check}${t}${isDate(d) ? `<small>${md(d)}</small>` : ''}</button>`; }).join('')}${money(billOf(a).amount) ? `<span class="bill-amt">報價 ${money(billOf(a).amount)}</span>` : ''}</div>
     ${a.note ? `<div class="app-note">${esc(a.note)}</div>` : ''}
     <div class="app-foot">${st === 'active' ? `<button class="btn sm primary" data-act="app-obtain" data-id="${esc(a.id)}">${IC.medal}標記已取證</button>` : ''}<button class="btn sm" data-act="edit" data-key="app:${esc(a.id)}">${IC.edit}編輯節點與資料</button></div>
@@ -1777,7 +1828,7 @@ function fillDrawer() {
    App 開著或在背景時由 App 發通知；App 關著時靠 iPhone 行事曆（訂閱或匯出的 .ics，見 alarmsFor）。 */
 const NTF_KEY = 'msec.ntf.v1';
 function noticeTimes(e) {
-  if (!['item', 'step', 'certday'].includes(e.k) || e.done || !e.live || (e.span && e.span.i > 0)) return [];
+  if (!['item', 'step', 'certday', 'memo'].includes(e.k) || e.done || !e.live || (e.span && e.span.i > 0)) return [];
   const [y, m, d] = e.date.split('-').map(Number);
   if (e.time && !e.allDay) {
     const [h, mi] = e.time.split(':').map(Number);
@@ -1785,7 +1836,7 @@ function noticeTimes(e) {
   }
   return [{ at: new Date(y, m - 1, d - 1, 9, 0), kind: 'day' }];
 }
-const noticeName = e => e.k === 'certday' ? `預計取證：${appName(e.app)}` : e.k === 'step' ? `${appName(e.app)}｜${e.title}` : priWord(priOf(e.ref)) + e.title;
+const noticeName = e => e.k === 'certday' ? `預計取證：${appName(e.app)}` : e.k === 'step' ? `${appName(e.app)}｜${e.title}` : e.k === 'memo' ? `${appName(e.app)}｜備註：${e.title}` : priWord(priOf(e.ref)) + e.title;
 function noticeText(e, n) {
   const when = '明天';
   const t = timeLabel(e);
@@ -2167,6 +2218,14 @@ function openItemForm(it, date, scope, pre) {
   });
 }
 
+function memoRow(mo) {
+  return `<div class="step-ed memo-ed" data-mid="${esc(mo.id || uid('m'))}">
+    <div class="se-dwrap"><input type="date" class="me-date" value="${esc(mo.date || '')}" aria-label="備註日期"><span class="wd-hint">${wdHint(mo.date)}</span></div>
+    <input class="me-text" value="${esc(mo.text || '')}" placeholder="要追蹤或提醒的事" aria-label="備註內容" maxlength="200">
+    <label class="dn"><input type="checkbox" class="me-done" ${mo.done ? 'checked' : ''}>完成</label>
+    <button type="button" class="ico" data-act="memo-del" aria-label="移除備註">${IC.x}</button>
+  </div>`;
+}
 function stepRow(s) {
   return `<div class="step-ed" data-sid="${esc(s.id || uid('s'))}">
     <div class="se-dwrap"><input type="date" class="se-date" value="${esc(s.date || '')}" aria-label="節點日期"><span class="wd-hint">${wdHint(s.date)}</span></div>
@@ -2201,6 +2260,9 @@ function openAppForm(a, preset) {
       <div class="fsec">提交節點（要交的內容）</div>
       <div class="full"><div class="steps-ed" id="fa-steps">${(v.steps || []).slice().sort((x, y) => (x.date || '') < (y.date || '') ? -1 : 1).map(stepRow).join('')}</div>
         <div class="steps-tools"><button type="button" class="btn sm" data-act="step-add">${IC.plus}新增節點</button><button type="button" class="btn sm" data-act="step-tpl">套用常用節點</button></div></div>
+      <div class="fsec">日程備註（到期前一天提醒）</div>
+      <div class="full"><div class="steps-ed" id="fa-memos">${(v.memos || []).slice().sort((x, y) => (x.date || '') < (y.date || '') ? -1 : 1).map(memoRow).join('')}</div>
+        <div class="steps-tools"><button type="button" class="btn sm" data-act="memo-add">${IC.plus}新增備註</button><span class="muted" style="font-size:12.5px;align-self:center">例如：打電話確認排測、催報告、追蹤樣品寄回</span></div></div>
       <div class="fsec">報價與請款</div>
       ${fld('fa-amount', '報價金額（NT$，選填）', inp('fa-amount', billOf(v).amount || '', 'inputmode="numeric" placeholder="例如：150000"'))}
       <div class="full bill-ed">${BILL.map(([k, t]) => `<label class="bi"><input type="checkbox" data-bill="${k}" ${isDate(billOf(v)[k]) ? 'checked' : ''}> ${t}<input type="date" data-bill-d="${k}" value="${esc(billOf(v)[k] || '')}" aria-label="${t}日期"></label>`).join('')}</div>
@@ -2234,12 +2296,19 @@ function openAppForm(a, preset) {
     }).filter(s => s.title || s.date);
     const bill = { amount: Number(String(val('fa-amount')).replace(/[^\d.]/g, '')) || '' };
     BILL.forEach(([k]) => { const c = $(`#fApp [data-bill="${k}"]`), d = $(`#fApp [data-bill-d="${k}"]`).value; bill[k] = c.checked ? (isDate(d) ? d : TODAY) : ''; });
+    const oldM = a ? (a.memos || []) : [];
+    const memos = $$('#fa-memos .memo-ed').map(r => {
+      const id = r.dataset.mid; const prev = oldM.find(x => x.id === id) || {};
+      const done = $('.me-done', r).checked;
+      return { id, date: $('.me-date', r).value, text: $('.me-text', r).value.trim(), done, doneAt: done ? (prev.doneAt || iso()) : null };
+    }).filter(x => x.text);
+    if (memos.some(x => !isDate(x.date))) { toast('日程備註請填日期', 'worried'); return; }
     const colorEl = document.querySelector('input[name="fa-color"]:checked');
     const status = val('fa-status');
     const body = Object.assign({}, a || {}, {
       name, scheme: val('fa-scheme'), project: val('fa-project'), company: val('fa-company'), target: val('fa-target'), phone: val('fa-phone'),
       location: val('fa-location'), link: val('fa-link'), applyDate, certDate, status, color: colorEl ? Number(colorEl.value) : 1,
-      steps, bill, actualCertDate: val('fa-actual'), certNo: val('fa-certno'), expiry: val('fa-expiry'), note: val('fa-note'), updatedAt: iso()
+      steps, memos, bill, actualCertDate: val('fa-actual'), certNo: val('fa-certno'), expiry: val('fa-expiry'), note: val('fa-note'), updatedAt: iso()
     });
     if (!a) body.createdAt = iso();
     if (status === 'obtained' && !isDate(body.actualCertDate)) body.actualCertDate = TODAY;
@@ -2499,6 +2568,10 @@ function exportEventsICS() {
     (a.steps || []).forEach(st => {
       if (!isDate(st.date) || st.done || st.date < TODAY || st.date > hi) return;
       evs.push(vevent({ uid: `step-${a.id}-${st.id}`, date: st.date, time: st.time, summary: `【認證】${appName(a)}｜${st.title}`, desc: [a.company && `實驗室：${a.company}`, a.target && `窗口：${a.target}`, a.phone && `電話：${a.phone}`].filter(Boolean).join('\n'), url: appUrl(), alarms: alarmsFor(st.time) }));
+    });
+    (a.memos || []).forEach(mo => {
+      if (!isDate(mo.date) || mo.done || mo.date < TODAY || mo.date > hi || !mo.text) return;
+      evs.push(vevent({ uid: `memo-${a.id}-${mo.id}`, date: mo.date, summary: `【認證備註】${appName(a)}｜${mo.text}`, url: appUrl(), alarms: alarmsFor('') }));
     });
     if (isDate(a.certDate) && a.certDate >= TODAY && a.certDate <= hi) evs.push(vevent({ uid: 'certday-' + a.id, date: a.certDate, summary: `【取證日】${appName(a)}`, url: appUrl(), alarms: alarmsFor('') }));
   }
@@ -2802,6 +2875,10 @@ function buildFeed() {
       if (!isDate(st.date) || st.date < lo || st.date > hi) return;
       const future = live && !st.done && st.date >= TODAY;
       evs.push(vevent({ uid: `step-${a.id}-${st.id}`, date: st.date, time: st.time, summary: `${st.done ? '✓ ' : ''}【認證】${appName(a)}｜${st.title}`, desc: '認證提交節點', url, alarms: future ? alarmsFor(st.time) : [] }));
+    });
+    (a.memos || []).forEach(mo => {
+      if (!isDate(mo.date) || mo.date < lo || mo.date > hi || !mo.text) return;
+      evs.push(vevent({ uid: `memo-${a.id}-${mo.id}`, date: mo.date, summary: `${mo.done ? '✓ ' : ''}【認證備註】${appName(a)}｜${mo.text}`, desc: '認證日程備註', url, alarms: live && !mo.done && mo.date >= TODAY ? alarmsFor('') : [] }));
     });
     const cd = endOf(a);
     if (isDate(cd) && cd >= lo && cd <= hi) evs.push(vevent({ uid: 'certday-' + a.id, date: cd, summary: `${a.status === 'obtained' ? '【取證】' : '【預計取證】'}${appName(a)}`, url, alarms: live && cd >= TODAY ? alarmsFor('') : [] }));
@@ -3701,6 +3778,7 @@ function findByKey(key) {
   const [k, a, b] = key.split(':');
   if (k === 'item') return { k, it: S.items.find(x => x.id === a), date: b };
   if (k === 'step' || k === 'certday' || k === 'app') return { k, app: S.apps.find(x => x.id === a), stepId: b };
+  if (k === 'memo') return { k, app: S.apps.find(x => x.id === a), memoId: b };
   if (k === 'cert') return { k, cert: S.certs.find(x => x.id === a) };
   return { k };
 }
@@ -3737,6 +3815,12 @@ function toggle(btn) {
     Store.patch('apps', a.id, { steps, updatedAt: iso() });
     if (done && steps.every(s => s.done)) setTimeout(() => toast(`「${appName(a)}」所有提交節點都完成了，就等取證！`, 'happy'), 900);
     else if (lastToday) setTimeout(() => toast('今日待辦全部完成', 'happy'), 900);
+  } else if (f.k === 'memo' && f.app) {
+    const a = f.app; const mo = (a.memos || []).find(x => x.id === f.memoId); if (!mo) return;
+    const done = !mo.done;
+    const memos = (a.memos || []).map(x => x.id === f.memoId ? Object.assign({}, x, { done, doneAt: done ? iso() : null }) : Object.assign({}, x));
+    if (done) celebrate(btn, `${appName(a)}｜${mo.text}`);
+    Store.patch('apps', a.id, { memos });
   }
 }
 function arm(btn, armedText, fn) {
@@ -3851,6 +3935,9 @@ const ACT = {
   'step-add': () => { $('#fa-steps').insertAdjacentHTML('beforeend', stepRow({ id: uid('s'), date: TODAY })); const r = $$('#fa-steps .se-title'); r[r.length - 1].focus(); },
   'step-tpl': () => insertTemplate(),
   'step-del': b => b.closest('.step-ed').remove(),
+  'memo-add': () => { $('#fa-memos').insertAdjacentHTML('beforeend', memoRow({ id: uid('m'), date: TODAY })); const r = $$('#fa-memos .me-text'); r[r.length - 1].focus(); },
+  'memo-del': b => b.closest('.memo-ed').remove(),
+  'cb-copy': () => copyText(certBrief().map(x => '・' + x.text).join('\n'), '認證提示已複製'),
   'clear-samples': b => clearSamples(b),
   'clear-all': b => clearAll(b),
   backup: () => backup(),
