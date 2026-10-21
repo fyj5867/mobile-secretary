@@ -30,8 +30,10 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
   `memos`（v25，2026/10/21）：日程備註 [{id,date,text,done,doneAt}]，有日期的追蹤事項；`buildEvents` 產生 `k:'memo'`（和節點一樣可打勾、前一天推播、
-  出現在月曆與 iPhone 訂閱，不進 Google）。今日頁「認證提示」（`certBrief`）把逾期／今天／兩天內的節點與備註、待回簽報價、待請款、
-  兩週內預計取證、90 天內到期證書整理成一張條列，可直接打勾或複製。
+  出現在月曆與 iPhone 訂閱，不進 Google）。備註可勾「重要」（`imp`）：完成前不論日期都列在認證提示。
+  今日頁「認證提示」（`certBrief`）：逾期／今天／兩天內的節點與備註 → 重要備註 → 待回簽、待請款 → 每件進行中申請一行「進度」
+  （節點 x/n・下一步・取證倒數；申請備註勾了 `pinNote` 就一起顯示）。可直接打勾或複製。
+  **今日頁順序（使用者指定，v26）：問候 → 今日待辦（＋逾期）→ 認證提示 → 證書到期提示 → 即將到來 → 每日一句 → 心情結語**，單欄排列。
   `bill`（2026/10/15 新增，報價與請款）：{ quote 收到報價單, sign 回簽報價單, invoice 收到發票, claim 發票請款：勾選的日期或 ''；amount 報價金額 }，
   步驟定義在 `BILL`；卡片上可直接勾（記今天，再按取消），表單「報價與請款」可改日期與金額。
   認證頁第三個分頁「報表」（`vCertReport`）：依配合單位（`company`）統計案件、節點進度、報價合計、帳務完成；案件進度表；
