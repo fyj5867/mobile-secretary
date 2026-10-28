@@ -255,6 +255,8 @@ body.app-locked > *:not(#lockScreen){visibility:hidden}
 .cal-wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
 .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
 .toolbar .grow{flex:1}
+.cert-tb .seg{flex:none}
+.cert-tb .search{flex:1 1 200px}
 .month-title{font-family:var(--f-display);font-weight:500;font-size:19px;letter-spacing:.06em;min-width:130px;text-align:center}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--sub)}
 .legend span{display:inline-flex;align-items:center;gap:5px}
@@ -653,9 +655,9 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v27）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 27;
-const APP_DATE = '2026/10/21';
+/* 版本：和 sw.js 的 CACHE（msec-v28）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 28;
+const APP_DATE = '2026/10/28';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -827,7 +829,7 @@ const prefs = (() => { try { return JSON.parse(ls.get(PREF_KEY)) || {}; } catch 
 const savePrefs = () => ls.set(PREF_KEY, JSON.stringify(prefs));
 const UI = {
   view: 'today', scope: prefs.scope || 'all', month: TODAY.slice(0, 8) + '01', sel: TODAY,
-  certTab: 'apps', appFilter: 'active', certQ: '', agQ: '', agDays: 30, agDone: false,
+  certTab: 'apps', appFilter: 'active', certQ: '', certGroup: prefs.certGroup || 'kind', agQ: '', agDays: 30, agDone: false,
   repMode: 'week', repAnchor: TODAY
 };
 function loadData() {
@@ -1001,6 +1003,26 @@ function lvl(e) {
   if (d === 0) return 'today';
   if (d <= LEAD) return 'soon';
   return null;
+}
+/* 證書的三個類別，和「安規認證效期看板」以及來源 Excel 的三個分頁一致。
+   匯入檔沒有帶類別欄位，所以從認證項目名稱推回來：(Adapter)／(Battery)／
+   其餘（(NB)、(Taiwan)、手動新增的）算系統本身。
+   「CB (發證日+5年)」系統與 adapter 兩邊都有，adapter 的那幾筆 note 會帶 W 數
+   （「…｜120W｜適用 S14、Z14、S15」），用這個分開。
+   c.kind 有值時一律以它為準，之後匯入檔補上欄位就不必再猜。 */
+const CKINDS = [
+  { k: 'adapter', t: 'AC ADAPTER', col: 'ADAPTER 型號', c: 'var(--tape-4)' },
+  { k: 'system', t: '系統本身', col: '機型／專案', c: 'var(--tape-5)' },
+  { k: 'battery', t: '電池', col: '電池型號', c: 'var(--tape-2)' }
+];
+const CKIND_T = { adapter: 'AC ADAPTER', system: '系統本身', battery: '電池' };
+function certKind(c) {
+  if (c.kind && CKIND_T[c.kind]) return c.kind;
+  const n = c.cert || '';
+  if (/\(\s*adapter\s*\)/i.test(n)) return 'adapter';
+  if (/\(\s*battery\s*\)/i.test(n)) return 'battery';
+  if (/^\s*CB\b/i.test(n) && /[｜|]\s*\d+\s*W\b/i.test(c.note || '')) return 'adapter';
+  return 'system';
 }
 function certLvl(c) {
   if ((c.state || 'normal') === 'retired') return 'retired';
@@ -1454,7 +1476,8 @@ function vCerts() {
   const all = S.certs;
   const n = k => all.filter(c => certLvl(c) === k).length;
   const q = UI.certQ.trim().toLowerCase();
-  const list = all.filter(c => !q || `${c.project} ${c.cert} ${c.no || ''} ${c.note || ''}`.toLowerCase().includes(q));
+  const list = all.filter(c => !q || `${c.project} ${c.cert} ${c.no || ''} ${c.note || ''} ${CKIND_T[certKind(c)]}`.toLowerCase().includes(q));
+  const byKind = UI.certGroup !== 'lvl';
   const G = [
     { k: 'expired', t: '已過期', rule: '到期日已過', c: 'var(--red)' },
     { k: 'warn', t: '90 天內到期', rule: '列入每日提醒', c: 'var(--sun)' },
@@ -1462,12 +1485,31 @@ function vCerts() {
     { k: 'ok', t: '正常', rule: '超過 180 天', c: 'var(--mint)' },
     { k: 'retired', t: '不續證／停用', rule: '不列入提醒', c: 'var(--faint)' }
   ];
-  const groups = G.map(g => {
-    const rows = list.filter(c => certLvl(c) === g.k).sort((a, b) => (a.due || '') < (b.due || '') ? -1 : 1);
-    if (!rows.length) return '';
-    return `<section class="panel cert-group"><div class="panel-h"><span class="dot" style="--c:${g.c}"></span><h2>${g.t}</h2><span class="n">（${g.rule}）${rows.length} 筆</span></div>
-    <div class="tbl-wrap"><table><thead><tr><th>機型／專案</th><th>認證項目</th><th>到期日</th><th>剩餘</th><th>狀態</th><th>證書編號</th><th>備註</th><th></th></tr></thead><tbody>
-    ${rows.map(c => { const t = certTag(c); return `<tr><td class="proj">${esc(c.project)}</td><td>${esc(c.cert)}</td><td class="num">${isDate(c.due) ? c.due.replace(/-/g, '/') : '—'}</td><td><span class="tag ${t.cls}">${t.txt}</span></td><td>${esc(CSTATE[c.state || 'normal'] || '')}</td><td class="num">${esc(c.no || '—')}</td><td class="wrap">${esc(c.note || '')}</td><td><button class="ico" data-act="edit" data-key="cert:${esc(c.id)}" aria-label="編輯證書">${IC.edit}</button></td></tr>`; }).join('')}
+  /* 依類別時，一個類別一段，段內還是先列快到期的（已停用的沉到最後）；
+     依到期時維持原本的五段。兩種排法共用同一張表格。 */
+  const rank = c => { const L = certLvl(c); return L === 'retired' ? 1 : 0; };
+  const sects = byKind
+    ? CKINDS.map(g => {
+        const rows = list.filter(c => certKind(c) === g.k)
+          .sort((a, b) => rank(a) - rank(b) || ((a.due || '') < (b.due || '') ? -1 : 1));
+        const live = rows.filter(c => certLvl(c) !== 'retired');
+        const ex = live.filter(c => certLvl(c) === 'expired').length;
+        const wa = live.filter(c => certLvl(c) === 'warn').length;
+        const models = new Set(rows.map(c => c.project)).size;
+        const badge = ex ? `<span class="tag overdue">已過期 ${ex}</span>`
+          : wa ? `<span class="tag soon">90 天內 ${wa}</span>`
+          : live.length ? '<span class="tag done">全部正常</span>' : '';
+        return { ...g, rows, badge, meta: `${models} 個型號・${rows.length} 張證書` };
+      })
+    : G.map(g => {
+        const rows = list.filter(c => certLvl(c) === g.k).sort((a, b) => (a.due || '') < (b.due || '') ? -1 : 1);
+        return { ...g, rows, badge: '', col: '機型／專案', meta: `（${g.rule}）${rows.length} 筆` };
+      });
+  const groups = sects.map(g => {
+    if (!g.rows.length) return '';
+    return `<section class="panel cert-group"><div class="panel-h"><span class="dot" style="--c:${g.c}"></span><h2>${g.t}</h2><span class="n">${g.meta}</span><div class="grow"></div>${g.badge}</div>
+    <div class="tbl-wrap"><table><thead><tr><th>${g.col}</th><th>認證項目</th><th>到期日</th><th>剩餘</th><th>狀態</th><th>證書編號</th><th>備註</th><th></th></tr></thead><tbody>
+    ${g.rows.map(c => { const t = certTag(c); return `<tr><td class="proj">${esc(c.project)}</td><td>${esc(c.cert)}</td><td class="num">${isDate(c.due) ? c.due.replace(/-/g, '/') : '—'}</td><td><span class="tag ${t.cls}">${t.txt}</span></td><td>${esc(CSTATE[c.state || 'normal'] || '')}</td><td class="num">${esc(c.no || '—')}</td><td class="wrap">${esc(c.note || '')}</td><td><button class="ico" data-act="edit" data-key="cert:${esc(c.id)}" aria-label="編輯證書">${IC.edit}</button></td></tr>`; }).join('')}
     </tbody></table></div></section>`;
   }).join('');
   return `<div class="tiles">
@@ -1476,7 +1518,7 @@ function vCerts() {
     <div class="tile t-sky"><div><div class="v">${n('watch')}</div><div class="l">180 天內到期</div></div></div>
     <div class="tile t-mint"><div><div class="v">${n('ok')}</div><div class="l">正常</div></div></div>
   </div>
-  <div class="toolbar"><label class="search">${IC.search}<input id="certSearch" type="search" placeholder="搜尋機型、認證項目、證書編號" value="${esc(UI.certQ)}" aria-label="搜尋證書"></label><div class="grow"></div><button class="btn" data-act="excel-import">${IC.ul}從效期表更新</button><button class="btn primary" data-act="new-cert">＋ 新增證書</button></div>
+  <div class="toolbar cert-tb"><div class="seg" role="group" aria-label="分組方式">${[['kind', '依類別'], ['lvl', '依到期']].map(([k, t]) => `<button data-act="cert-group" data-g="${k}" aria-pressed="${(UI.certGroup !== 'lvl' ? 'kind' : 'lvl') === k}">${t}</button>`).join('')}</div><label class="search">${IC.search}<input id="certSearch" type="search" placeholder="搜尋型號、認證項目、類別" value="${esc(UI.certQ)}" aria-label="搜尋證書"></label><div class="grow"></div><button class="btn" data-act="excel-import">${IC.ul}從效期表更新</button><button class="btn primary" data-act="new-cert">＋ 新增證書</button></div>
   <p class="excel-note">${prefs.lastExcel ? `上次從效期表更新：<b>${esc(prefs.lastExcel.name)}</b>（${new Date(prefs.lastExcel.at).toLocaleDateString('zh-TW')}）` : '每月審查完，按「從效期表更新」選最新的《TWINHEAD 安規認證到期管理》Excel，到期日就會同步到這裡和手機。'}</p>
   ${groups || `<section class="panel">${emptyBox(q ? '找不到符合的證書' : '還沒有證書資料', q ? '<div>換個關鍵字試試看。</div>' : '<div>到「設定 → 匯入資料」載入證書效期檔，或按「＋ 新增證書」。180 天內開始追蹤、90 天內列入每日提醒。</div>')}${!q ? `<div class="set-acts" style="margin-top:10px"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}前往匯入</button></div>` : ''}</section>`}`;
 }
@@ -3875,6 +3917,7 @@ const ACT = {
   'cal-today': () => { UI.month = TODAY.slice(0, 8) + '01'; UI.sel = TODAY; render(); },
   'cert-tab': b => { UI.certTab = b.dataset.t; render(); },
   'app-filter': b => { UI.appFilter = b.dataset.f; render(); },
+  'cert-group': b => { UI.certGroup = b.dataset.g; prefs.certGroup = UI.certGroup; savePrefs(); render(); },
   'cr-filter': b => { UI.crFilter = b.dataset.f; render(); },
   'cr-copy': () => copyText(certReportText(), '認證報表文字已複製，可以直接貼到郵件或 Teams'),
   'cr-csv': () => shareOrDownload(`認證案件報表_${crFilterName(UI.crFilter || 'active')}_${TODAY}.csv`, certReportCSV(), 'text/csv'),

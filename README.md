@@ -31,8 +31,10 @@ _private/      私人資料（證書匯入檔），不會上傳到 GitHub
 
 1. 手機用 Safari（iPhone）或 Chrome（Android）打開網址 →「加入主畫面」。
 2. App 會先放一些標示【範例】的示範資料，看完可在「今日」或「設定」一鍵清除。
-3. 把 `_private/行動祕書_匯入_證書效期.json`（39 筆證書）傳到手機（例如存到 iCloud／OneDrive），
+3. 把 `_private/行動祕書_匯入_證書效期.json` 傳到手機（例如存到 iCloud／OneDrive），
    在 App「設定 → 匯入備份／證書資料」選這個檔案 →「合併匯入」。
+   這個檔由安規效期來源表產生，要更新就在 `OneDrive\安規報價試算器\` 跑：
+   `.\update-cert-board.ps1 -AppJson "C:\Users\joyce_fan\Mobile-secretary\_private\行動祕書_匯入_證書效期.json"`
 
 ## 提醒怎麼運作
 
