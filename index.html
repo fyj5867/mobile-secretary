@@ -361,6 +361,10 @@ body.app-locked > *:not(#lockScreen){visibility:hidden}
 .cb-t{flex:1;min-width:0;overflow-wrap:anywhere;line-height:1.55}
 .cb-t b{font-weight:500}
 .tick.sm{width:22px;height:22px}
+.app-done .app-head{align-items:center}
+.app-done .stamp{width:44px;height:44px;flex:none}
+.done-line{margin-top:6px;font-size:13px;color:var(--sub);line-height:1.6}
+.done-line b{font-family:var(--f-num);color:var(--ink);font-weight:500}
 .bill{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .bill-h{font-size:12.5px;color:var(--sub);margin-right:2px}
 .bill-h b{font-family:var(--f-num);color:var(--ink);font-weight:600}
@@ -655,9 +659,9 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v28）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 28;
-const APP_DATE = '2026/10/28';
+/* 版本：和 sw.js 的 CACHE（msec-v29）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 29;
+const APP_DATE = '2026/11/02';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -829,7 +833,7 @@ const prefs = (() => { try { return JSON.parse(ls.get(PREF_KEY)) || {}; } catch 
 const savePrefs = () => ls.set(PREF_KEY, JSON.stringify(prefs));
 const UI = {
   view: 'today', scope: prefs.scope || 'all', month: TODAY.slice(0, 8) + '01', sel: TODAY,
-  certTab: 'apps', appFilter: 'active', certQ: '', certGroup: prefs.certGroup || 'kind', agQ: '', agDays: 30, agDone: false,
+  certTab: 'apps', appFilter: 'all', certQ: '', certGroup: prefs.certGroup || 'kind', agQ: '', agDays: 30, agDone: false,
   repMode: 'week', repAnchor: TODAY
 };
 function loadData() {
@@ -1357,6 +1361,16 @@ function vApps() {
 }
 function appCard(a) {
   const st = a.status || 'active';
+  const open = UI.appOpen && UI.appOpen.has(a.id);
+  if (st === 'obtained' && !open) {
+    const got = isDate(a.actualCertDate) ? a.actualCertDate : endOf(a), steps = a.steps || [];
+    const info = [isDate(got) ? `已於 <b>${got.replace(/-/g, '/')}</b> 取證` : '已取證', `節點 ${steps.filter(x => x.done).length}/${steps.length}`, a.certNo && `證書編號 ${esc(a.certNo)}`, isDate(a.expiry) && `證書到期 ${a.expiry.replace(/-/g, '/')}`, a.company && esc(a.company)].filter(Boolean);
+    return `<article class="panel app-card app-done" style="--tape:var(--tape-${a.color || 1})">
+    <div class="app-head"><div class="ttl"><div class="app-name">${esc(appName(a))}</div><div class="app-badges">${a.scheme ? `<span class="scheme">${esc(a.scheme)}</span>` : ''}<span class="tag done">已完成</span>${a.sample ? '<span class="tag later">範例</span>' : ''}</div></div>${stamp('完成')}</div>
+    <div class="done-line">${info.join('・')}</div>
+    <div class="app-foot"><button class="btn sm" data-act="app-expand" data-id="${esc(a.id)}">展開日程</button><button class="btn sm" data-act="edit" data-key="app:${esc(a.id)}">${IC.edit}編輯</button></div>
+  </article>`;
+  }
   const end = endOf(a); const ok = isDate(a.applyDate) && isDate(end);
   const total = ok ? Math.max(1, diff(a.applyDate, end)) : 1;
   const el = ok ? clamp(diff(a.applyDate, TODAY), 0, total) : 0;
@@ -1391,7 +1405,7 @@ function appCard(a) {
     ${(() => { const ms = EV.filter(e => e.k === 'memo' && e.appId === a.id); return ms.length ? `<div class="sub-h" style="margin-top:12px">日程備註</div><div class="rows">${ms.map(e => evRow(e, { noApp: true, noEdit: true })).join('')}</div>` : ''; })()}
     <div class="bill"><span class="bill-h">報價與請款 <b>${billDone(a)}/${BILL.length}</b></span>${BILL.map(([k, t]) => { const d = billOf(a)[k]; return `<button type="button" class="bill-chk ${isDate(d) ? 'on' : ''}" data-act="bill" data-id="${esc(a.id)}" data-k="${k}" aria-pressed="${isDate(d)}">${IC.check}${t}${isDate(d) ? `<small>${md(d)}</small>` : ''}</button>`; }).join('')}${money(billOf(a).amount) ? `<span class="bill-amt">報價 ${money(billOf(a).amount)}</span>` : ''}</div>
     ${a.note ? `<div class="app-note">${esc(a.note)}</div>` : ''}
-    <div class="app-foot">${st === 'active' ? `<button class="btn sm primary" data-act="app-obtain" data-id="${esc(a.id)}">${IC.medal}標記已取證</button>` : ''}<button class="btn sm" data-act="edit" data-key="app:${esc(a.id)}">${IC.edit}編輯節點與資料</button></div>
+    <div class="app-foot">${st === 'active' ? `<button class="btn sm primary" data-act="app-obtain" data-id="${esc(a.id)}">${IC.medal}標記已取證</button>` : ''}${st === 'obtained' ? `<button class="btn sm" data-act="app-expand" data-id="${esc(a.id)}">收合日程</button>` : ''}<button class="btn sm" data-act="edit" data-key="app:${esc(a.id)}">${IC.edit}編輯節點與資料</button></div>
   </article>`;
 }
 /* 認證報表：配合單位（公司／實驗室）× 案件 × 進度，另外看報價與請款走到哪一步 */
@@ -2272,7 +2286,7 @@ function openAppForm(a, preset) {
       ${fld('fa-amount', '報價金額（NT$，選填）', inp('fa-amount', billOf(v).amount || '', 'inputmode="numeric" placeholder="例如：150000"'))}
       <div class="full bill-ed">${BILL.map(([k, t]) => `<label class="bi"><input type="checkbox" data-bill="${k}" ${isDate(billOf(v)[k]) ? 'checked' : ''}> ${t}<input type="date" data-bill-d="${k}" value="${esc(billOf(v)[k] || '')}" aria-label="${t}日期"></label>`).join('')}</div>
       <div class="fsec">取證與效期</div>
-      ${fld('fa-actual', '實際取證日', dateInp('fa-actual', v.actualCertDate))}
+      ${fld('fa-actual', '實際取證日', dateInp('fa-actual', v.actualCertDate) + '<div class="hint">填上後儲存，這筆申請會標成「已完成」並收合日程。</div>')}
       ${fld('fa-certno', '證書編號', inp('fa-certno', v.certNo))}
       ${fld('fa-expiry', '證書到期日', dateInp('fa-expiry', v.expiry) + '<div class="hint">狀態為「已取證」且填了到期日，會自動加入「證書效期」。</div>', 'full')}
       ${fld('fa-note', '備註', `<textarea id="fa-note" maxlength="3000">${esc(v.note || '')}</textarea><label class="chk-inline" style="margin-top:6px"><input type="checkbox" id="fa-pin" ${v.pinNote ? 'checked' : ''}> 把這段備註顯示在今日「認證提示」</label>`, 'full')}
@@ -2309,7 +2323,9 @@ function openAppForm(a, preset) {
     }).filter(x => x.text);
     if (memos.some(x => !isDate(x.date))) { toast('日程備註請填日期', 'worried'); return; }
     const colorEl = document.querySelector('input[name="fa-color"]:checked');
-    const status = val('fa-status');
+    let status = val('fa-status');
+    // 填了實際取證日就算完成：進行中／暫停 → 已取證（卡片會收合成一行）
+    if (isDate(val('fa-actual')) && (status === 'active' || status === 'paused')) status = 'obtained';
     const body = Object.assign({}, a || {}, {
       name, scheme: val('fa-scheme'), project: val('fa-project'), company: val('fa-company'), target: val('fa-target'), phone: val('fa-phone'),
       location: val('fa-location'), link: val('fa-link'), applyDate, certDate, status, color: colorEl ? Number(colorEl.value) : 1,
@@ -2327,7 +2343,7 @@ function openAppForm(a, preset) {
     }
     commit();
     closeLayer(m);
-    if (status === 'obtained' && !(a && a.status === 'obtained')) { toast(`恭喜取證！「${name}」`, 'happy'); }
+    if (status === 'obtained' && !(a && a.status === 'obtained')) { toast(`恭喜取證！「${name}」已標成完成，日程已收合`, 'happy'); }
     else toast(a ? '已更新認證申請' : `已新增「${name}」`, 'happy');
   });
 }
@@ -3917,6 +3933,7 @@ const ACT = {
   'cal-today': () => { UI.month = TODAY.slice(0, 8) + '01'; UI.sel = TODAY; render(); },
   'cert-tab': b => { UI.certTab = b.dataset.t; render(); },
   'app-filter': b => { UI.appFilter = b.dataset.f; render(); },
+  'app-expand': b => { UI.appOpen = UI.appOpen || new Set(); const id = b.dataset.id; if (UI.appOpen.has(id)) UI.appOpen.delete(id); else UI.appOpen.add(id); render(); },
   'cert-group': b => { UI.certGroup = b.dataset.g; prefs.certGroup = UI.certGroup; savePrefs(); render(); },
   'cr-filter': b => { UI.crFilter = b.dataset.f; render(); },
   'cr-copy': () => copyText(certReportText(), '認證報表文字已複製，可以直接貼到郵件或 Teams'),

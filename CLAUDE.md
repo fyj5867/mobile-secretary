@@ -29,6 +29,8 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   一句話輸入認得 10/20-10/23、10/20～23、二十號到二十三號、10/20 09:00-10/23 17:00。Google 兩邊都帶區間；v23 以前帶進來的多天 Google 行程第一次同步會補上 endDate（不會把 Google 縮成一天）。從 Google 主日曆帶進來的事項另有 `gsrc: 'primary'`、`gev`（Google 事件 id），見下方「Google 日曆連動」。
 - `apps`：認證申請。applyDate → certDate（月曆紙膠帶色帶，color 1–6）、status `active|obtained|paused|cancelled`、
   steps[{id,date,time,title,done}] 提交節點、actualCertDate、certNo、expiry。已取證且有 expiry 會自動建立 certs 的 `fa<appId>`。
+  v29（2026/11/02）：表單填了實際取證日 → 進行中／暫停自動變「已取證」；已取證的卡片收合成一行（已完成標記、取證日、節點、證書編號），
+  「展開日程」／「收合日程」切換（`UI.appOpen`，不存）。認證申請清單預設篩選改成「全部」（完成的收合排在最後）。
   `memos`（v25，2026/10/21）：日程備註 [{id,date,text,done,doneAt}]，有日期的追蹤事項；`buildEvents` 產生 `k:'memo'`（和節點一樣可打勾、前一天推播、
   出現在月曆與 iPhone 訂閱，不進 Google）。備註可勾「重要」（`imp`）：完成前不論日期都列在認證提示。
   今日頁「認證提示」（`certBrief`）：逾期／今天／兩天內的節點與備註 → 重要備註 → 待回簽、待請款 → 每件進行中申請一行「進度」
