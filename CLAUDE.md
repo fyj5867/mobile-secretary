@@ -92,7 +92,7 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
 - **App 鎖**（`msec.lock.v1`；v23 起**跟著雲端同步**：使用者回報 iPhone 打開沒上鎖——她以為設一次全部裝置都有。
   payload 的 `lock` 只放 {kind, salt, hash, iter, delay, at}，以 `at` 最新為準；關閉也同步（`msec.lockoff.v1` 記時間）；
   Face ID 註冊 `wa` 只屬於各裝置。沒有鎖時今日頁最上方有「設定 App 鎖」提示）：PIN（4～8 碼）或密碼，只存 PBKDF2-SHA256（15 萬次）雜湊與 salt。
-  上鎖時 `body.app-locked` 只顯示 `#lockScreen`；自動上鎖：離開 App 超過 `delay` 分鐘（0＝每次進入都要解鎖，**預設**，使用者要求「一進入就要密碼」）、
+  上鎖時 `body.app-locked` 把其他元素設成 display:none（v30：不能只用 visibility:hidden——底下頁面若比螢幕寬，iPhone 上解鎖框會被推出畫面）、只顯示 `#lockScreen`；自動上鎖：離開 App 超過 `delay` 分鐘（0＝每次進入都要解鎖，**預設**，使用者要求「一進入就要密碼」）、
   或畫面開著沒操作超過 max(delay,5) 分鐘。可用 WebAuthn 平台驗證（Face ID／指紋／Windows Hello，`lockCfg.wa` 存 credential id）解鎖。
   錯 5 次開始冷卻。「忘記密碼」：① 貼上同一個 GitHub 帳號的金鑰（呼叫 /user 比對 login）證明是本人 → 關閉鎖（同步到各裝置）再設新 PIN；
   ② 或清除這台的資料與連線設定（不能只清鎖而不驗證，否則任何人一清就能把資料抓回來）。

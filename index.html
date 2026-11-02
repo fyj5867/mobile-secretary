@@ -125,7 +125,7 @@ h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:22px;line-hei
 .ico svg{width:16px;height:16px}
 
 /* ---------- panels & rows ---------- */
-.panel{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.panel{overflow-wrap:break-word;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
 .panel-h{display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap}
 .panel-h h2{margin:0;font-family:var(--f-display);font-weight:700;font-size:15.5px;line-height:1.35;letter-spacing:.06em}
 .panel-h .n{font-family:var(--f-num);font-size:13px;color:var(--sub)}
@@ -226,9 +226,10 @@ input.time-in[aria-invalid="true"]{border-color:var(--red)!important;background:
 .ver-line b{font-family:var(--f-num);color:var(--ink);font-weight:600}
 
 /* ---------- App 鎖 ---------- */
-body.app-locked > *:not(#lockScreen){visibility:hidden}
-.lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;padding:24px;padding-top:calc(24px + env(safe-area-inset-top,0px));overflow:auto}
-.lock-box{width:min(340px,100%);display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+body.app-locked{overflow:hidden}
+body.app-locked > *:not(#lockScreen){display:none!important}
+.lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;grid-template-columns:minmax(0,1fr);place-items:center;padding:24px;padding-top:calc(24px + env(safe-area-inset-top,0px));overflow-x:hidden;overflow-y:auto}
+.lock-box{width:100%;max-width:340px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
 .lock-box .lock-dog{width:64px;height:64px}
 .lock-box h2{margin:4px 0 6px;font-weight:500;font-size:17px;letter-spacing:.1em}
 .lock-form{display:flex;gap:8px;width:100%}
@@ -353,7 +354,7 @@ body.app-locked > *:not(#lockScreen){visibility:hidden}
 .cbrief{margin-top:16px}
 .tstack{display:flex;flex-direction:column;gap:16px;margin-top:16px}
 .tstack > .panel{margin-top:0}
-.cb-note{margin-top:4px;padding:4px 8px;border-radius:4px;background:var(--card-2);font-size:12.5px;color:var(--sub);white-space:pre-wrap}
+.cb-note{margin-top:4px;padding:4px 8px;border-radius:4px;background:var(--card-2);font-size:12.5px;color:var(--sub);white-space:pre-wrap;overflow-wrap:anywhere}
 .cb-list{list-style:none;margin:0;padding:0}
 .cb-list li{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
 .cb-list li:first-child{border-top:0}
@@ -363,7 +364,7 @@ body.app-locked > *:not(#lockScreen){visibility:hidden}
 .tick.sm{width:22px;height:22px}
 .app-done .app-head{align-items:center}
 .app-done .stamp{width:44px;height:44px;flex:none}
-.done-line{margin-top:6px;font-size:13px;color:var(--sub);line-height:1.6}
+.done-line{margin-top:6px;font-size:13px;color:var(--sub);line-height:1.6;overflow-wrap:anywhere}
 .done-line b{font-family:var(--f-num);color:var(--ink);font-weight:500}
 .bill{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
 .bill-h{font-size:12.5px;color:var(--sub);margin-right:2px}
@@ -659,8 +660,8 @@ td.proj{font-weight:700}
 <script>
 (() => {
 'use strict';
-/* 版本：和 sw.js 的 CACHE（msec-v29）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 29;
+/* 版本：和 sw.js 的 CACHE（msec-v30）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
+const APP_VERSION = 30;
 const APP_DATE = '2026/11/02';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
@@ -3587,6 +3588,7 @@ let BIO = false;
 function lockNow() {
   if (!lockCfg) return;
   lock.on = true; document.body.classList.add('app-locked');
+  try { window.scrollTo(0, 0); } catch (e) {}
   const el = $('#lockScreen'), pin = lockCfg.kind === 'pin';
   el.innerHTML = `<div class="lock-box">
     ${mascot('calm', 'lock-dog')}
