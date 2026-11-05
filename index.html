@@ -442,6 +442,9 @@ td.proj{font-weight:700}
 .stat-line b{font-family:var(--f-num);color:var(--ink);font-weight:600}
 .excel-note{display:flex;align-items:center;gap:6px;margin:-4px 0 14px;font-size:12.5px;color:var(--sub)}
 .excel-note b{color:var(--ink);font-weight:500}
+.excel-note{flex-wrap:wrap}
+.excel-new{color:var(--brand);font-weight:500}
+.excel-note .linkbtn{border:0;background:none;padding:0;color:var(--sub);text-decoration:underline;cursor:pointer;font:inherit}
 .diff-list{list-style:none;margin:0 0 6px;padding:0;border-top:1px solid var(--line)}
 .diff-list li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:6px 2px;border-bottom:1px solid var(--line);font-size:13px}
 .diff-list li .num{margin-left:auto;color:var(--accent-tx);white-space:nowrap}
@@ -661,8 +664,8 @@ td.proj{font-weight:700}
 (() => {
 'use strict';
 /* 版本：和 sw.js 的 CACHE（msec-v30）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 30;
-const APP_DATE = '2026/11/02';
+const APP_VERSION = 31;
+const APP_DATE = '2026/11/05';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -1534,7 +1537,7 @@ function vCerts() {
     <div class="tile t-mint"><div><div class="v">${n('ok')}</div><div class="l">正常</div></div></div>
   </div>
   <div class="toolbar cert-tb"><div class="seg" role="group" aria-label="分組方式">${[['kind', '依類別'], ['lvl', '依到期']].map(([k, t]) => `<button data-act="cert-group" data-g="${k}" aria-pressed="${(UI.certGroup !== 'lvl' ? 'kind' : 'lvl') === k}">${t}</button>`).join('')}</div><label class="search">${IC.search}<input id="certSearch" type="search" placeholder="搜尋型號、認證項目、類別" value="${esc(UI.certQ)}" aria-label="搜尋證書"></label><div class="grow"></div><button class="btn" data-act="excel-import">${IC.ul}從效期表更新</button><button class="btn primary" data-act="new-cert">＋ 新增證書</button></div>
-  <p class="excel-note">${prefs.lastExcel ? `上次從效期表更新：<b>${esc(prefs.lastExcel.name)}</b>（${new Date(prefs.lastExcel.at).toLocaleDateString('zh-TW')}）` : '每月審查完，按「從效期表更新」選最新的《TWINHEAD 安規認證到期管理》Excel，到期日就會同步到這裡和手機。'}</p>
+  <p class="excel-note">${UI.excelNew ? `<span class="excel-new">效期表有新版本（${fmtStamp(UI.excelNew.mtime)} 存檔），按「從效期表更新」套用</span>` : prefs.lastExcel ? `上次從效期表更新：<b>${esc(prefs.lastExcel.name)}</b>（${prefs.lastExcel.mtime ? fmtStamp(prefs.lastExcel.mtime) + ' 存檔的版本，' : ''}${new Date(prefs.lastExcel.at).toLocaleDateString('zh-TW')} 套用）` : 'Excel 存檔後按「從效期表更新」，選安規 Excel（TWINHEAD_Safety_application…），會讀三個效期管理分頁，到期日就會同步到這裡和手機。'}${fsPick() && prefs.lastExcel ? `<button class="linkbtn" data-act="excel-pick">換檔案</button>` : ''}</p>
   ${groups || `<section class="panel">${emptyBox(q ? '找不到符合的證書' : '還沒有證書資料', q ? '<div>換個關鍵字試試看。</div>' : '<div>到「設定 → 匯入資料」載入證書效期檔，或按「＋ 新增證書」。180 天內開始追蹤、90 天內列入每日提醒。</div>')}${!q ? `<div class="set-acts" style="margin-top:10px"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}前往匯入</button></div>` : ''}</section>`}`;
 }
 
@@ -1803,6 +1806,7 @@ function render() {
   $('#fab').innerHTML = IC.plus;
   const lb = $('#lockBtn'); lb.hidden = !lockCfg; lb.innerHTML = IC.lock;
   $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy');
+  if (UI.view === 'cert') checkExcelNew();
   $('#foot').innerHTML = `<span>版本 <b>v${APP_VERSION}</b>（${APP_DATE}）</span><span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
 }
@@ -2402,8 +2406,10 @@ function backup() {
 const validId = s => typeof s === 'string' && /^[\w.-]{1,80}$/.test(s);
 function cleanDocs(arr) { return Array.isArray(arr) ? arr.filter(x => x && typeof x === 'object' && validId(x.id)) : []; }
 let pendingImport = null;
-/* ===== 從《TWINHEAD 安規認證到期管理》Excel 更新證書效期（單向：Excel 是主資料） =====
-   讀「到期提醒總覽」工作表：標題列含「機型」「到期日」；到期日是公式，讀 Excel 存檔時的計算結果。
+/* ===== 從安規 Excel 更新證書效期（單向：Excel 是主資料） =====
+   主要來源：TWINHEAD_Safety_application_and_standard_revision_Joyce.xlsx 的「系統效期管理」「Adapter效期管理」「Battery 效期管理」，
+   擷取規則與 OneDrive\安規報價試算器\update-cert-board.ps1 完全相同（欄位、CB +5 年、跳過非日期的格子、id、note），兩邊結果一致。
+   沒有這三個分頁的舊檔才退回讀「到期提醒總覽」（標題列含「機型」「到期日」）。
    以「機型＋認證項目」比對；App 裡的續證狀態、證書編號、備註保留。新證書的 id 由比對鍵雜湊而來，多台裝置匯入不會重複。 */
 const XLSX_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
 const normTxt = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim();
@@ -2416,9 +2422,82 @@ function excelDate(v) {
   const m = String(v).match(/(\d{4})\s*[\/.\-年]\s*(\d{1,2})\s*[\/.\-月]\s*(\d{1,2})/);
   return m ? `${m[1]}-${pad(+m[2])}-${pad(+m[3])}` : '';
 }
+// 各認證的提前通知月數（來源：Excel 各分頁第 10 列）；CB 沒有效期欄位，+5 年只是推估
+const CERT_LEAD = { 'TS (Taiwan)': 3, 'BSMI (R33872) (NB)': 2, 'CCC (NB)': 3, 'BSMI (R43001) (Adapter)': 3, 'CCC (Adapter)': 3, 'ANZ (Adapter)': 3, 'PSE (Adapter)': 3, 'BIS (Adapter)': 3, 'BSMI (R33872) (Battery)': 2, 'CCC (Battery)': 3 };
+const CB_CERT = 'CB (發證日+5年)';
+const CELL_NA = /^\s*(NA|N\/A|-|—)\s*$/i;
+const AUTO_NOTE = /^(提前 \d+ 個月通知|證書無有效期欄位)/;
+function certCellDate(v) {
+  if (v == null) return '';
+  if (v instanceof Date) return ymd(v);
+  const t = String(v).trim(); if (!t) return '';
+  if (typeof v === 'number' || /^\d+(\.\d+)?$/.test(t)) {
+    const n = +t; if (n < 20000 || n > 60000) return '';
+    const d = new Date(Date.UTC(1899, 11, 30) + Math.floor(n) * 864e5);
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+  }
+  // 常見「2024/12/03\n(IEC 62368:2018)」：只看第一行的日期
+  const m = t.split(/[\r\n]/)[0].match(/(\d{4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/);
+  if (!m) return '';
+  const y = +m[1], mo = +m[2], dd = +m[3];
+  if (mo < 1 || mo > 12 || dd < 1 || dd > new Date(y, mo, 0).getDate()) return '';
+  return `${y}-${pad(mo)}-${pad(dd)}`;
+}
+// 加減月份（月底自動收在該月最後一天，和 .NET AddMonths 相同）
+function addMonthsYmd(d, n) {
+  const [y, m, dd] = d.split('-').map(Number), t = y * 12 + (m - 1) + n, y2 = Math.floor(t / 12), m2 = t - y2 * 12 + 1;
+  return `${y2}-${pad(m2)}-${pad(Math.min(dd, new Date(y2, m2, 0).getDate()))}`;
+}
+function readExpirySheets(X, wb) {
+  const find = name => wb.SheetNames.find(n => n.replace(/\s/g, '') === name);
+  const sysN = find('系統效期管理');
+  if (!sysN) return null;
+  const batN = find('Battery效期管理'), adpN = find('Adapter效期管理');
+  const cell = (ws, c, r) => { const x = ws && ws[c + r]; return !x || x.v == null ? '' : typeof x.v === 'string' ? x.v.trim() : x.v; };
+  const lastRow = ws => ws && ws['!ref'] ? X.utils.decode_range(ws['!ref']).e.r + 1 : 0;
+  const FIRST = 12, rows = [];
+  const take = (kind, project, cert, raw, cb, spec = '', applies = '') => {
+    if (raw === '') return;
+    let due = certCellDate(raw);
+    if (!due) { if (!CELL_NA.test(String(raw))) rows.push({ kind, project, cert, due: '', raw: normTxt(raw) }); return; }
+    if (cb) due = addMonthsYmd(due, 60);
+    const lead = CERT_LEAD[cert];
+    const note = [lead ? `提前 ${lead} 個月通知（自 ${addMonthsYmd(due, -lead).replace(/-/g, '/')} 起）` : '證書無有效期欄位，到期日為發證日 +5 年推估', spec, applies ? '適用 ' + applies : ''].filter(Boolean).join('｜');
+    rows.push({ kind, project, cert, due, note });
+  };
+  // 系統效期管理：B 機種、D CB 發證日、J TS、K BSMI (NB)、L CCC (NB)；M 欄是 adapter 型號註記（反查適用機種用）
+  const sys = wb.Sheets[sysN], adpOf = {};
+  for (let r = FIRST, n = lastRow(sys); r <= n; r++) {
+    const p = normTxt(cell(sys, 'B', r)); if (!p) continue;
+    take('system', p, CB_CERT, cell(sys, 'D', r), true);
+    [['J', 'TS (Taiwan)'], ['K', 'BSMI (R33872) (NB)'], ['L', 'CCC (NB)']].forEach(([c, cert]) => take('system', p, cert, cell(sys, c, r)));
+    const a = normTxt(cell(sys, 'M', r));
+    if (a && !/^(NA|N\/A|ongoing|\?|-|—)$/i.test(a)) (adpOf[a] = adpOf[a] || []).push(p);
+  }
+  // Battery 效期管理：E 電池型號、F CCC、G BSMI（B～D 是系統的日期，不重複輸出）
+  const bat = batN && wb.Sheets[batN];
+  for (let r = FIRST, n = lastRow(bat); r <= n; r++) {
+    const p = normTxt(cell(bat, 'E', r)); if (!p) continue;
+    take('battery', p, 'CCC (Battery)', cell(bat, 'F', r));
+    take('battery', p, 'BSMI (R33872) (Battery)', cell(bat, 'G', r));
+  }
+  // Adapter效期管理：B 型號、C 適用機種、E CB 發證日、H～L BSMI／CCC／ANZ／PSE／BIS（D 承認書、F UL、G CE DoC 不是到期日）
+  const adp = adpN && wb.Sheets[adpN];
+  for (let r = FIRST, n = lastRow(adp); r <= n; r++) {
+    const p = normTxt(cell(adp, 'B', r)); if (!p) continue;
+    const w = p.match(/FSP0*(\d{2,4})/i), spec = w ? +w[1] + 'W' : '';
+    let applies = String(cell(adp, 'C', r)).split(/[\r\n]/).map(x => x.replace(/^\s*\d+\s*[.、)]\s*/, '').trim()).filter(Boolean).join('、');
+    if (!applies && adpOf[p]) applies = adpOf[p].join('、');
+    take('adapter', p, CB_CERT, cell(adp, 'E', r), true, spec, applies);
+    [['H', 'BSMI (R43001) (Adapter)'], ['I', 'CCC (Adapter)'], ['J', 'ANZ (Adapter)'], ['K', 'PSE (Adapter)'], ['L', 'BIS (Adapter)']].forEach(([c, cert]) => take('adapter', p, cert, cell(adp, c, r), false, spec, applies));
+  }
+  return { sheet: [sysN, adpN, batN].filter(Boolean).join('、'), rows, three: true };
+}
 async function readReviewWorkbook(file) {
   if (!window.XLSX) await loadScript(XLSX_LIB);
   const wb = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+  const three = readExpirySheets(window.XLSX, wb);
+  if (three) { if (!three.rows.some(r => r.due)) throw new Error('nodate'); return three; }
   const sheet = wb.SheetNames.find(n => n.includes('到期提醒總覽')) || wb.SheetNames.find(n => n.includes('到期'));
   if (!sheet) throw new Error('nosheet');
   const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[sheet], { header: 1, raw: true, defval: '' });
@@ -2456,22 +2535,62 @@ async function handleExcelFile(file) {
   try { res = await readReviewWorkbook(file); reading.remove(); }
   catch (e) {
     reading.remove();
-    toast(e.message === 'nosheet' ? '這個 Excel 裡找不到「到期提醒總覽」工作表' : e.message === 'noheader' ? '找不到「機型／到期日」標題列，請確認是安規認證到期管理的檔案' : '讀不懂這個檔案，請選 .xlsx 檔（也請確認網路連線）', 'worried');
+    toast(e.message === 'nodate' ? '三個效期管理分頁裡讀不到任何到期日，請確認欄位有沒有被移動過' : e.message === 'nosheet' ? '這個 Excel 裡找不到「系統效期管理」或「到期提醒總覽」工作表' : e.message === 'noheader' ? '找不到「機型／到期日」標題列，請確認是安規認證到期管理的檔案' : '讀不懂這個檔案，請選 .xlsx 檔（也請確認網路連線）', 'worried');
     return;
   }
-  const d = certDiff(res.rows); d.fileName = file.name; d.sheet = res.sheet; d.total = res.rows.length;
+  const d = certDiff(res.rows); d.fileName = file.name; d.mtime = file.lastModified || 0; d.sheet = res.sheet; d.total = res.rows.filter(r => r.due).length;
   UI.certDiff = d;
   const li = (arr, f, max = 8) => arr.length ? `<ul class="diff-list">${arr.slice(0, max).map(f).join('')}${arr.length > max ? `<li class="muted">…還有 ${arr.length - max} 筆</li>` : ''}</ul>` : '';
   const dd = s => isDate(s) ? s.replace(/-/g, '/') : '—';
   const m = $('#modal'); m.setAttribute('aria-label', '從效期表更新');
-  m.innerHTML = `<div class="sheet-h"><div><h2>從效期表更新</h2><p>${esc(file.name)}・「${esc(res.sheet)}」${res.rows.length} 筆</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
-    <div class="stat-line"><span>新增 <b>${d.added.length}</b></span><span>到期日變更 <b>${d.changed.length}</b></span><span>不變 <b>${d.same}</b></span><span>表中沒有 <b>${d.missing.length}</b></span>${d.skipped.length ? `<span>沒有到期日（略過）<b>${d.skipped.length}</b></span>` : ''}</div>
+  m.innerHTML = `<div class="sheet-h"><div><h2>從效期表更新</h2><p>${esc(file.name)}${file.lastModified ? `（${fmtStamp(file.lastModified)} 存檔）` : ''}・「${esc(res.sheet)}」${d.total} 筆</p></div><button type="button" class="ico x" data-act="close" aria-label="關閉">${IC.x}</button></div>
+    <div class="stat-line"><span>新增 <b>${d.added.length}</b></span><span>到期日變更 <b>${d.changed.length}</b></span><span>不變 <b>${d.same}</b></span><span>表中沒有 <b>${d.missing.length}</b></span>${d.skipped.length ? `<span>沒有日期（略過）<b>${d.skipped.length}</b></span>` : ''}</div>
     ${d.added.length ? `<div class="sub-h">新增的證書</div>${li(d.added, r => `<li><b>${esc(r.project)}</b>｜${esc(r.cert)}<span class="num">${dd(r.due)}</span></li>`)}` : ''}
     ${d.changed.length ? `<div class="sub-h">到期日變更</div>${li(d.changed, x => `<li><b>${esc(x.r.project)}</b>｜${esc(x.r.cert)}<span class="num">${dd(x.c.due)} → ${dd(x.r.due)}</span></li>`)}` : ''}
     ${d.missing.length ? `<div class="sub-h">App 裡有、但效期表中沒有的（不會自動刪除）</div><ul class="diff-list">${d.missing.map(c => `<li><label class="chk-inline"><input type="checkbox" data-retire="${esc(c.id)}"> 標為不續證／停用</label><span><b>${esc(c.project)}</b>｜${esc(c.cert)}</span><span class="num">${dd(c.due)}</span></li>`).join('')}</ul>` : ''}
+    ${d.skipped.length && res.three ? `<div class="sub-h">格子裡不是日期，所以沒有帶進來（填上日期後再更新一次就會出現）</div>${li(d.skipped, r => `<li><b>${esc(r.project)}</b>｜${esc(r.cert)}<span class="num">${esc(r.raw || '')}</span></li>`, 20)}` : ''}
     ${!d.added.length && !d.changed.length && !d.missing.length ? `<p class="muted">App 裡的證書效期已經和這份效期表一致。</p>` : ''}
     <div class="form-foot"><button class="btn ghost" data-act="close">取消</button><button class="btn primary" data-act="excel-apply">套用更新</button></div>`;
   openLayer(m);
+}
+const fmtStamp = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+/* 電腦版 Chrome／Edge：選過一次效期表就記住（檔案代號存在這台的 IndexedDB，不同步），之後按「從效期表更新」直接重讀同一個檔；
+   打開證書頁時若瀏覽器仍允許讀取，會自動比對存檔時間，Excel 有新版本就提示。其他瀏覽器（手機）維持每次選檔。 */
+const fsPick = () => 'showOpenFilePicker' in window;
+function fsStore(mode, fn) {
+  return new Promise((res, rej) => {
+    const o = indexedDB.open('msec-fs', 1);
+    o.onupgradeneeded = () => o.result.createObjectStore('h');
+    o.onerror = () => rej(o.error);
+    o.onsuccess = () => { const tx = o.result.transaction('h', mode), q = fn(tx.objectStore('h')); tx.oncomplete = () => res(q && q.result); tx.onerror = () => rej(tx.error); };
+  }).catch(() => null);
+}
+const excelHandle = { get: () => fsStore('readonly', st => st.get('excel')), set: h => fsStore('readwrite', st => st.put(h, 'excel')), del: () => fsStore('readwrite', st => st.delete('excel')) };
+async function pickExcel(fresh) {
+  if (!fsPick()) { const f = $('#excelFile'); f.value = ''; f.click(); return; }
+  let h = fresh ? null : await excelHandle.get();
+  if (h) { try { if (await h.requestPermission({ mode: 'read' }) !== 'granted') h = null; } catch (e) { h = null; } }
+  if (!h) {
+    try { [h] = await window.showOpenFilePicker({ id: 'msec-excel', types: [{ description: 'Excel 效期表', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx', '.xlsm'] } }] }); }
+    catch (e) { return; }
+    excelHandle.set(h);
+  }
+  let file;
+  try { file = await h.getFile(); }
+  catch (e) { excelHandle.del(); toast('讀不到上次的效期表（可能改名、搬家或網路磁碟沒連上），請再按一次重新選檔', 'worried'); return; }
+  handleExcelFile(file);
+}
+let excelChecked = 0;
+async function checkExcelNew() {
+  if (!fsPick() || Date.now() - excelChecked < 30000) return;
+  excelChecked = Date.now();
+  const h = await excelHandle.get(); if (!h) return;
+  try {
+    if (await h.queryPermission({ mode: 'read' }) !== 'granted') return;
+    const f = await h.getFile(), last = (prefs.lastExcel && prefs.lastExcel.mtime) || 0;
+    const nw = f.lastModified > last ? { name: f.name, mtime: f.lastModified } : null;
+    if (JSON.stringify(nw) !== JSON.stringify(UI.excelNew || null)) { UI.excelNew = nw; if (UI.view === 'cert' && !layers.length) render(); }
+  } catch (e) {}
 }
 function applyCertDiff() {
   const d = UI.certDiff; if (!d) return;
@@ -2479,17 +2598,18 @@ function applyCertDiff() {
   d.added.forEach(r => {
     const id = hashId(certKey(r.project, r.cert));
     const doc = { id, project: r.project, cert: r.cert, due: r.due, no: '', state: 'normal', note: r.note, src: 'excel', updatedAt: now };
+    if (r.kind) doc.kind = r.kind;
     const i = S.certs.findIndex(c => c.id === id);
     if (i < 0) S.certs.push(doc); else S.certs[i] = Object.assign({}, S.certs[i], doc);
   });
   d.changed.forEach(({ c, r }) => {
     // 到期日往後延，代表續證完成：續證中 → 追蹤中
     if (c.state === 'renewing' && r.due > c.due) c.state = 'normal';
-    c.due = r.due; if (!c.note && r.note) c.note = r.note; c.updatedAt = now;
+    c.due = r.due; if (r.note && (!c.note || AUTO_NOTE.test(c.note))) c.note = r.note; if (r.kind && !c.kind) c.kind = r.kind; c.updatedAt = now;
   });
   let retired = 0;
   $$('#modal input[data-retire]:checked').forEach(el => { const c = S.certs.find(x => x.id === el.dataset.retire); if (c) { c.state = 'retired'; c.updatedAt = now; retired++; } });
-  prefs.lastExcel = { name: d.fileName, at: now }; savePrefs();
+  prefs.lastExcel = { name: d.fileName, at: now, mtime: d.mtime || 0 }; savePrefs(); UI.excelNew = null;
   UI.certDiff = null;
   commit(); closeLayer($('#modal'));
   toast(`效期表已套用：新增 ${d.added.length}、到期日變更 ${d.changed.length}${retired ? `、停用 ${retired}` : ''} 筆${syncCfg ? '，會同步到手機' : ''}`, 'happy');
@@ -3987,7 +4107,8 @@ const ACT = {
   'quote-file': () => { const f = $('#quoteFile'); f.value = ''; f.click(); },
   'quote-del': b => arm(b, '確定刪除？', () => Store.del('quotes', b.dataset.id)),
   'quote-all': () => { UI.quoteAll = !UI.quoteAll; render(); },
-  'excel-import': () => { const f = $('#excelFile'); f.value = ''; f.click(); },
+  'excel-import': () => pickExcel(false),
+  'excel-pick': () => pickExcel(true),
   'excel-apply': () => applyCertDiff(),
   'lock-setup': () => openLockForm('set'),
   'lock-change': () => openLockForm('change'),

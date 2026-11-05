@@ -45,16 +45,22 @@ _private/         ★不進版控（.gitignore）。放使用者的證書清單�
   **主資料是唯一來源 Excel `Z:\交接區\Joyce 記錄區\TWINHEAD_Safety_application_and_standard_revision_Joyce.xlsx`**
   的「系統效期管理」「Battery 效期管理」「Adapter效期管理」三個分頁（2026-10-15 使用者指定；取代先前每月一份的
   《TWINHEAD_安規認證到期管理_YYYYMMDD.xlsx》）。
-  進料方式：在 `C:\Users\joyce_fan\OneDrive\安規報價試算器\` 跑
-  `.\update-cert-board.ps1 -AppJson "C:\Users\joyce_fan\Mobile-secretary\_private\行動祕書_匯入_證書效期.json"`，
-  再到 App「設定 → 匯入備份／證書資料」選該檔「合併匯入」。同一支腳本也更新安規認證效期看板，兩邊數字一定一致。
-  匯入檔的 id 用 App 自己的 `hashId(certKey)`（tw 開頭、跨裝置一致），所以重複匯入是更新同一筆、不會長出重複證書。
-  note 會寫入各認證的提前通知月數（例「提前 3 個月通知（自 2025/03/18 起）｜65W｜適用 S14、Z14」）；
-  `state` 一律 `normal`，180／90 天的追蹤與提醒門檻仍由 App 自己算。
-  ⚠ 合併匯入是整筆取代同 id 的證書，**App 裡手動填的續證狀態／證書編號／備註會被蓋掉**；
+  **進料方式（v31，2026/11/05 起的主要路徑）**：證書效期頁「從效期表更新」直接選這份 Excel，App 用 SheetJS
+  讀三個效期管理分頁（`readExpirySheets`），**擷取規則逐條照抄 `C:\Users\joyce_fan\OneDrive\安規報價試算器\update-cert-board.ps1`**
+  （系統 B/D/J/K/L、Adapter B/C/E/H–L、Battery E/F/G，第 12 列起；CB 發證日 +5 年；只取第一行日期；NA/N/A/- 不算）。
+  用 2026/11/05 的 Excel 實測：41 筆的 id／project／cert／kind／due／note 和腳本的 -AppJson 輸出**逐筆完全一致**。
+  **改欄位規則時兩邊一起改**，改完用同一份 Excel 重跑比對。
+  比對畫面列出新增／到期日變更／表中沒有（可勾停用）／**格子不是日期而略過的（顯示原文，如 ongoing、?、待新電芯）**。
+  套用時保留 App 裡的續證狀態、證書編號、使用者自己的備註（腳本格式的自動備註「提前 N 個月通知…」才會跟著更新）；
+  到期日往後延時「續證中」自動變回追蹤。沒有三個分頁的舊月檔才退回讀「到期提醒總覽」（該分頁在新 Excel 裡是 8 月的舊頁、很多 #REF!，不要用）。
+  電腦版 Chrome／Edge 用 File System Access：選過一次就把檔案代號存在這台的 IndexedDB `msec-fs`（不同步、不進備份），
+  之後按鈕直接重讀同一檔（瀏覽器可能問一次「允許讀取」）；打開證書頁時若權限仍在，比對檔案修改時間，
+  比 `prefs.lastExcel.mtime` 新就在說明列提示「效期表有新版本」。「換檔案」重新選檔。手機（無此 API）維持每次選檔。
+  網頁 App 無法在背景自己去讀 Z: 網路磁碟（瀏覽器安全限制），所以一定要使用者按一次。
+  另一條路（看板也要更新時）：跑 `.\update-cert-board.ps1 -AppJson "C:\Users\joyce_fan\Mobile-secretary\_private\行動祕書_匯入_證書效期.json"`，
+  再到「設定 → 匯入備份／證書資料」合併匯入。id 同樣是 `hashId(certKey)`（tw 開頭、跨裝置一致），兩條路更新的是同一筆。
+  ⚠ 合併匯入是整筆取代同 id 的證書，App 裡手動填的續證狀態／證書編號／備註會被蓋掉（按鈕那條路不會）；
   ⚠ 新表沒有的舊證書不會被刪，要在 App 裡勾「不續證／停用」。
-  證書效期頁的「從效期表更新」（SheetJS 讀「到期提醒總覽」工作表）**自 2026-10-15 起停用不再使用** ——
-  那條路讀的是另一份月檔，會變成第二份真相；程式碼保留但不要再叫使用者用它，也不要據此修改資料流。
   單向：不寫回 Excel。Excel 檔本身不要放進版控。
   **類別（v28，2026/10/28，使用者要求「像安規工頁一樣分類」）**：證書效期頁預設「依類別」分成
   AC ADAPTER／系統本身／電池三段（和看板、和來源 Excel 的三個分頁一致），右上角可切回「依到期」
