@@ -664,8 +664,8 @@ td.proj{font-weight:700}
 (() => {
 'use strict';
 /* 版本：和 sw.js 的 CACHE（msec-v30）用同一個數字；每次改版兩邊一起 +1，並更新 APP_DATE。畫面上看得到目前版本 */
-const APP_VERSION = 31;
-const APP_DATE = '2026/11/05';
+const APP_VERSION = 32;
+const APP_DATE = '2026/11/20';
 /* ================= utilities ================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
@@ -1182,6 +1182,8 @@ function vToday() {
   const certAl = showWork ? S.certs.filter(c => ['expired', 'warn', 'watch'].includes(certLvl(c))).sort((a, b) => a.due < b.due ? -1 : 1) : [];
   const samples = S.items.filter(x => x.sample).length + S.apps.filter(x => x.sample).length + S.certs.filter(x => x.sample).length;
   const sampleBar = samples ? `<div class="banner" style="margin-top:16px"><p>目前有 <b class="num">${samples}</b> 筆標示「【範例】」的示範資料（含工作與個人）。看完功能後可以一鍵清除；證書效期資料可以到「設定」匯入。</p><div class="acts"><button class="btn sm" data-act="tab" data-view="settings">${IC.ul}匯入資料</button><button class="btn sm danger" data-act="clear-samples">清除範例</button></div></div>` : '';
+  /* 效期表有新版本時，今日頁也提示一次 —— 證書頁不一定每天開，光靠那一頁的說明列會漏看。 */
+  const excelBar = (showWork && UI.excelNew) ? `<div class="banner">${IC.ul}<p><b>效期表有新版本</b>（${fmtStamp(UI.excelNew.mtime)} 存檔）。套用後證書到期日才會是最新的。</p><div class="acts"><button class="btn sm primary" data-act="excel-import">${IC.ul}從效期表更新</button></div></div>` : '';
   const soonByDay = [1, 2].map(n => {
     const d = addDays(TODAY, n); const l = soon.filter(e => e.date === d);
     return l.length ? `<div class="sub-h">${n === 1 ? '明天' : '後天'}・${full(d)}</div><div class="rows">${l.map(e => evRow(e, { noDate: true })).join('')}</div>` : '';
@@ -1190,6 +1192,7 @@ function vToday() {
   return `
   ${!lockCfg ? `<div class="banner">${IC.lock}<p><b>還沒有設定 App 鎖。</b>設定後，每次打開行動祕書都要先輸入 PIN 才看得到內容${syncCfg ? '，所有同步的裝置都會套用' : ''}。</p><div class="acts"><button class="btn sm primary" data-act="lock-setup">設定 App 鎖</button></div></div>` : ''}
   ${sampleBar}
+  ${excelBar}
   <div class="tstack">
     <section class="panel">
       <div class="panel-h"><h2>今日待辦</h2><span class="n">${pending.length} 件待辦・${doneT.length} 件完成</span><button class="btn sm act" data-act="new-item" data-date="${TODAY}">＋ 新增</button></div>
@@ -1806,7 +1809,7 @@ function render() {
   $('#fab').innerHTML = IC.plus;
   const lb = $('#lockBtn'); lb.hidden = !lockCfg; lb.innerHTML = IC.lock;
   $('#brandMascot').innerHTML = mascot(A.ev.some(e => lvl(e) === 'overdue') ? 'worried' : 'happy');
-  if (UI.view === 'cert') checkExcelNew();
+  if (UI.view === 'cert' || UI.view === 'today') checkExcelNew();
   $('#foot').innerHTML = `<span>版本 <b>v${APP_VERSION}</b>（${APP_DATE}）</span><span>事項在 <b>前一天</b> 推播提醒</span><span>今日頁列出 <b>${LEAD}</b> 天內到期的事</span><span>證書 <b>180</b> 天內追蹤・<b>90</b> 天內列入提醒</span>`;
   if (!$('#drawer').hidden) fillDrawer();
 }
@@ -2589,7 +2592,7 @@ async function checkExcelNew() {
     if (await h.queryPermission({ mode: 'read' }) !== 'granted') return;
     const f = await h.getFile(), last = (prefs.lastExcel && prefs.lastExcel.mtime) || 0;
     const nw = f.lastModified > last ? { name: f.name, mtime: f.lastModified } : null;
-    if (JSON.stringify(nw) !== JSON.stringify(UI.excelNew || null)) { UI.excelNew = nw; if (UI.view === 'cert' && !layers.length) render(); }
+    if (JSON.stringify(nw) !== JSON.stringify(UI.excelNew || null)) { UI.excelNew = nw; if ((UI.view === 'cert' || UI.view === 'today') && !layers.length) render(); }
   } catch (e) {}
 }
 function applyCertDiff() {
